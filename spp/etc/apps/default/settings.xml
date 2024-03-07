@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Document   : settings.xml
+    Created on : 08 October 2009, 13:43
+    Author     : Satya Prakash Shukla
+    Description:
+        Stores settings for Satya Portal Pack.
+-->
+
+<settings>
+    <profile>dev</profile>
+    <profiles>
+        <profile>
+            <pname>production</pname>
+            <modautoload>yes</modautoload>
+            <debugmode>no</debugmode>
+        </profile>
+        <profile>
+            <pname>dev</pname>
+            <modautoload>yes</modautoload>
+            <debugmode>yes</debugmode>
+        </profile>
+    </profiles>
+    <src>
+        <dir>src</dir>
+    </src>
+
+</settings>

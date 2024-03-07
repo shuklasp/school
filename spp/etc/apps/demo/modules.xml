@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Document   : modules.xml
+    Created on : 08 October 2009, 09:32
+    Author     : Satya Prakash Shukla
+    Description:
+        Modules configuration.
+-->
+
+<modules>
+    <module>
+        <modname>sppauth</modname>
+        <modpath>spp/sppauth</modpath>
+        <status>inactive</status>
+        <dependencies>
+            <dependency>sppcore</dependency>
+        </dependencies>
+    </module>
+    <module>
+        <modname>sppdb</modname>
+        <modpath>spp/sppdb</modpath>
+        <status>active</status>
+        <dependencies>
+            <dependency>sppcore</dependency>
+        </dependencies>
+    </module>
+    <module>
+        <modname>sppconfig</modname>
+        <modpath>spp/sppconfig</modpath>
+        <status>inactive</status>
+        <dependencies>
+            <dependency>sppcore</dependency>
+        </dependencies>
+    </module>
+    <module>
+        <modname>spplogger</modname>
+        <modpath>spp/spplogger</modpath>
+        <status>inactive</status>
+        <dependencies>
+            <dependency>sppcore</dependency>
+            <dependency>sppdb</dependency>
+            <dependency>sppsession</dependency>
+        </dependencies>
+    </module>
+    <module>
+        <modname>sppprofile</modname>
+        <modpath>spp/sppprofile</modpath>
+        <status>active</status>
+        <dependencies>
+            <dependency>sppcore</dependency>
+            <dependency>sppdb</dependency>
+            <dependency>sppsession</dependency>
+        </dependencies>
+    </module>
+    <module>
+        <modname>sppwizard</modname>
+        <modpath>spp/sppwizard</modpath>
+        <status>active</status>
+        <dependencies>
+            <dependency>sppcore</dependency>
+            <dependency>sppdb</dependency>
+            <dependency>sppsession</dependency>
+        </dependencies>
+    </module>
+    <module>
+        <modname>sppdojo</modname>
+        <modpath>spp/sppdojo</modpath>
+        <status>active</status>
+        <dependencies>
+            <dependency>sppcore</dependency>
+            <dependency>sppdb</dependency>
+            <dependency>sppsession</dependency>
+        </dependencies>
+    </module>
+    <module>
+        <modname>sppdijit</modname>
+        <modpath>spp/sppdojo/sppdijit</modpath>
+        <status>active</status>
+        <dependencies>
+            <dependency>sppcore</dependency>
+            <dependency>sppdb</dependency>
+            <dependency>sppsession</dependency>
+        </dependencies>
+    </module>
+    <module>
+        <modname>sppvalidator</modname>
+        <modpath>spp/sppvalidator</modpath>
+        <status>active</status>
+        <dependencies>
+            <dependency>sppcore</dependency>
+            <dependency>sppdb</dependency>
+            <dependency>sppsession</dependency>
+        </dependencies>
+    </module>
+    <module>
+        <modname>spphtml</modname>
+        <modpath>spp/spphtml</modpath>
+        <status>inactive</status>
+        <dependencies>
+            <dependency>sppcore</dependency>
+            <dependency>sppdb</dependency>
+            <dependency>sppsession</dependency>
+        </dependencies>
+    </module>
+</modules>

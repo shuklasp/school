@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Document   : sppajax.module.xml
+    Author     : Satya Prakash Shukla
+    Description:
+        Descriptor for sppajax module.
+-->
+
+<module>
+    <name>sppajax</name>
+    <version>0.5</version>
+    <pubname>SPP Ajax</pubname>
+    <modgroup>SPP_Optional</modgroup>
+    <pubdesc>Handles SPP Ajax calls.</pubdesc>
+    <includes>
+        <include>class.sppajax.php</include>
+        <include>ajaxexceptions.php</include>
+    </includes>
+    <deps>
+        <depends>sppconfig</depends>
+    </deps>
+</module>

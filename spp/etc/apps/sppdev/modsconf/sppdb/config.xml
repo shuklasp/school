@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Document   : config.xml
+    Created on : 16 October 2009, 10:49
+    Author     : Satya Prakash Shukla
+    Description:
+        Configuration options for a module.
+-->
+
+<config>
+    <variables>
+        <variable>
+            <name>dbtype</name>
+            <value>mysql</value>
+        </variable>
+        <variable>
+            <name>dbuser</name>
+            <value>root</value>
+        </variable>
+        <variable>
+            <name>dbpasswd</name>
+            <value></value>
+        </variable>
+        <variable>
+            <name>dbhost</name>
+            <value>localhost</value>
+        </variable>
+        <variable>
+            <name>dbname</name>
+            <value>spp</value>
+        </variable>
+    </variables>
+</config>

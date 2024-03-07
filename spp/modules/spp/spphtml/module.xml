@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Document   : sppauth.module.xml
+    Created on : 11 October 2009, 17:28
+    Author     : Satya Prakash Shukla
+    Description:
+        Descriptor for sppauth module.
+-->
+
+<module>
+    <name>spphtml</name>
+    <version>0.5</version>
+    <pubname>SPP HTML</pubname>
+    <modgroup>SPP_Optional</modgroup>
+    <pubdesc>Handles HTML in SPP.</pubdesc>
+    <includes>
+        <include>class.spphtmlelement.php</include>
+        <include>class.spphtmltable.php</include>
+        <include>class.sppform.php</include>
+        <include>class.sppformelement.php</include>
+        <include>class.spphtmlpage.php</include>
+        <include>classes.formelements.php</include>
+        <include>classes.htmlelements.php</include>
+    </includes>
+    <deps>
+        <depends>sppdb</depends>
+        <depends>sppconfig</depends>
+    </deps>
+</module>

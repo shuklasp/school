@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Document   : sppauth.module.xml
+    Created on : 11 October 2009, 17:28
+    Author     : Satya Prakash Shukla
+    Description:
+        Descriptor for sppauth module.
+-->
+
+<module>
+    <name>sppauth</name>
+    <version>0.5</version>
+    <pubname>SPP Auth</pubname>
+    <modgroup>SPP_Optional</modgroup>
+    <pubdesc>Handles native SPP Authentication.</pubdesc>
+    <includes>
+        <include>class.sppauth.php</include>
+        <include>class.sppright.php</include>
+        <include>class.spprole.php</include>
+        <include>class.sppuser.php</include>
+        <include>class.sppusersession.php</include>
+    </includes>
+    <deps>
+        <depends>sppdb</depends>
+        <depends>sppconfig</depends>
+    </deps>
+</module>

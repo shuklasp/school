@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Document   : dojosources.xml
+    Created on : 01 November 2009, 06:52
+    Author     : Satya Prakash Shukla
+    Description:
+        List of available dojo sources.
+-->
+
+<dojosrc>
+<src>
+    <name>spp</name>
+    <version value="1.3">
+        <source>/dojo/dojo.js</source>
+        <dojocss>/dojo/resources/dojo.css</dojocss>
+        <themes>
+            <theme>
+                <name>tundra</name>
+                <style>/dijit/themes/tundra/tundra.css</style>
+            </theme>
+            <theme>
+                <name>soria</name>
+                <style>/dijit/themes/soria/soria.css</style>
+            </theme>
+            <theme>
+                <name>nihilo</name>
+                <style>/dijit/themes/nihilo/nihilo.css</style>
+            </theme>
+        </themes>
+    </version>
+</src>
+<src>
+    <name>aolcdn</name>
+    <version value="1.1">
+        <source>http://o.aolcdn.com/dojo/1.1/dojo/dojo.xd.js</source>
+        <dojocss>http://o.aolcdn.com/dojo/1.1/dojo/resources/dojo.css</dojocss>
+        <themes>
+            <theme>
+                <name>tundra</name>
+                <style>http://o.aolcdn.com/dojo/1.1/dijit/themes/tundra/tundra.css</style>
+            </theme>
+            <theme>
+                <name>soria</name>
+                <style>http://o.aolcdn.com/dojo/1.1/dijit/themes/soria/soria.css</style>
+            </theme>
+            <theme>
+                <name>nihilo</name>
+                <style>http://o.aolcdn.com/dojo/1.1/dijit/themes/nihilo/nihilo.css</style>
+            </theme>
+        </themes>
+    </version>
+    <version value="1.3">
+        <source>http://o.aolcdn.com/dojo/1.3/dojo/dojo.xd.js</source>
+        <dojocss>http://o.aolcdn.com/dojo/1.3/dojo/resources/dojo.css</dojocss>
+        <themes>
+            <theme>
+                <name>tundra</name>
+                <style>http://o.aolcdn.com/dojo/1.3/dijit/themes/tundra/tundra.css</style>
+            </theme>
+            <theme>
+                <name>soria</name>
+                <style>http://o.aolcdn.com/dojo/1.3/dijit/themes/soria/soria.css</style>
+            </theme>
+            <theme>
+                <name>nihilo</name>
+                <style>http://o.aolcdn.com/dojo/1.3/dijit/themes/nihilo/nihilo.css</style>
+            </theme>
+        </themes>
+    </version>
+    <version value="1.2">
+        <source>http://o.aolcdn.com/dojo/1.2/dojo/dojo.xd.js</source>
+        <dojocss>http://o.aolcdn.com/dojo/1.2/dojo/resources/dojo.css</dojocss>
+        <themes>
+            <theme>
+                <name>tundra</name>
+                <style>http://o.aolcdn.com/dojo/1.2/dijit/themes/tundra/tundra.css</style>
+            </theme>
+            <theme>
+                <name>soria</name>
+                <style>http://o.aolcdn.com/dojo/1.2/dijit/themes/soria/soria.css</style>
+            </theme>
+            <theme>
+                <name>nihilo</name>
+                <style>http://o.aolcdn.com/dojo/1.2/dijit/themes/nihilo/nihilo.css</style>
+            </theme>
+        </themes>
+    </version>
+</src>
+<src>
+    <name>google</name>
+    <version value="1.1">
+        <source>http://ajax.googleapis.com/ajax/libs/dojo/1.1/dojo/dojo.xd.js</source>
+        <dojocss>http://ajax.googleapis.com/ajax/libs/dojo/1.1/dojo/resources/dojo.css</dojocss>
+        <themes>
+            <theme>
+                <name>tundra</name>
+                <style>http://ajax.googleapis.com/ajax/libs/dojo/1.1/dijit/themes/tundra/tundra.css</style>
+            </theme>
+            <theme>
+                <name>soria</name>
+                <style>http://ajax.googleapis.com/ajax/libs/dojo/1.1/dijit/themes/soria/soria.css</style>
+            </theme>
+            <theme>
+                <name>nihilo</name>
+                <style>http://ajax.googleapis.com/ajax/libs/dojo/1.1/dijit/themes/nihilo/nihilo.css</style>
+            </theme>
+        </themes>
+    </version>
+    <version value="1.2">
+        <source>http://ajax.googleapis.com/ajax/libs/dojo/1.2/dojo/dojo.xd.js</source>
+        <dojocss>http://ajax.googleapis.com/ajax/libs/dojo/1.2/dojo/resources/dojo.css</dojocss>
+        <themes>
+            <theme>
+                <name>tundra</name>
+                <style>http://ajax.googleapis.com/ajax/libs/dojo/1.2/dijit/themes/tundra/tundra.css</style>
+            </theme>
+            <theme>
+                <name>soria</name>
+                <style>http://ajax.googleapis.com/ajax/libs/dojo/1.2/dijit/themes/soria/soria.css</style>
+            </theme>
+            <theme>
+                <name>nihilo</name>
+                <style>http://ajax.googleapis.com/ajax/libs/dojo/1.2/dijit/themes/nihilo/nihilo.css</style>
+            </theme>
+        </themes>
+    </version>
+    <version value="1.3">
+        <source>http://ajax.googleapis.com/ajax/libs/dojo/1.3/dojo/dojo.xd.js</source>
+        <dojocss>http://ajax.googleapis.com/ajax/libs/dojo/1.3/dojo/resources/dojo.css</dojocss>
+        <themes>
+            <theme>
+                <name>tundra</name>
+                <style>http://ajax.googleapis.com/ajax/libs/dojo/1.3/dijit/themes/tundra/tundra.css</style>
+            </theme>
+            <theme>
+                <name>soria</name>
+                <style>http://ajax.googleapis.com/ajax/libs/dojo/1.3/dijit/themes/soria/soria.css</style>
+            </theme>
+            <theme>
+                <name>nihilo</name>
+                <style>http://ajax.googleapis.com/ajax/libs/dojo/1.3/dijit/themes/nihilo/nihilo.css</style>
+            </theme>
+        </themes>
+    </version>
+</src>
+</dojosrc>

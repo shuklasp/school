@@ -1,0 +1,52 @@
+Changelog
+----------
+
+1) SPPProfile class created along with required exceptions.
+2) spp/sppprofile.php include file created.
+3) SPPEvent class modified
+4) Event handling functions added to SPPObject class.
+
+Version 0.5 alpha3
+------------------
+
+Changelog
+----------
+
+1) Lot of renaming of files and classes. (Please report any broken references)
+2) Added following static functions to SPPSeqeunces class:
+        -- sequenceExists()
+        -- createSequence()
+        -- dropSequence()
+3) Added lots of files to install folder.
+4) Revamped the Authentication system.
+5) Included server side authentication.
+6) Added feature to kill a session.
+7) Added feature for a user session to timeout.
+
+
+Version 0.5 alpha2
+-------------------
+
+This is new development release, with a lot of modifications and additions. See changelog for complete details.
+for more information, see http://spp.vshiksha.com
+
+Changelog
+----------
+
+1) Revamped directory structure. All the core functionality moved to core directory.
+2) Created linking include files:
+        -- sppauth.php
+        -- sppevents.php
+        -- spphtml.php
+        -- sppexceptions.php
+        -- sppentity.php
+3) Created appevents.php for application events.
+4) Created empty files index.php, core/index.php, install/index.php for directory safety.
+5) Created appsettings.php for application specific settings.
+6) Created appexceptions.php for application specific exceptions.
+7) Added abstract class SPPEntity in file core/class.sppentity.php
+
+Version 0.5-alpha1
+-------------------
+
+This is just a primary release. Various subsystems are still in various developmental pahses. For more information, see readme.txt

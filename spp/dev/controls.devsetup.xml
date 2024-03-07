@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Document   : controls.devsetup.xml
+    Created on : 19 September 2009, 05:56
+    Author     : Satya Prakash Shukla
+    Description:
+        Defines controls for devsetup.php.
+-->
+
+<spphtmldocument>
+    <forms>
+        <form>
+            <name>installform</name>
+            <action>devsetup.php</action>
+            <controls>
+                <control>
+                    <name>appname</name>
+                    <type>SPP_Form_Input</type>
+                    <attributes>
+                        <attribute>
+                            <name>maxlength</name>
+                            <value>40</value>
+                        </attribute>
+                        <attribute>
+                            <name>size</name>
+                            <value>40</value>
+                        </attribute>
+                    </attributes>
+                </control>
+                <control>
+                    <name>dbname</name>
+                    <type>SPP_Form_Input</type>
+                </control>
+                <control>
+                    <name>dbuname</name>
+                    <type>SPP_Form_Input</type>
+                </control>
+                <control>
+                    <name>dbpasswd</name>
+                    <type>SPP_Form_Input_Password</type>
+                </control>
+                <control>
+                    <name>formsubmit</name>
+                    <type>SPP_Form_Input_Submit</type>
+                    <attributes>
+                        <attribute>
+                            <name>value</name>
+                            <value>Submit</value>
+                        </attribute>
+                    </attributes>
+                </control>
+                <control>
+                    <name>dbtype</name>
+                    <type>SPP_Form_Select</type>
+                    <options>
+                        <option>
+                            <text>MySQL</text>
+                            <value>MySQL</value>
+                        </option>
+                    </options>
+                </control>
+            </controls>
+            <validations>
+                <validation>
+                    <type>SPP_Validator_RequiredValidator</type>
+                    <name>appnameval</name>
+                    <control>appname</control>
+                    <message>Application name is required!</message>
+                    <attach>
+                        <element>appname</element>
+                        <event>onblur</event>
+                        <errorholder>appnameerror</errorholder>
+                    </attach>
+                </validation>
+                <validation>
+                    <type>SPP_Validator_RequiredValidator</type>
+                    <name>dbnameval</name>
+                    <control>dbname</control>
+                    <message>Database name is required!</message>
+                    <attach>
+                        <element>dbname</element>
+                        <event>onblur</event>
+                        <errorholder>dbnameerror</errorholder>
+                    </attach>
+                </validation>
+                <validation>
+                    <type>SPP_Validator_RequiredValidator</type>
+                    <name>dbunameval</name>
+                    <control>dbuname</control>
+                    <message>Database user name is required!</message>
+                    <attach>
+                        <element>dbuname</element>
+                        <event>onblur</event>
+                        <errorholder>dbunameerror</errorholder>
+                    </attach>
+                </validation>
+                <validation>
+                    <type>SPP_Validator_RequiredValidator</type>
+                    <name>dbtypeval</name>
+                    <control>dbtype</control>
+                    <message>Database type is required!</message>
+                    <attach>
+                        <element>dbtype</element>
+                        <event>onblur</event>
+                        <errorholder>dbtypeerror</errorholder>
+                    </attach>
+                </validation>
+                <validation>
+                    <type>SPP_Validator_OneRequiredValidator</type>
+                    <name>dbonetypeval</name>
+                    <controls>
+                        <control>
+                            <name>dbuname</name>
+                        </control>
+                        <control>
+                            <name>dbpasswd</name>
+                        </control>
+                    </controls>
+                    <message>Any one is required!</message>
+                    <attach>
+                        <element>dbpasswd</element>
+                        <event>onblur</event>
+                        <errorholder>errordiv</errorholder>
+                    </attach>
+                </validation>
+            </validations>
+        </form>
+    </forms>
+</spphtmldocument>
