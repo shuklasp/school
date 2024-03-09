@@ -101,5 +101,3 @@ class SPP_HTML_Li extends SPP_HTML_Element{
         return $htm;
     }
 }
-
-?>

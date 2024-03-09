@@ -75,4 +75,3 @@ class SPP_Validator_OneRequiredValidator extends SPP_Multiple_Validator {
         }
     }
 }
-?>

@@ -15,4 +15,3 @@ class SPP_XDB {
     protected $result_set=null;
     protected $err_msg=array();
 }
-?>

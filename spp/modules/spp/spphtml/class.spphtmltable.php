@@ -193,4 +193,3 @@ class SPP_HTML_Table extends SPP_HTML_Element {
         $this->endOne();
     }
 }
-?>

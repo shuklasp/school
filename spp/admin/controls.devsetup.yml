@@ -1,0 +1,70 @@
+forms:
+  - name: installform
+    action: devsetup.php
+    controls:
+      - name: appname
+        type: SPP_Form_Input
+        attributes:
+          - name: maxlength
+            value: 40
+          - name: size
+            value: 40
+      - name: dbname
+        type: SPP_Form_Input
+      - name: dbuname
+        type: SPP_Form_Input
+      - name: dbpasswd
+        type: SPP_Form_Input_Password
+      - name: formsubmit
+        type: SPP_Form_Input_Submit
+        attributes:
+          - name: value
+            value: Submit
+      - name: dbtype
+        type: SPP_Form_Select
+        options:
+          - text: MySQL
+            value: MySQL
+    validations:
+      - type: SPP_Validator_RequiredValidator
+        name: appnameval
+        control: appname
+        message: Application name is required!
+        attach:
+          - element: appname
+            event: onblur
+            errorholder: appnameerror
+      - type: SPP_Validator_RequiredValidator
+        name: dbnameval
+        control: dbname
+        message: Database name is required!
+        attach:
+          - element: dbname
+            event: onblur
+            errorholder: dbnameerror
+      - type: SPP_Validator_RequiredValidator
+        name: dbunameval
+        control: dbuname
+        message: Database user name is required!
+        attach:
+          - element: dbuname
+            event: onblur
+            errorholder: dbunameerror
+      - type: SPP_Validator_RequiredValidator
+        name: dbtypeval
+        control: dbtype
+        message: Database type is required!
+        attach:
+          - element: dbtype
+            event: onblur
+            errorholder: dbtypeerror
+      - type: SPP_Validator_OneRequiredValidator
+        name: dbonetypeval
+        controls:
+          - name: dbuname
+          - name: dbpasswd
+        message: Any one is required!
+        attach:
+          - element: dbpasswd
+            event: onblur
+            errorholder: errordiv

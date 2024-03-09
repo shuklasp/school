@@ -321,8 +321,8 @@ class SPP_Form_DateChooser extends SPP_Form_Input
     protected $dateattr=array();
     public function __construct($ename)
     {
-        SPP_HTML_Page::addJsIncludeFile(SPP_JS_URI.SPPUS.'datechooser/datechooser.js');
-        SPP_HTML_Page::addCssIncludeFile(SPP_JS_URI.SPPUS.'datechooser/datechooser.css');
+        SPP_HTML_Page::addJsIncludeFile(SPP_JS_URI.SPP_US.'datechooser/datechooser.js');
+        SPP_HTML_Page::addCssIncludeFile(SPP_JS_URI.SPP_US.'datechooser/datechooser.css');
         parent::__construct($ename);
         $this->setDateAttr('DateFormat', SPP_Config::get('defdateformat'));
         $this->updateClass();
@@ -402,4 +402,3 @@ class SPP_Form_DateChooser extends SPP_Form_Input
     }
 
 }
-?>

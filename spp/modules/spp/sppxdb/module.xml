@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-    Document   : sppauth.module.xml
+    Document   : sppxdb.module.xml
     Created on : 11 October 2009, 17:28
     Author     : Satya Prakash Shukla
     Description:
-        Descriptor for sppauth module.
+        Descriptor for sppxdb module.
 -->
 
 <module>
@@ -15,7 +15,7 @@
     <modgroup>SPP_Optional</modgroup>
     <pubdesc>Handles XML Database in SPP.</pubdesc>
     <includes>
-        <include>dojoinit.php</include>
+        <include>sppxdb.php</include>
     </includes>
     <deps>
         <depends>sppdb</depends>

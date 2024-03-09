@@ -18,4 +18,3 @@ class SPP_Form_Element extends SPP_HTML_Element{
         $this->eventattrlist[]='onfocus';
     }
 }
-?>

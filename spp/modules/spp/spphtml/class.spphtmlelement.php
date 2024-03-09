@@ -10,7 +10,7 @@
  *
  * @author Satya Prakash Shukla
  */
-class SPP_HTML_Element extends SPP_Object {
+abstract class SPP_HTML_Element extends SPP_Object {
     protected $tagname;
     protected $isemptyflag=false;
     protected $matter_text;
@@ -18,14 +18,16 @@ class SPP_HTML_Element extends SPP_Object {
     protected $attrlist=array();
     protected $stdattrlist=array();
     protected $eventattrlist=array();
-    public static $started_tags = '';
+    public static SPP_Stack $started_tags = '';
 
     /**
      * Constructor
      *
      * @param string $ename
      */
-    public function  __construct($ename) {
+    public function  __construct($ename, $isemptyflag=false) {
+        //$this->tagname=$ename;
+        $this->isemptyflag=$isemptyflag;
         $this->attributes['name']=$ename;
         $this->attributes['id']=$ename;
         $this->stdattrlist=array('class','id','style','title','dir','lang','xml:lang','accesskey','tabindex');
@@ -33,6 +35,23 @@ class SPP_HTML_Element extends SPP_Object {
         SPP_HTML_Page::addElement($this);
     }
 
+    /**
+     * function getName()
+     * Gets the name of the element.
+     *
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->tagname;
+    }
+    
+    /**
+     * function getHTML()
+     * Gets the HTML representation of the element.
+     *
+     * @return string
+     */
     public function getHTML()
     {
         $pstr='<'.$this->tagname;
@@ -52,6 +71,13 @@ class SPP_HTML_Element extends SPP_Object {
         return $pstr;
     }
 
+    //**
+    // * function __toString()
+    // * Gets the HTML representation of the element.
+    // *
+    // * @return string
+    // */
+    
     public function __toString()
     {
         $str=(string)$this->getHTML();
@@ -85,6 +111,13 @@ class SPP_HTML_Element extends SPP_Object {
         echo $pstr;
     }
 
+    
+    /**
+     * function readFromArray()
+     * Reads the attributes of the element from an array.
+     *
+     * @param array $arr
+     */
     public function readFromArray(array $arr)
     {
         if(array_key_exists('attributes',$arr))
@@ -205,4 +238,3 @@ class SPP_HTML_Element extends SPP_Object {
         //    }
     }
 }
-?>

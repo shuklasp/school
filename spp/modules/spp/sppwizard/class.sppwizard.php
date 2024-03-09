@@ -36,7 +36,7 @@ class SPP_Wizard extends SPP_Object {
         {
             throw new SessionDoesNotExistException('No session exists!');
         }
-        $wizards=SPP_Session::setSessionVar('__wizards__',array());
+        SPP_Session::setSessionVar('__wizards__',array());
     }
 
     /**
@@ -150,4 +150,3 @@ class SPP_Wizard extends SPP_Object {
         }
     }
 }
-?>
