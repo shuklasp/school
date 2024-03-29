@@ -18,7 +18,7 @@ abstract class SPP_HTML_Element extends SPP_Object {
     protected $attrlist=array();
     protected $stdattrlist=array();
     protected $eventattrlist=array();
-    public static SPP_Stack $started_tags = '';
+    public static mixed $started_tags='';
 
     /**
      * Constructor
@@ -33,6 +33,21 @@ abstract class SPP_HTML_Element extends SPP_Object {
         $this->stdattrlist=array('class','id','style','title','dir','lang','xml:lang','accesskey','tabindex');
         $this->eventattrlist=array('onkeydown','onkeypress','onkeyup','onclick','ondblclick','onmousedown','onmousemove','onmouseover','onmouseout','onmouseup');
         SPP_HTML_Page::addElement($this);
+    }
+
+    //**
+    // * function addClass()
+    // * Adds a class to the element.
+    // *
+    // * @param string $classname
+    // */
+    
+    public function addClass(string $classname){
+        if(isset($this->attributes['class'])){
+            $this->attributes['class'].=' '.$classname;
+        }else{
+            $this->attributes['class']=$classname;
+        }
     }
 
     /**
@@ -71,6 +86,10 @@ abstract class SPP_HTML_Element extends SPP_Object {
         return $pstr;
     }
 
+    public function render(){
+        return $this->getHTML();
+    }
+
     //**
     // * function __toString()
     // * Gets the HTML representation of the element.
@@ -80,7 +99,7 @@ abstract class SPP_HTML_Element extends SPP_Object {
     
     public function __toString()
     {
-        $str=(string)$this->getHTML();
+        $str=(string)$this->render();
         return $str;
     }
 
@@ -111,6 +130,83 @@ abstract class SPP_HTML_Element extends SPP_Object {
         echo $pstr;
     }
 
+    public function getAttributes(){
+        return $this->attributes;
+    }
+
+    public function renderAttributes(){
+        $pstr='';
+        foreach ($this->attributes as $key => $val) {
+            $pstr .= ' ' . $key . '="' . $val . '"';
+        }
+        return $pstr;
+    }
+
+    public function removeAttribute($aname){
+        unset($this->attributes[$aname]);
+    }
+
+    public function setMatter($matter){
+        $this->matter_text=$matter;
+    }
+
+    public function getMatter(){
+        return $this->matter_text;
+    }
+
+    public function clearMatter(){
+        $this->matter_text='';
+
+    }
+
+    
+    /**
+     * function showMatter()
+     * Shows the matter of the element.
+     */
+   public function showMatter()
+    {
+        if($this->matter_text!='')
+        {
+            echo $this->matter_text;
+        }
+    }
+
+    /**
+     * function showEnd()
+     * Shows the end of the element.
+     */
+    public function showEnd()
+    {
+        echo '</'.$this->tagname.'>';
+    }
+
+    
+    /**
+     * function showAll()
+     * Shows the element.
+     */
+    public function showAll()
+    {
+        $this->show();
+        $this->showMatter();
+        $this->showEnd();
+    }
+
+
+    /**
+     * function writeToArray()
+     * Writes the attributes of the element to an array.
+     *
+     * @param array $arr
+     */
+
+/*     public function writeToArray(($array) &$arr)
+    {
+        $arr['tagname']=$this->tagname;
+        $arr['attributes']=$this->attributes;
+    }
+ */
     
     /**
      * function readFromArray()

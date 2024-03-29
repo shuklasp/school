@@ -14,6 +14,17 @@ class SPP_App extends SPP_Object {
     private $appname='';
     private $modsloaded=false;
     private $errobj=0;
+    private $app_status=self::APP_EXEC;
+    public static const APP_EXEC=1;
+    public static const APP_WAITING=2;
+    public static const APP_STOPPED=3;
+    public static const APP_ERROR=4;
+    private const data_dir=SPP_ETC_DIR.SPP_DS.'apps'.SPP_DS.$appname.SPP_DS.'data'.SPP_DS;
+    private const log_dir=SPP_ETC_DIR.SPP_DS.'apps'.SPP_DS.$appname.SPP_DS.'logs'.SPP_DS;
+    private const cache_dir=SPP_ETC_DIR.SPP_DS.'apps'.SPP_DS.$appname.SPP_DS.'cache'.SPP_DS;
+    private const tmp_dir=SPP_ETC_DIR.SPP_DS.'apps'.SPP_DS.$appname.SPP_DS.'tmp'.SPP_DS;
+    private const conf_dir=SPP_ETC_DIR.SPP_DS.'apps'.SPP_DS.$appname.SPP_DS.'conf'.SPP_DS;
+    private const mod_dir=SPP_ETC_DIR.SPP_DS.'apps'.SPP_DS.$appname.SPP_DS.'mods'.SPP_DS;
 
     /**
      * function __construct()
@@ -51,6 +62,85 @@ class SPP_App extends SPP_Object {
         }
     }
 
+    public static function getApp()
+    {
+        $context=SPP_Scheduler::getContext();
+        $app=new SPP_App($context);
+        return $app;
+    }
+
+    public static function getActiveApp()
+    {
+        $context=SPP_Scheduler::getContext();
+        return $context;
+    }
+
+    public function isModsLoaded()
+    {
+        return $this->modsloaded;
+    }
+
+    /**
+     * function setStatus()
+     * Sets the status of application.
+     *
+     * @param integer $status Status of the application.
+     * @throws SPP_Exception If the status is invalid.
+     */
+    public function setStatus($status)
+    {
+        if($status==self::APP_EXEC||$status==self::APP_STOPPED||$status==self::APP_WAITING||$status==self::APP_ERROR)
+        {
+            $this->app_status = $status;
+        }
+        else {
+            throw new SPP_Exception('Invalid application status.');
+        }
+    }
+
+    /**
+     * function getStatus()
+     * Gets the status of application.
+     *
+     * @return integer Status of the application.
+     */
+    public function getStatus()
+    {
+        return $this->app_status;
+    }
+
+
+
+    public function getLogDir()
+    {
+        return self::log_dir;
+    }
+
+    public function getCacheDir()
+    {
+        return self::cache_dir;
+    }
+
+    public function getTmpDir()
+    {
+        return self::tmp_dir;
+    }
+
+    public function getConfDir()
+    {
+        return self::conf_dir;
+    }
+
+    public function getModDir()
+    {
+        return self::mod_dir;
+    }
+
+    public function getDataDir()
+    {
+        return self::data_dir;
+    }
+
     /**
      * function getErrorObj()
      * Gets the error object for this application.
@@ -71,12 +161,24 @@ class SPP_App extends SPP_Object {
         return $this->appname;
     }
 
+    /**
+     * function getModsConfDir()
+     * Gets the mods conf dir.
+     *
+     * @return string Mods conf dir.
+     */
     public function getModsConfDir()
     {
         $dir=SPP_ETC_DIR.SPP_DS.'apps'.SPP_DS.$this->appname.SPP_DS.'modsconf';
         return $dir;
     }
 
+    /**
+     * function getAppConfDir()
+     * Gets the app conf dir.
+     *
+     * @return string App conf dir.
+     */
     public function getAppConfDir()
     {
         $dir=SPP_ETC_DIR.SPP_DS.'apps'.SPP_DS.$this->appname;
@@ -104,7 +206,8 @@ class SPP_App extends SPP_Object {
     public static function killSession()
     {
         $ssname=self::getSessionName();
-        SPP_Event::startEvent('ev_kill_session',array('sname'=>$ssname));
+        SPP_Event::startEvent('ev_kill_session');
+        $ssname=self::getSessionName();
         if(SPP_Session::sessionExists())
         {
             unset($_SESSION[$ssname]);
@@ -161,4 +264,3 @@ class SPP_App extends SPP_Object {
         }
     }
 }
-?>

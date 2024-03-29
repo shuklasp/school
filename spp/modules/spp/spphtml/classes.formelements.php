@@ -87,9 +87,9 @@ class SPP_Form_Option extends SPP_Form_Element{
         self::endOne();
     }
 
-    public function getHTML()
+    public function render()
     {
-        $htm=parent::getHTML();
+        $htm=parent::render();
         $htm.=$this->opttext;
         $htm.='</option>';
         return $htm;

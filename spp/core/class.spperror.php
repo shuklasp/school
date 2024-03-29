@@ -8,7 +8,7 @@ require_once 'classes.htmlelements.php';*/
  */
 class SPP_Error extends SPP_Object {
     //private $errordiv='';
-    private $customerrhnd;
+    //private $customerrhnd;
     private $appname='';
     private static $errortype = array (
               E_ERROR              => 'Error',
@@ -40,7 +40,6 @@ class SPP_Error extends SPP_Object {
             E_COMPILE_ERROR         =>  array(),
             E_COMPILE_WARNING         =>  array(),
             E_USER_ERROR         =>  array(),
-            E_USER_ERROR         =>  array(),
             E_USER_WARNING         =>  array(),
             E_USER_NOTICE         =>  array(),
             E_STRICT         =>  array(),
@@ -66,9 +65,36 @@ class SPP_Error extends SPP_Object {
 
    public function defineCustomErrorHandler($hnd)
    {
-       $this->customerrhnd=$hnd;
+       if($hnd!='' && $hnd!=null && $hnd!=false && is_callable($hnd))
+       {
+           $this->customerrhnd=$hnd;
+       }
    }
-    
+
+   public static function setCustomErrorHandler($hnd)
+   {
+       if($hnd!='' && $hnd != null && $hnd != false && is_callable($hnd))
+       $err=SPP_Scheduler::getActiveErrorObj();
+       if($err!=null)
+       {
+           $err->setCustomErrorHandler($hnd);
+       }
+   }
+
+   public function getCustomErrorHandler()
+   {
+       return $this->customerrhnd;
+   }
+
+   /**
+    * public static function errorHandler($errno, $errmsg, $filename, $linenum, $vars=array())
+    *
+    * @param int $errno
+    * @param string $errmsg
+    * @param string $filename
+    * @param int $linenum
+    * @param array $vars
+    */
    public static function errorHandler($errno, $errmsg, $filename, $linenum, $vars=array())
    {
        $proc=SPP_Scheduler::getActiveProc();
@@ -77,11 +103,24 @@ class SPP_Error extends SPP_Object {
        $err->errors[$errno][]=array('errno'=>$errno,'errmsg'=>$errmsg,'filename'=>$filename,'linenum'=>$linenum);
        if($err->customerrhnd!='')
        {
-           $err->customerrhnd();
+        if(is_callable($err->customerrhnd))
+           call_user_func($err->customerrhnd);
        }
        SPP_Session::setSessionVar('__errors__'.$pname, $err->errors);
    }
 
+   
+   public function getErrorTypes()
+   {
+       return self::$errortype;
+   }
+
+   /***
+    * public static function triggerUserError($err)
+    * Triggers a user error
+    *
+    * @param string $err
+    */
    public static function triggerUserError($err)
    {
        trigger_error($err, E_USER_NOTICE);
@@ -97,6 +136,12 @@ class SPP_Error extends SPP_Object {
        trigger_error($err, E_USER_WARNING);
    }
 
+   /***
+    * public function getErrors()
+    * Returns all errors
+    *
+    * @return array
+    */
    public function getErrors()
    {
        return $this->errors;
@@ -117,6 +162,15 @@ class SPP_Error extends SPP_Object {
        return $this->errors[E_USER_NOTICE];
    }
 
+   /**
+    * public static function getUlErrors($errformat='',$errno=0)
+    * Returns HTML unordered list of errors
+    *
+    * @param string $errformat
+    * @param int $errno
+    * @return string
+    * @return string[html]ml]
+    */
    public static function getUlErrors($errformat='',$errno=0)
    {
        $errobj=SPP_Scheduler::getActiveErrorObj();
@@ -159,6 +213,13 @@ class SPP_Error extends SPP_Object {
        return $htm;
    }
 
+   /***
+    * public static function getOlErrors($errformat='',$errno=0)
+    * Returns a HTML ordered list of errors
+    *
+    * @param string $errformat
+    * @param int $errno
+    */
    public static function getOlErrors($errformat='',$errno=0)
    {
        $errobj=SPP_Scheduler::getActiveErrorObj();
@@ -232,4 +293,3 @@ class SPP_Error extends SPP_Object {
        return self::$errortype[$errno];
    }
 }
-?>

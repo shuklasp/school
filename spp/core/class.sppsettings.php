@@ -60,4 +60,3 @@ class SPP_Settings extends SPP_Object {
         }
     }
 }
-?>

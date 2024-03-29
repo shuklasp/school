@@ -16,7 +16,6 @@ SPP_Error::destroyErrors();
         <link href="lib/MDB5/css/mdb.min.css" rel="stylesheet">
     </head>
     <body>
-
         <div id="menu-area">
             <?php require('comp/navbar.php'); ?>
         </div>

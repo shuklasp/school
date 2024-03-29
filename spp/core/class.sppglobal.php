@@ -8,6 +8,11 @@
 final class SPP_Global extends SPP_Object {
     private static $globals=array();
 
+    
+    /**
+     * function __construct()
+     * Private constructor.
+     */
     private function __construct()
     {
         ;
@@ -22,7 +27,8 @@ final class SPP_Global extends SPP_Object {
      */
     public static function set($prop,$val)
     {
-        self::$globals[$prop]=$val;
+        $context=SPP_Scheduler::getContext();
+        self::$globals[$context][$prop]=$val;
     }
 
     /**
@@ -34,9 +40,10 @@ final class SPP_Global extends SPP_Object {
      */
     public static function get($prop)
     {
-        if(array_key_exists($prop, self::$globals))
+        $context = SPP_Scheduler::getContext();
+        if(array_key_exists($prop, self::$globals[$context]))
         {
-            return self::$globals[$prop];
+            return self::$globals[$context][$prop];
         }
         else
         {
@@ -53,7 +60,8 @@ final class SPP_Global extends SPP_Object {
      */
     public static function is_set($prop)
     {
-        if(array_key_exists($prop, self::$globals))
+        $context = SPP_Scheduler::getContext();
+        if(array_key_exists($prop, self::$globals[$context]))
         {
             return true;
         }
@@ -72,9 +80,10 @@ final class SPP_Global extends SPP_Object {
      */
     public static function do_unset($prop)
     {
-        if(array_key_exists($prop, self::$globals))
+       $context = SPP_Scheduler::getContext();
+       if(array_key_exists($prop, self::$globals[$context]))
         {
-            unset(self::$globals[$prop]);
+            unset(self::$globals[$context][$prop]);
             return true;
         }
         else
@@ -83,4 +92,3 @@ final class SPP_Global extends SPP_Object {
         }
     }
 }
-?>

@@ -57,4 +57,3 @@ function installform_submitted()
     //SPP_Error::triggerError('Bad Form');
     //header('Location: '.SPP_Base::sppLink('devsetup1.php'));
 }
-?>
