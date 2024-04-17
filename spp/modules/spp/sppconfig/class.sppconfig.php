@@ -13,7 +13,7 @@ require_once SPP_BASE_DIR.SPPUS.'appsettings.php';*/
  *
  * @author Satya Prakash Shukla
  */
-class SPP_Config extends SPP_Object{
+class SPP_Config extends \SPP\SPP_Object{
     private static $configcache=array();
     private static $feelinglucky=true;
     /**
@@ -47,7 +47,7 @@ class SPP_Config extends SPP_Object{
         else
         {
             $db=new SPP_DB();
-            $query='select * from '.SPP_Base::sppTable('config').' where propname=?';
+            $query='select * from '.\SPP\SPP_Base::sppTable('config').' where propname=?';
             $result=$db->execute_query($query, Array($propname));
             if(sizeof($result)<=0)
             {
@@ -95,7 +95,7 @@ class SPP_Config extends SPP_Object{
             throw new ReadonlyConfigVarException('Config var in settings.php was tried to be modified!');
         }
         $db=new SPP_DB();
-        $query='select * from '.SPP_Base::sppTable('config').' where propname=?';
+        $query='select * from '.\SPP\SPP_Base::sppTable('config').' where propname=?';
         $result=$db->execute_query($query, Array($propname));
         if(sizeof($result)<=0)
         {
@@ -106,14 +106,14 @@ class SPP_Config extends SPP_Object{
             $res=$result[0];
             if($res['propval']!='fromtabs')
             {
-                $sql='update '.SPP_Base::sppTable('config').' set propval=? where propname=?';
+                $sql='update '.\SPP\SPP_Base::sppTable('config').' set propval=? where propname=?';
                 $values=Array($propval,$propname);
                 $result=$db->execute_query($sql, $values);
                 self::$configcache[$propname]=$propval;
             }
             else
             {
-                $sql='update '.SPP_Base::sppTable($res['tabname']).' set '.$res['colname'].'=? where '.$res['pkname'].'=?';
+                $sql='update '.\SPP\SPP_Base::sppTable($res['tabname']).' set '.$res['colname'].'=? where '.$res['pkname'].'=?';
                 $values=Array($propval,$res['pkval']);
                 $result=$db->execute_query($sql, $values);
                 self::$configcache[$propname]=$propval;
@@ -154,7 +154,7 @@ class SPP_Config extends SPP_Object{
     public static function varExists($propname)
     {
         $db=new SPP_DB();
-        $sql='select * from '.SPP_Base::sppTable('config').' where propname=?';
+        $sql='select * from '.\SPP\SPP_Base::sppTable('config').' where propname=?';
         $values=array($propname);
         $result=$db->execute_query($sql, $values);
         if(sizeof($result)>0)
@@ -192,7 +192,7 @@ class SPP_Config extends SPP_Object{
         }
         else
         {
-            $sql='insert into '.SPP_Base::sppTable('config').'(propname, propval) values(?,?)';
+            $sql='insert into '.\SPP\SPP_Base::sppTable('config').'(propname, propval) values(?,?)';
             $values=array($propname,$propval);
             $db->execute_query($sql, $values);
             return true;
@@ -220,7 +220,7 @@ class SPP_Config extends SPP_Object{
         }
         else
         {
-            $sql='insert into '.SPP_Base::sppTable('config').' values(?,?,?,?,?,?)';
+            $sql='insert into '.\SPP\SPP_Base::sppTable('config').' values(?,?,?,?,?,?)';
             $values=array($propname,'fromtabs',$tabname,$colname,$pkname,$pkval);
             $db->execute_query($sql, $values);
             return true;
@@ -244,7 +244,7 @@ class SPP_Config extends SPP_Object{
         }
         else
         {
-            $sql='delete from '.SPP_Base::sppTable('config').' where propname=?';
+            $sql='delete from '.\SPP\SPP_Base::sppTable('config').' where propname=?';
             $values=array($propname);
             $db->execute_query($sql, $values);
             return true;

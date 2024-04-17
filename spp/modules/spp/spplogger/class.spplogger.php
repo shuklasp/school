@@ -10,7 +10,7 @@ require_once 'class.sppbase.php';*/
  *
  * @author Satya Prakash Shukla
  */
-class SPP_Logger extends SPP_Object{
+class SPP_Logger extends \SPP\SPP_Object{
     //put your code here
 
     public static function write_to_log($logtxt)
@@ -26,7 +26,7 @@ class SPP_Logger extends SPP_Object{
         $ip=getVisitorIP();
         $logtime=date('Y-m-d H:i:s',time());
         $sessid=session_id();
-        $sql='insert into '.SPP_Base::sppTable('logger').'(loggerid,uid,uname,ip,logtime,sessid,descr) values(?,?,?,?,?,?,?)';
+        $sql='insert into '.\SPP\SPP_Base::sppTable('logger').'(loggerid,uid,uname,ip,logtime,sessid,descr) values(?,?,?,?,?,?,?)';
         $values=Array(date('Ymd',time()).SPP_Sequence::next('loggerid',true),$uid,$uname,$ip,$logtime,$sessid,$logtxt);
 //        echo $sql;
 //        print_r($values);

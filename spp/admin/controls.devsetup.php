@@ -1,10 +1,10 @@
 <?php
-$app=new SPP_App('sppadmin');
-/*SPP_Base::useModule('SPPHtml');
-SPP_Base::useModule('SPPDB');
-SPP_Base::useModule('SPP_Dev');
-SPP_Base::useModule('SPP_Session');
-SPP_Base::useModule('SPP_Wizard');*/
+$app=new \SPP\App('sppadmin');
+/*\SPP\SPP_Base::useModule('SPPHtml');
+\SPP\SPP_Base::useModule('SPPDB');
+\SPP\SPP_Base::useModule('SPP_Dev');
+\SPP\SPP_Base::useModule('SPP_Session');
+\SPP\SPP_Base::useModule('SPP_Wizard');*/
 SPP_HTML_Page::readXMLFile(SPP_DEV_DIR.SPP_US.'controls.devsetup.xml');
 /*$appname=new SPP_Form_Input('appname');
 $appname->setAttribute('maxlength', '40');
@@ -18,7 +18,7 @@ $dbname=new SPP_Form_Input('dbname');*/
 $dbpasswd=new SPP_Form_Input_Password('dbpasswd');
 $formsubmit=new SPP_Form_Input_Submit('formsubmit');
 $formsubmit->setAttribute('value', 'Submit');
-//$installform=new SPP_Form('installform', SPP_Base::sppLink('devsetup.php'), 'post');
+//$installform=new SPP_Form('installform', \SPP\SPP_Base::sppLink('devsetup.php'), 'post');
 //$installform->addElement($appname);
 /*$installform->addElement($dbname);
 $installform->addElement($dbtype);
@@ -47,13 +47,13 @@ $dgt->setDigitProperty('required', 'true');
 $dgt->setDigitProperty('invalidMessage', 'Invalid value entered.');
 $dgt->finalize();
 SPP_HTML_Page::processForms();
-SPP_Registry::register('event=>attr=>attr1', 2);
-//echo SPP_Registry::get('event=>attr');
+\SPP\Registry::register('event=>attr=>attr1', 2);
+//echo \SPP\Registry::get('event=>attr');
 function installform_submitted()
 {
     //SPP_Wizard::collectSubmittedVars('newwiz','post');
     //$installform=SPP_HTML_Page::getElement('installform');
     //$installform->doValidation();
     //SPP_Error::triggerError('Bad Form');
-    //header('Location: '.SPP_Base::sppLink('devsetup1.php'));
+    //header('Location: '.\SPP\SPP_Base::sppLink('devsetup1.php'));
 }

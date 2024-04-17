@@ -1,11 +1,12 @@
 <?php
 clearstatcache() ;
-$obj=new SPP_Settings();
+$obj=new \SPP\SPP_Settings();
 $src=($obj->getSetting('src'));
 //print_r($_SESSION);
-SPP_Error::destroyErrors();
+\SPP\SPP_Error::destroyErrors();
             require_once('server/class.person.php');
             $p = new \School\Person();
+            //var_dump($p);
 //var_dump($src);
 //echo '<img src="'.$src[0]->dir.'/img/name-plate.jpeg" />';
 ?>

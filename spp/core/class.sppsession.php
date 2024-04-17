@@ -1,4 +1,5 @@
 <?php
+namespace SPP;
 /*require_once 'class.sppobject.php';
 require_once 'sppsystemexceptions.php';
 require_once 'class.spperror.php';*/
@@ -9,7 +10,7 @@ require_once 'class.spperror.php';*/
  * @author Satya Prakash Shukla
  */
 
-class SPP_Session extends SPP_Object {
+class SPP_Session extends \SPP\SPP_Object {
     private $sessvars=array();
 
     /**
@@ -18,7 +19,7 @@ class SPP_Session extends SPP_Object {
      */
     public function __construct()
     {
-        $ssname=SPP_App::getSessionName();
+        $ssname=\SPP\App::getSessionName();
         if(!array_key_exists($ssname, $_SESSION))
         {
          //   $ssn=new SPP_Session();
@@ -35,7 +36,8 @@ class SPP_Session extends SPP_Object {
      */
     public static function sessionExists()
     {
-        $ssname=SPP_App::getSessionName();
+        //$app=new \SPP\App();
+        $ssname=\SPP\App::getSessionName();
         if(array_key_exists($ssname, $_SESSION))
         {
             return true;
@@ -57,11 +59,11 @@ class SPP_Session extends SPP_Object {
      */
     public static function validSessionVarExists($varname)
     {
-        $ssname=SPP_App::getSessionName();
+        $ssname=\SPP\App::getSessionName();
         //self::startSession();
         if(!self::sessionExists())
         {
-            throw new SessionDoesNotExistException('No session exists!');
+            throw new \SessionDoesNotExistException('No session exists!');
         }
         $ssn=unserialize($_SESSION[$ssname]);
         return $ssn->validVarExists($varname);
@@ -78,11 +80,11 @@ class SPP_Session extends SPP_Object {
      */
     public static function sessionVarExists($varname)
     {
-        $ssname=SPP_App::getSessionName();
+        $ssname=\SPP\App::getSessionName();
         //self::startSession();
         if(!self::sessionExists())
         {
-            throw new SessionDoesNotExistException('No session exists!');
+            throw new \SessionDoesNotExistException('No session exists!');
         }
         $ssn=unserialize($_SESSION[$ssname]);
         return $ssn->varExists($varname);
@@ -98,11 +100,11 @@ class SPP_Session extends SPP_Object {
      */
     public static function getSessionVar($varname)
     {
-        $ssname=SPP_App::getSessionName();
+        $ssname=\SPP\App::getSessionName();
         //self::startSession();
         if(!self::sessionExists())
         {
-            throw new SessionDoesNotExistException('No session exists!');
+            throw new \SessionDoesNotExistException('No session exists!');
         }
         $ssn=unserialize($_SESSION[$ssname]);
         return $ssn->getVar($varname);
@@ -117,11 +119,11 @@ class SPP_Session extends SPP_Object {
      */
     public static function setSessionVar($varname, $varval)
     {
-        $ssname=SPP_App::getSessionName();
+        $ssname=\SPP\App::getSessionName();
         //self::startSession();
         if(!self::sessionExists())
         {
-            throw new SessionDoesNotExistException('No session exists!');
+            throw new \SessionDoesNotExistException('No session exists!');
         }
         $ssn=unserialize($_SESSION[$ssname]);
         $ssn->setVar($varname,$varval);
@@ -136,11 +138,11 @@ class SPP_Session extends SPP_Object {
      */
     public static function unsetSessionVar($varname)
     {
-        $ssname=SPP_App::getSessionName();
+        $ssname=\SPP\App::getSessionName();
         //self::startSession();
         if(!self::sessionExists())
         {
-            throw new SessionDoesNotExistException('No session exists!');
+            throw new \SessionDoesNotExistException('No session exists!');
         }
         $ssn=unserialize($_SESSION[$ssname]);
         $ssn->unsetVar($varname);
@@ -156,11 +158,11 @@ class SPP_Session extends SPP_Object {
      */
     public static function invalidateSessionVar($varname)
     {
-        $ssname=SPP_App::getSessionName();
+        $ssname=\SPP\App::getSessionName();
         //self::startSession();
         if(!self::sessionExists())
         {
-            throw new SessionDoesNotExistException('No session exists!');
+            throw new \SessionDoesNotExistException('No session exists!');
         }
         $ssn=unserialize($_SESSION[$ssname]);
         $ssn->invalidateVar($varname);
@@ -252,7 +254,7 @@ class SPP_Session extends SPP_Object {
         }
         else
         {
-            throw new UnknownSessionVarException('Undefined session variable '.$varname.' accessed.');
+            throw new \UnknownSessionVarException('Undefined session variable '.$varname.' accessed.');
         }
     }
 
@@ -270,7 +272,7 @@ class SPP_Session extends SPP_Object {
         }
         else
         {
-            throw new UnknownSessionVarException('Undefined session variable '.$varname.' accessed.');
+            throw new \UnknownSessionVarException('Undefined session variable '.$varname.' accessed.');
         }
     }
 

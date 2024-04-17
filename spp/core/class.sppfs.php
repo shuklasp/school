@@ -1,14 +1,15 @@
 <?php
+namespace SPP;
 /**
  * class SPP_FS
  * Handles File system in SPP.
  *
  * @author Satya Prakash Shukla
  */
-class SPP_FS extends SPP_Object {
+class SPP_FS extends \SPP\SPP_Object {
     public static function findFile($file,$root=SPP_BASE_DIR) {
         $filearray=array();
-        $stack=new SPP_Stack();
+        $stack=new \SPP\Stack();
         do {
             $dir=opendir($root);
             //echo $root.'<br />';

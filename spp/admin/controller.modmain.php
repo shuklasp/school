@@ -4,19 +4,19 @@
  * Controller for modmain.php
  */
 
-$app=new SPP_App('sppadmin');
-$app1=new SPP_App('demo');
-SPP_Scheduler::setContext('demo');
-$mods=SPP_Module::scanModules();
+$app=new \SPP\App('sppadmin');
+$app1=new \SPP\App('demo');
+\SPP\Scheduler::setContext('demo');
+$mods=\SPP\Module::scanModules();
 //print_r($mods);
 //$opt=new SPP_Form_Input_Checkbox('sppoption');
 $i=1;
 foreach($mods as $modfile)
 {
-    $mod=new SPP_Module($modfile);
+    $mod=new \SPP\Module($modfile);
     $modarray[$mod->ModuleGroup][$mod->InternalName]['pubname']=$mod->PublicName;
     $modarray[$mod->ModuleGroup][$mod->InternalName]['pubdesc']=$mod->PublicDesc;
-    if(SPP_Module::isEnabled($mod->InternalName))
+    if(\SPP\Module::isEnabled($mod->InternalName))
     {
         $modarray[$mod->ModuleGroup][$mod->InternalName]['chbox']=new SPP_Form_Input_Checkbox('sppoption'.$i,$modfile,true);
         $i++;
@@ -29,7 +29,7 @@ foreach($mods as $modfile)
         //$opt->addOption($modfile);
     }
 }
-SPP_Scheduler::setContext('sppadmin');
+\SPP\Scheduler::setContext('sppadmin');
 //var_dump($_REQUEST);
 //$mods=compact($mods);
 /*foreach($mods as $mod)

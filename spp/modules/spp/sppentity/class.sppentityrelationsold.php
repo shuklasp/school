@@ -21,13 +21,13 @@ class SPP_EntityRelations
      * @param $relation_type
      * @param $current_entity_id
      * @param $related_entity_id
-     * @throws SPP_Exception
+     * @throws \SPP\SPP_Exception
      */
     public function __construct($this_entity, $relation_type, $related_entity_class)
     {
         if(is_null($relation_type) || is_null($related_entity_class) || !is_a($this_entity,'SPP_Entity'))
         {
-            throw new SPP_Exception("Invalid parameters for EntityRelations");
+            throw new \SPP\SPP_Exception("Invalid parameters for EntityRelations");
         }
         $rel_class=strtolower($related_entity_class);
         $this_class=strtolower(get_class($this_entity));
@@ -54,14 +54,14 @@ class SPP_EntityRelations
         }
         else
         {
-            throw new SPP_Exception("Invalid relation type");
+            throw new \SPP\SPP_Exception("Invalid relation type");
         }
         $this->relation_type = $relation_type;
         $this->related_entity_class = $related_entity_class;
         $this->this_entity = $this_entity;
         if(!SPP_Entity::entityExists($this->related_entity_class))
         {
-            throw new SPP_Exception("Invalid related entity class");
+            throw new \SPP\SPP_Exception("Invalid related entity class");
         }
         if($this->current_entity_id_field=='id')
         {
@@ -72,11 +72,11 @@ class SPP_EntityRelations
         }
         else
         {
-            throw new SPP_Exception("Invalid field name");
+            throw new \SPP\SPP_Exception("Invalid field name");
         }
         if($relation_type!="ER_OneToOne" && $relation_type!="ER_OneToMany" && $relation_type != "ER_ManyToOne")
         {
-            throw new SPP_Exception("Invalid relation type");
+            throw new \SPP\SPP_Exception("Invalid relation type");
         }
 
     }
@@ -90,7 +90,7 @@ class SPP_EntityRelations
         string $relation_type
     ) {
 /*         if (is_null($relation_type) || is_null($related_entity_class) || !is_a($this_entity, 'SPP_Entity')) {
-            throw new SPP_Exception("Invalid parameters for EntityRelations");
+            throw new \SPP\SPP_Exception("Invalid parameters for EntityRelations");
         }
         $rel_class = strtolower($related_entity_class);
         $this_class = strtolower(get_class($this_entity));
@@ -102,19 +102,19 @@ class SPP_EntityRelations
         $rel_array['child_entity_field'] = $child_entity_field;
         $rel_array['relation_type'] = $relation_type;
         if (!SPP_Entity::entityExists($parent_entity)) {
-            throw new SPP_Exception("Invalid parent entity class");
+            throw new \SPP\SPP_Exception("Invalid parent entity class");
         }
         if (!SPP_Entity::entityExists($child_entity)) {
-            throw new SPP_Exception("Invalid child entity class");
+            throw new \SPP\SPP_Exception("Invalid child entity class");
         }
         $prev_rel = array();
-        if (SPP_Registry::isRegistered('EntityRelations')) {
-            $prev_rel = SPP_Registry::get('EntityRelations');
+        if (\SPP\Registry::isRegistered('EntityRelations')) {
+            $prev_rel = \SPP\Registry::get('EntityRelations');
             $prev_rel[] = $rel_array;
         } else {
             $prev_rel[] = $rel_array;
         }
-        SPP_Registry::register('EntityRelations', $prev_rel);
+        \SPP\Registry::register('EntityRelations', $prev_rel);
         if(!isset(self::$related_entities[$parent_entity]))
         {
             self::$related_entities[$parent_entity]=array();
@@ -138,7 +138,7 @@ class SPP_EntityRelations
         string $relation_type
     ) {
         if (is_null($relation_type) || is_null($related_entity_class) || !is_a($this_entity, 'SPP_Entity')) {
-            throw new SPP_Exception("Invalid parameters for EntityRelations");
+            throw new \SPP\SPP_Exception("Invalid parameters for EntityRelations");
         }
         $rel_class = strtolower($related_entity_class);
         $this_class = strtolower(get_class($this_entity));
@@ -149,19 +149,19 @@ class SPP_EntityRelations
         $rel_array['child_entity_field'] = $child_entity_field;
         $rel_array['relation_type'] = $relation_type;
         if (!SPP_Entity::entityExists($parent_entity)) {
-            throw new SPP_Exception("Invalid parent entity class");
+            throw new \SPP\SPP_Exception("Invalid parent entity class");
         }
         if (!SPP_Entity::entityExists($child_entity)) {
-            throw new SPP_Exception("Invalid child entity class");
+            throw new \SPP\SPP_Exception("Invalid child entity class");
         }
         $prev_rel = array();
-        if (SPP_Registry::isRegistered('EntityRelations')) {
-            $prev_rel = SPP_Registry::get('EntityRelations');
+        if (\SPP\Registry::isRegistered('EntityRelations')) {
+            $prev_rel = \SPP\Registry::get('EntityRelations');
             $prev_rel[] = $rel_array;
         } else {
             $prev_rel[] = $rel_array;
         }
-        SPP_Registry::register('EntityRelations', $prev_rel);
+        \SPP\Registry::register('EntityRelations', $prev_rel);
         if(!isset(self::$related_entities[$parent_entity
        )
         self::$related_entities[$parent_entity]=array_merge(self::$related_entities[$parent_entity],array($child_entity));
@@ -174,7 +174,7 @@ class SPP_EntityRelations
     string $entity_field2, string $relation_type, $related_entity_class)
     {
         if (is_null($relation_type) || is_null($related_entity_class) || !is_a($this_entity, 'SPP_Entity')) {
-            throw new SPP_Exception("Invalid parameters for EntityRelations");
+            throw new \SPP\SPP_Exception("Invalid parameters for EntityRelations");
         }
         $rel_class = strtolower($related_entity_class);
         $this_class = strtolower(get_class($this_entity));
@@ -193,33 +193,33 @@ class SPP_EntityRelations
             $rel_array['current_entity_id_field'] = $rel_class . '_id ';
             $rel_array['related_entity_id_field'] = $this_class . '_id';
         } else {
-            throw new SPP_Exception("Invalid relation type");
+            throw new \SPP\SPP_Exception("Invalid relation type");
         }
         $rel_array['relation_type'] = $relation_type;
         $rel_array['related_entity_class'] = $related_entity_class;
         $rel_array['this_entity'] = $this_entity;
         if (!SPP_Entity::entityExists($rel_array['related_entity_class'])) {
-            throw new SPP_Exception("Invalid related entity class");
+            throw new \SPP\SPP_Exception("Invalid related entity class");
         }
         if ($rel_array['current_entity_id_field'] == 'id') {
             $rel_array['related_field_info'] = 'This_Entity';
         } else if ($rel_array['related_entity_id_field'] == 'id') {
             $rel_array['related_field_info'] = 'Related_Entity';
         } else {
-            throw new SPP_Exception("Invalid field name");
+            throw new \SPP\SPP_Exception("Invalid field name");
         }
         self::$relations[] = $rel_array;
         $prev_rel=array();
-        if(SPP_Registry::isRegistered('EntityRelations'))
+        if(\SPP\Registry::isRegistered('EntityRelations'))
         {
-            $prev_rel=SPP_Registry::get('EntityRelations');
+            $prev_rel=\SPP\Registry::get('EntityRelations');
             $prev_rel[]=$rel_array;
         }
         else
         {
             $prev_rel[]=$rel_array;
         }
-        SPP_Registry::register('EntityRelations', $prev_rel);
+        \SPP\Registry::register('EntityRelations', $prev_rel);
 
     }
  */
@@ -227,7 +227,7 @@ class SPP_EntityRelations
 /*     public function __construct($this_entity, $relation_type, $current_entity_id_field, $related_entity_id_field, $related_entity_class)
     {
         if (is_null($relation_type) || is_null($current_entity_id_field) || is_null($related_entity_id_field) || is_null($related_entity_class) || !is_a($this_entity, 'SPP_Entity')) {
-            throw new SPP_Exception("Invalid parameters for EntityRelations");
+            throw new \SPP\SPP_Exception("Invalid parameters for EntityRelations");
         }
         $this->relation_type = $relation_type;
         $this->current_entity_id_field = $current_entity_id_field;
@@ -235,17 +235,17 @@ class SPP_EntityRelations
         $this->related_entity_class = $related_entity_class;
         $this->this_entity = $this_entity;
         if (!SPP_Entity::entityExists($this->related_entity_class)) {
-            throw new SPP_Exception("Invalid related entity class");
+            throw new \SPP\SPP_Exception("Invalid related entity class");
         }
         if ($this->current_entity_id_field == 'id') {
             $this->related_field_info = 'This_Entity';
         } else if ($this->related_entity_id_field == 'id') {
             $this->related_field_info = 'Related_Entity';
         } else {
-            throw new SPP_Exception("Invalid field name");
+            throw new \SPP\SPP_Exception("Invalid field name");
         }
         if ($relation_type != "ER_OneToOne" && $relation_type != "ER_OneToMany" && $relation_type != "ER_ManyToOne") {
-            throw new SPP_Exception("Invalid relation type");
+            throw new \SPP\SPP_Exception("Invalid relation type");
         }
     }
  */
@@ -260,7 +260,7 @@ class SPP_EntityRelations
         $rel_ent = new $this->related_entity_class();
         if(SPP_Entity::entityExists($this->related_entity_class))
         {
-            throw new SPP_Exception("Invalid entity class".$this->related_entity_class);
+            throw new \SPP\SPP_Exception("Invalid entity class".$this->related_entity_class);
         }
         $rel = $rel_ent->loadMultiple(array($this->related_entity_id_field), array($ent->get($this->related_entity_id_field)));
         return $rel;
@@ -308,7 +308,7 @@ class SPP_EntityRelations
         $ent = $this->this_entity;
         $rel_ent = new $this->related_entity_class();
         if (SPP_Entity::entityExists($this->related_entity_class)) {
-            throw new SPP_Exception("Invalid entity class" . $this->related_entity_class);
+            throw new \SPP\SPP_Exception("Invalid entity class" . $this->related_entity_class);
         }
         $rel = $rel_ent->loadMultiple(array_merge(array($this->related_entity_id_field),$atts), array_merge(array($ent->get($this->related_entity_id_field)),$values));
         return $rel;
@@ -343,7 +343,7 @@ class SPP_EntityRelations
             $rel_ent->load($id);
             $rel_ent->delete();
         }
-        catch(SPP_Exception $e)
+        catch(\SPP\SPP_Exception $e)
         {
             return false;
         }
@@ -366,7 +366,7 @@ class SPP_EntityRelations
             $rel_ent->setValues($values);
             $rel_ent->save();
         }
-        catch(SPP_Exception $e)
+        catch(\SPP\SPP_Exception $e)
         {
             return false;
         }

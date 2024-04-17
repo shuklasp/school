@@ -1,4 +1,5 @@
 <?php
+namespace SPP;
 //require_once 'class.sppobject.php';
 /**
  * Class Stack
@@ -6,7 +7,7 @@
  *
  * @author Satya Prakash Shukla
  */
-class SPP_Stack extends SPP_Object{
+class Stack extends \SPP\SPP_Object{
     private $values;
     private $curkey;
     

@@ -3,7 +3,7 @@ require_once('entityexceptions.php');
 
 /**
  * class SPP_Ajax
- * extends SPP_Object
+ * extends \SPP\SPP_Object
  * Deals with ajax calls
  */
 class SCH_Person extends SPP_Entity{

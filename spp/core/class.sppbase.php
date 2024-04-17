@@ -1,4 +1,5 @@
 <?php
+namespace SPP;
 /*require_once 'class.sppsession.php';
 require_once 'sppsystemexceptions.php';
 require_once 'sppconstants.php';*/
@@ -8,11 +9,11 @@ require_once 'sppconstants.php';*/
  */
 
 /**
- * class SPP_Base
+ * class \SPP\SPP_Base
  *
  * @author Satya Prakash Shukla
  */
-class SPP_Base extends SPP_Object {
+class SPP_Base extends \SPP\SPP_Object {
     /*public static function useModule($modname)
     {
         switch($modname)
@@ -39,7 +40,7 @@ class SPP_Base extends SPP_Object {
                 require_once SPP_BASE_DIR.SPPUS.'sppwizard.php';
                 break;
             default:
-                throw new SPP_Exception('Illegal module inclusion :'.$modname);
+                throw new \SPP\SPP_Exception('Illegal module inclusion :'.$modname);
         }
     }*/
 

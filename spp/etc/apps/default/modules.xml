@@ -103,8 +103,8 @@
         </dependencies>
     </module>
     <module>
-        <modname>spphtml</modname>
-        <modpath>spp/spphtml</modpath>
+        <modname>sppview</modname>
+        <modpath>spp/sppview</modpath>
         <status>active</status>
         <dependencies>
             <dependency>sppcore</dependency>

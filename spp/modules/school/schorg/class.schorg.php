@@ -3,10 +3,10 @@ require_once('entityexceptions.php');
 
 /**
  * class SPP_Ajax
- * extends SPP_Object
+ * extends \SPP\SPP_Object
  * Deals with ajax calls
  */
-class SPP_Entity extends SPP_Object{
+class SPP_Entity extends \SPP\SPP_Object{
     protected $enttab;
     protected $props=[array('pname','varchar(40)'),
                                     array('pval','varchar(30)')];

@@ -1,15 +1,16 @@
 <?php
+namespace SPP;
 /* 
  * class.sppscheduler.php
- * Defines the class SPP_Scheduler
+ * Defines the class \SPP\Scheduler
  */
 
 /**
- * class SPP_Scheduler
+ * class \SPP\Scheduler
  *
  * @author Satya Prakash Shukla
  */
-class SPP_Scheduler extends SPP_Object {
+class Scheduler extends \SPP\SPP_Object {
     private static $AppContext='';
     private static $procs=array();
     const APP_CREATED = 1;
@@ -37,14 +38,14 @@ class SPP_Scheduler extends SPP_Object {
             else{
                 $curr_proc = self::getActiveProc();
                 $new_proc = self::getProcObj($context);
-                $curr_proc->setStatus(SPP_Scheduler::APP_WAITING);
-                $new_proc->setStatus(SPP_Scheduler::APP_EXEC);
+                $curr_proc->setStatus(\SPP\Scheduler::APP_WAITING);
+                $new_proc->setStatus(\SPP\Scheduler::APP_EXEC);
                 self::$AppContext=$context;
             }
         }
         else
         {
-            throw new SPP_Exception('Unregistered context : '.$context);
+            throw new \SPP\SPP_Exception('Unregistered context : '.$context);
         }
     }
 
@@ -53,24 +54,24 @@ class SPP_Scheduler extends SPP_Object {
      * function regProc()
      * Registers a new process.
      *
-     * @param SPP_App  $proc SPP_App object.
+     * @param \SPP\App  $proc \SPP\App object.
      */
-    public static function regProc(SPP_App $proc)
+    public static function regProc(\SPP\App $proc)
     {
         $pname=$proc->getName();
         if(array_key_exists($pname, self::$procs))
         {
-            throw new SPP_Exception('Duplicate process registration : '.$pname);
+            throw new \SPP\SPP_Exception('Duplicate process registration : '.$pname);
         }
         else
         {
-            if(is_a($proc, 'SPP_App'))
+            if(is_a($proc, '\SPP\App'))
             {
                 self::$procs[$pname]=$proc;
             }
             else
             {
-                throw new SPP_Exception('Invalid process registration : '.$pname);
+                throw new \SPP\SPP_Exception('Invalid process registration : '.$pname);
             }
         }
     }
@@ -94,11 +95,11 @@ class SPP_Scheduler extends SPP_Object {
 
     /**
      * function getProcObj($pname)
-     * Returns SPP_App object for given process name.
+     * Returns \SPP\App object for given process name.
      *
      * @param string $pname process name.
-     * @return SPP_App object.
-     * @throws SPP_Exception if process not registered.
+     * @return \SPP\App object.
+     * @throws \SPP\SPP_Exception if process not registered.
      */
     public static function getProcObj($pname)
     {
@@ -108,23 +109,23 @@ class SPP_Scheduler extends SPP_Object {
         }
         else
         {
-            throw new SPP_Exception('Unregistered process : '.$pname);
+            throw new \SPP\SPP_Exception('Unregistered process : '.$pname);
         }
     }
 
     
     /**
      * function getActiveProc()
-     * Returns SPP_App object for active application context.
+     * Returns \SPP\App object for active application context.
      *
-     * @return SPP_App object.
-     * @throws SPP_Exception if context not set.
+     * @return \SPP\App object.
+     * @throws \SPP\SPP_Exception if context not set.
      */
     public static function getActiveProc()
     {
         if(self::$AppContext=='')
         {
-            throw new SPP_Exception('Application context not set.');
+            throw new \SPP\SPP_Exception('Application context not set.');
         }
         else
         {
@@ -138,7 +139,7 @@ class SPP_Scheduler extends SPP_Object {
      * Returns SPP_Error object for active application context.
      *
      * @return SPP_Error object.
-     * @throws SPP_Exception if context not set.
+     * @throws \SPP\SPP_Exception if context not set.
      */
     public static function getActiveErrorObj()
     {

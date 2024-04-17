@@ -1,4 +1,5 @@
 <?php
+namespace SPP;
 /**
  * class SPP_Utils
  * Provides some utility functions for SPP.
@@ -6,22 +7,32 @@
  * @author Satya Prakash Shukla
  */
 // require_once 'class.sppobject.php';
-class SPP_Utils extends SPP_Object {
+class SPP_Utils extends \SPP\SPP_Object {
     public static function valueIn(array $array, $value) {
         return in_array($value,$array);
     }
 
-    function selfURL() {
+    public static function valueNotIn(array $array, $value) {
+        return !in_array($value,$array);
+    }
+
+    /**
+     * public static function strleft(string $s1, string $s2)
+     * 
+     */
+    static function strleft($s1, $s2)
+    {
+        return substr($s1, 0, strpos($s1, $s2));
+    }
+
+    static function selfURL() {
         $s = empty($_SERVER["HTTPS"]) ? ''
                 : (($_SERVER["HTTPS"] == "on") ? "s"
                 : "");
-        $protocol = strleft(strtolower($_SERVER["SERVER_PROTOCOL"]), "/").$s;
+        $protocol = self::strleft(strtolower($_SERVER["SERVER_PROTOCOL"]), "/").$s;
         $port = ($_SERVER["SERVER_PORT"] == "80") ? ""
                 : (":".$_SERVER["SERVER_PORT"]);
         return $protocol."://".$_SERVER['SERVER_NAME'].$port.$_SERVER['REQUEST_URI'];
-    }
-    function strleft($s1, $s2) {
-        return substr($s1, 0, strpos($s1, $s2));
     }
 
     public static function xml2phpArray($xml,$arr=array()) {
@@ -58,4 +69,3 @@ class SPP_Utils extends SPP_Object {
         return($subject);
     }
 }
-?>

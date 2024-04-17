@@ -63,6 +63,8 @@ if(!defined('SPP_VER'))
     require_once SPP_CORE_DIR.SPP_DS.'class.sppexception.php';
     require_once SPP_CORE_DIR.SPP_DS.'class.sppmodule.php';
     require_once SPP_CORE_DIR.SPP_DS.'class.spputils.php';
+    require_once SPP_CORE_DIR . SPP_DS . 'int.sppimodule.php';
+    require_once SPP_CORE_DIR . SPP_DS . 'int.sppientity.php';
     //require_once SPP_CORE_DIR.SPP_DS.'class.sppentity.php';
     require_once SPP_CORE_DIR.SPP_DS.'class.sppfs.php';
     require_once SPP_CORE_DIR.SPP_DS.'sppsystemexceptions.php';
@@ -70,21 +72,21 @@ if(!defined('SPP_VER'))
     //require_once SPP_CORE_DIR.SPP_DS.'class.sppbase.php';
 
 
-    //SPP_Event::registerEvent('spp_init');
-  //  SPP_Event::startEvent('spp_init');
+    //\SPP\SPP_Event::registerEvent('spp_init');
+  //  \SPP\SPP_Event::startEvent('spp_init');
 //    define('SPP_SRC_URI',$str.SPP_DS.SPP_Setti)
     /**
      * Initiate SPP_Session and SPP_Error
      */
-    //SPP_Base::initSession();
-    $app=new SPP_App('');
-  //  SPP_Event::endEvent('spp_init');
+    //\SPP\SPP_Base::initSession();
+    $app=new \SPP\App('');
+  //  \SPP\SPP_Event::endEvent('spp_init');
 
     //$spperror=new SPP_Error();
-    //SPP_Module::loadAllModules();
+    //\SPP\Module::loadAllModules();
     //SPP_Error::init();
 }
-//SPP_App::getAppConfDir()
+//\SPP\App::getAppConfDir()
 //session_destroy();
 //print SPP_Error::getUlErrors('Line: !linenum!, File: !filename!, Error No.: !errno!, Error message: !errmsg!');
 /**

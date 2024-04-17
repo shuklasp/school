@@ -1,15 +1,17 @@
 <?php
+namespace SPP;
+//
 /*require_once 'class.sppobject.php';
 require_once 'class.sppevent.php';
 require_once 'class.spputils.php';
 require_once 'class.sppstack.php';*/
 /**
- * class SPP_Registry
+ * class \SPP\Registry
  * Implements a registry system for Satya Portal Pack.
  *
  * @author Satya Prakash Shukla
  */
-class SPP_Registry extends SPP_Object {
+class Registry extends \SPP\SPP_Object {
     //private static $functions=array();
     //private static $objects=array();
 //    private static $events=array();
@@ -19,7 +21,7 @@ class SPP_Registry extends SPP_Object {
 
     /**
      * function __construct()
-     * Constructor for the SPP_Registry class.
+     * Constructor for the \SPP\Registry class.
      *
      */
     public function __construct() {
@@ -36,9 +38,9 @@ class SPP_Registry extends SPP_Object {
     public static function register($entity,$value)
     {
         //var_dump($entity,$value);
-        if(SPP_Scheduler::getContext()!='')
+        if(\SPP\Scheduler::getContext()!='')
         {
-            $entity='__apps=>'.SPP_Scheduler::getContext().'=>'.$entity;
+            $entity='__apps=>'.\SPP\Scheduler::getContext().'=>'.$entity;
         }
          //echo '<br /><br />Registring '.$entity.' with value ';
          //print_r($value);
@@ -56,7 +58,7 @@ class SPP_Registry extends SPP_Object {
             $ent=strtok($entity, '=>');
             $oldent=$ent;
             $arr=array();
-            $stk=new SPP_Stack();
+            $stk=new \SPP\Stack();
             while($ent!==false)
             {
                 $stk->push(trim($ent));
@@ -141,9 +143,9 @@ class SPP_Registry extends SPP_Object {
      */
     public static function get($entity)
     {
-        if(SPP_Scheduler::getContext()!='')
+        if(\SPP\Scheduler::getContext()!='')
         {
-            $entity='__apps=>'.SPP_Scheduler::getContext().'=>'.$entity;
+            $entity='__apps=>'.\SPP\Scheduler::getContext().'=>'.$entity;
         }
         /*$ent=strtok($entity,'=>');
         $arr=self::$reg;
@@ -205,9 +207,9 @@ class SPP_Registry extends SPP_Object {
      */
     public static function isRegistered($entity)
     {
-        if(SPP_Scheduler::getContext()!='')
+        if(\SPP\Scheduler::getContext()!='')
         {
-            $entity='__apps=>'.SPP_Scheduler::getContext().'=>'.$entity;
+            $entity='__apps=>'.\SPP\Scheduler::getContext().'=>'.$entity;
         }
         $ent=strtok($entity,'=>');
         $arr=self::$reg;
@@ -231,9 +233,9 @@ class SPP_Registry extends SPP_Object {
     //***************************************************************
     private static function getKey($entity)
     {
-        /*if(SPP_App::$AppContext!='')
+        /*if(\SPP\App::$AppContext!='')
         {
-            $entity='__apps=>'.SPP_App::$AppContext.'=>'.$entity;
+            $entity='__apps=>'.\SPP\App::$AppContext.'=>'.$entity;
         }*/
         $ent=strtok($entity,'=>');
         $arr=self::$reg;
@@ -265,11 +267,11 @@ class SPP_Registry extends SPP_Object {
     }
 
 
-/*    public static function callHandler(SPP_Event $event) {
+/*    public static function callHandler(\SPP\SPP_Event $event) {
         self::$events[$event]();
     }
 
-    public static function registerObject(SPP_Object $ojb) {
+    public static function registerObject(\SPP\SPP_Object $ojb) {
         self::$objects[]=$obj;
     }*/
 }

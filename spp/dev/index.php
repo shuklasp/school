@@ -4,11 +4,11 @@ require_once('../sppinit.php');
 //require_once SPP_BASE_DIR.SPPUS.'sppbase.php')
 //session_start();
 //require_once SPP_BASE_DIR.SPPUS.'sppauth.php';
-//SPP_Base::useModule('SPP_Auth');
-//SPP_Base::useModule('SPPHtml');
+//\SPP\SPP_Base::useModule('SPP_Auth');
+//\SPP\SPP_Base::useModule('SPPHtml');
 /* if(!SPP_Dev::isDevEnvSetup())
 {
-    header('Location: '.SPP_Base::sppLink('devsetup.php'));
+    header('Location: '.\SPP\SPP_Base::sppLink('devsetup.php'));
 }
 require_once 'model.index.php';
 //require_once 'class.SPP_Dev.php';

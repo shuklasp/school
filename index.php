@@ -1,7 +1,7 @@
 <?php
 require_once('spp/sppinit.php');
 require_once('global.php');
-$obj=new SPP_Settings();
+$obj=new \SPP\SPP_Settings();
 //require_once('vendor/autoload.php');
 include('src/home.php');
 //var_dump($_SESSION);

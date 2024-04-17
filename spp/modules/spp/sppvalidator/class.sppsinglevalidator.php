@@ -9,9 +9,14 @@
 abstract class SPP_Single_validator extends SPP_Validator {
     protected $element;
 
-    public function __construct(SPP_HTML_Element $elem)
+    public function __construct(SPP_ViewTag $elem, $errorholder, $msg, $jsfunc) {
+        parent::__construct($errorholder, $msg, $jsfunc);
+        $this->element=$elem;
+    }
+
+    public function setElement(SPP_ViewTag $elem)
     {
-        parent::__construct();
+        //parent::__construct();
         $this->element=$elem;
     }
 

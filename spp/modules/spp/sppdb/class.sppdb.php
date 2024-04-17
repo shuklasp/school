@@ -1,7 +1,7 @@
 <?php
 /*require_once("class.sppconfig.php");
 require_once 'class.sppobject.php';*/
-//SPP_Module::initWS('sppdb');
+//\SPP\Module::initWS('sppdb');
 /**
  * class SPP_DB
  * Handles database transations in the system.
@@ -9,7 +9,7 @@ require_once 'class.sppobject.php';*/
  * @author Satya Prakash Shukla
  */
 
- SPP_Event::registerEvent('spp_db_connection');
+ \SPP\SPP_Event::registerEvent('spp_db_connection');
 class SPP_DB extends PDO {
     private $con,$numrows,$numcols,$insertedid;
     /**
@@ -27,21 +27,21 @@ class SPP_DB extends PDO {
         $dbmapper=array();
         try {
             $url='old';
-            SPP_Event::startEvent('spp_db_connection');
+            \SPP\SPP_Event::startEvent('spp_db_connection');
           //  echo 'Creating connection'.$url.$dbuser;
             if($dburl==null)
             {
-                $dbtype=SPP_Module::getConfig('dbtype','sppdb');
-                $dbhost=SPP_Module::getConfig('dbhost','sppdb');
-                $dbname=SPP_Module::getConfig('dbname','sppdb');
+                $dbtype=\SPP\Module::getConfig('dbtype','sppdb');
+                $dbhost=\SPP\Module::getConfig('dbhost','sppdb');
+                $dbname=\SPP\Module::getConfig('dbname','sppdb');
                 $url = $dbtype.':host='.$dbhost.';dbname='.$dbname;
             }
             else
             {
                 $url=$dburl;
             }
-            $dbuser=($dbuser==null)?SPP_Module::getConfig('dbuser','sppdb'):$dbuser;
-            $dbpasswd=($dbpasswd==null)?SPP_Module::getConfig('dbpasswd','sppdb'):$dbpasswd;
+            $dbuser=($dbuser==null)?\SPP\Module::getConfig('dbuser','sppdb'):$dbuser;
+            $dbpasswd=($dbpasswd==null)?\SPP\Module::getConfig('dbpasswd','sppdb'):$dbpasswd;
             if($dbuser==null&&$dbpasswd==null&&$options==null)
             {
                 parent::__construct($url);
@@ -62,7 +62,7 @@ class SPP_DB extends PDO {
             die();
 
         }
-        //SPP_Event::endEvent('spp_db_connection');
+        //\SPP\SPP_Event::endEvent('spp_db_connection');
     }
 
     /**
@@ -78,11 +78,11 @@ class SPP_DB extends PDO {
         $result=$sql;
         if(is_array($tabname)){
             foreach($tabname as $tab){
-                $result=SPP_Utils::str_replace_count('%tab%', $tab, $result, 1);
+                $result=\SPP\SPP_Utils::str_replace_count('%tab%', $tab, $result, 1);
             }
         }
         else{
-            $result = SPP_Utils::str_replace_count('%tab%', $tabname, $result, 1);
+            $result = \SPP\SPP_Utils::str_replace_count('%tab%', $tabname, $result, 1);
         }
         return $result;
     }
@@ -217,7 +217,7 @@ class SPP_DB extends PDO {
             }
         }
         else{
-            throw new SPP_Exception('Table not found');
+            throw new \SPP\SPP_Exception('Table not found');
         }
         return true;
     }
@@ -323,5 +323,5 @@ class SPP_DB extends PDO {
         return $result;
     }*/
 }
-//SPP_Module::endWS();
+//\SPP\Module::endWS();
 ?>

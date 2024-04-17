@@ -1,4 +1,5 @@
 <?php
+namespace SPP;
 /**
  * class SPP_Dev
  * Encapsulates all the developer functionality.
@@ -13,7 +14,7 @@ if(file_exists($currdir.SPP_DS.'devsettings.php'))
     require_once 'devsettings.php';;
 }
 
-class SPP_Dev extends SPP_Object {
+class SPP_Dev extends \SPP\SPP_Object {
     //put your code here
     public function __construct()
     {
@@ -44,7 +45,7 @@ class SPP_Dev extends SPP_Object {
             }
             else
             {
-                throw new UnknownConfigVarException('Unknown Development Config variable '.$sname.' accessed');
+                throw new \UnknownConfigVarException('Unknown Development Config variable '.$sname.' accessed');
             }
         }
         else

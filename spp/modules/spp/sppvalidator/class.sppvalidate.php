@@ -9,7 +9,7 @@
  *
  * @author Satya Prakash Shukla
  */
-class SPP_Validate extends SPP_Object {
+class SPP_Validate extends \SPP\SPP_Object {
     //put your code here
 }
 ?>

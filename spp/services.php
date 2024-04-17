@@ -1,4 +1,5 @@
 <?php
+use SPP\SPP_Global as SPP_Global;
 global $services, $pages, $servdir;
 
 $servdir='src/server/';

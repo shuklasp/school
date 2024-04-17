@@ -3,12 +3,12 @@ require_once('ajaxexceptions.php');
 
 /**
  * class SPP_Ajax
- * extends SPP_Object
+ * extends \SPP\SPP_Object
  * Deals with ajax calls
  * 
  * SPP Services are defined in SPP_DIR/services.php
  */
-class SPP_Ajax extends SPP_Object{
+class SPP_Ajax extends \SPP\SPP_Object{
     function __construct()
     {
         

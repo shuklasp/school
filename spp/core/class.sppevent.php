@@ -1,12 +1,14 @@
 <?php
+namespace SPP;
+
 /**
- * class SPP_Event
+ * class \SPP\SPP_Event
  * Implements event system in Satya Portal Pack.
  *
  * @author Satya Prakash Shukla
  * 
  */
-class SPP_Event extends SPP_Object
+class SPP_Event extends \SPP\SPP_Object
 {
     /**
      * Constructor
@@ -33,7 +35,7 @@ class SPP_Event extends SPP_Object
       */
      public static function registerEvent(string $event_name)
      {
-        $events=SPP_Registry::get('__events');
+        $events=\SPP\Registry::get('__events');
         //$events=array();
         if($events===false)
         {
@@ -46,10 +48,10 @@ class SPP_Event extends SPP_Object
         }
         else
         {
-            throw new SPP_Exception('Event "'.$event_name.'" already registered!');
+            throw new \SPP\SPP_Exception('Event "'.$event_name.'" already registered!');
         }
         //var_dump($events);
-        SPP_Registry::register('__events',$events);
+        \SPP\Registry::register('__events',$events);
      }
 
      /**
@@ -62,31 +64,31 @@ class SPP_Event extends SPP_Object
       */
      public static function registerHandler(string $event_name, string $handler_name, string $occurence, array $params=array())
      {
-        $events=SPP_Registry::get('__events');
+        $events=\SPP\Registry::get('__events');
         if($events===false)
         {
             $events=array();
-            throw new SPP_Exception('Event "'.$event_name.'" not registered!');
+            throw new \SPP\SPP_Exception('Event "'.$event_name.'" not registered!');
         }
         if(!array_key_exists($event_name, $events))
         {
-            throw new SPP_Exception('Event "'.$event_name.'" not registered!');
+            throw new \SPP\SPP_Exception('Event "'.$event_name.'" not registered!');
         }
         if(!in_array($occurence, array('before','after')))
         {
-            throw new SPP_Exception('Invalid occurence "'.$occurence.'" for event "'.$event_name.'"!');
+            throw new \SPP\SPP_Exception('Invalid occurence "'.$occurence.'" for event "'.$event_name.'"!');
         }
         if(!is_callable($handler_name))
         {
-            throw new SPP_Exception('Invalid handler "'.$handler_name.'" for event "'.$event_name.'"!');
+            throw new \SPP\SPP_Exception('Invalid handler "'.$handler_name.'" for event "'.$event_name.'"!');
         }
         $events[$event_name][$occurence][]=array('handler'=>$handler_name,'params'=>$params);
-        SPP_Registry::register('__events',$events);
+        \SPP\Registry::register('__events',$events);
      }
 
      public static function getHandlerParams($event_name, $handler_name, $occurence='before')
      {
-        $events=SPP_Registry::get('__events');
+        $events=\SPP\Registry::get('__events');
         $event=$events[$event_name];
         $handlers=$event[$occurence];
         foreach($handlers as $hnd)
@@ -96,12 +98,12 @@ class SPP_Event extends SPP_Object
                 return $hnd['params'];
             }
         }
-        throw new SPP_Exception('Handler "'.$handler_name.'" not registered for event "'.$event_name.'" for occurence "'.$occurence.'"!');
+        throw new \SPP\SPP_Exception('Handler "'.$handler_name.'" not registered for event "'.$event_name.'" for occurence "'.$occurence.'"!');
      }
 
      public static function setHandlerParams($event_name, $handler_name, $params, $occurence='after')
      {
-        $events=SPP_Registry::get('__events');
+        $events=\SPP\Registry::get('__events');
         $event=$events[$event_name];
         $handlers=$event[$occurence];
         $param_set=false;
@@ -116,7 +118,7 @@ class SPP_Event extends SPP_Object
                     }
                     else
                     {
-                        throw new SPP_Exception('Invalid parameter "'.$key.'" for handler "'.$handler_name.'" for event "'.$event_name.'"! Parameter not registered!');
+                        throw new \SPP\SPP_Exception('Invalid parameter "'.$key.'" for handler "'.$handler_name.'" for event "'.$event_name.'"! Parameter not registered!');
                     }
                 }
                 $param_set=true;
@@ -128,10 +130,10 @@ class SPP_Event extends SPP_Object
         {
             $event[$occurence]=$handlers;
             $events[$event_name]=$event;
-            SPP_Registry::register('__events',$events);
+            \SPP\Registry::register('__events',$events);
             return true;
         }
-        throw new SPP_Exception('Handler "' . $handler_name . '" not registered for event "' . $event_name . '" for occurence "'.$occurence.'"!');
+        throw new \SPP\SPP_Exception('Handler "' . $handler_name . '" not registered for event "' . $event_name . '" for occurence "'.$occurence.'"!');
      }
 
 
@@ -143,7 +145,7 @@ class SPP_Event extends SPP_Object
       */
      public static function startEvent($event_name)
      {
-        $events=SPP_Registry::get('__events');
+        $events=\SPP\Registry::get('__events');
         if(array_key_exists($event_name, $events))
         {
             $handlers=$events[$event_name]['before'];
@@ -154,7 +156,7 @@ class SPP_Event extends SPP_Object
         }
         else
         {
-            throw new SPP_Exception('Cannot start event "'.$event_name.'". Event not registered!');
+            throw new \SPP\SPP_Exception('Cannot start event "'.$event_name.'". Event not registered!');
         }
      }
 
@@ -167,7 +169,7 @@ class SPP_Event extends SPP_Object
       */
      public static function endEvent($event_name)
      {
-        $events=SPP_Registry::get('__events');
+        $events=\SPP\Registry::get('__events');
         if(array_key_exists($event_name, $events))
         {
             $handlers=$events[$event_name]['after'];
@@ -178,7 +180,7 @@ class SPP_Event extends SPP_Object
         }
         else
         {
-            throw new SPP_Exception('Cannot start event "'.$event_name.'". Event not registered!');
+            throw new \SPP\SPP_Exception('Cannot start event "'.$event_name.'". Event not registered!');
         }
     }
 
@@ -203,7 +205,7 @@ class SPP_Event extends SPP_Object
         }
         else
         {
-            throw new SPP_Exception('Invalid handler '.$hnd.' called!');
+            throw new \SPP\SPP_Exception('Invalid handler '.$hnd.' called!');
         }
     }
 
@@ -216,13 +218,13 @@ class SPP_Event extends SPP_Object
      */
 /*     public static function getVar($variable)
     {
-        $appctxt=SPP_Scheduler::getContext();
+        $appctxt=\SPP\Scheduler::getContext();
         if(SPP_Global::is_set('__'.$appctxt.'_event_variables')) {
             $stack=SPP_Global::get('__'.$appctxt.'_event_variables');
             $arr=$stack->getTop();
             if($arr===false)
             {
-                throw new SPP_Exception('Event variable used outside event function.');
+                throw new \SPP\SPP_Exception('Event variable used outside event function.');
             }
             if(array_key_exists($variable, $arr['vars']))
             {
@@ -231,10 +233,10 @@ class SPP_Event extends SPP_Object
             }
             else
             {
-                throw new SPP_Exception('Unknown event variable "'.$variable.'" accesed!');
+                throw new \SPP\SPP_Exception('Unknown event variable "'.$variable.'" accesed!');
             }
         } else {
-            throw new SPP_Exception('Event variable used outside event function.');
+            throw new \SPP\SPP_Exception('Event variable used outside event function.');
         }
     }
 
@@ -247,13 +249,13 @@ class SPP_Event extends SPP_Object
      */
 /*     public static function setVar($variable, $value)
     {
-        $appctxt=SPP_Scheduler::getContext();
+        $appctxt=\SPP\Scheduler::getContext();
         if(SPP_Global::is_set('__'.$appctxt.'_event_variables')) {
             $stack=SPP_Global::get('__'.$appctxt.'_event_variables');
             $arr=$stack->pop();
             if($arr===false)
             {
-                throw new SPP_Exception('Event variable used outside event function.');
+                throw new \SPP\SPP_Exception('Event variable used outside event function.');
             }
             if(array_key_exists($variable, $arr['vars']))
             {
@@ -264,10 +266,10 @@ class SPP_Event extends SPP_Object
             }
             else
             {
-                throw new SPP_Exception('Unknown event variable "'.$variable.'" accesed!');
+                throw new \SPP\SPP_Exception('Unknown event variable "'.$variable.'" accesed!');
             }
         } else {
-            throw new SPP_Exception('Event variable used outside event function.');
+            throw new \SPP\SPP_Exception('Event variable used outside event function.');
         }
     }
  */
@@ -279,13 +281,13 @@ class SPP_Event extends SPP_Object
      */
 /*     public static function getVars()
     {
-        $appctxt=SPP_Scheduler::getContext();
+        $appctxt=\SPP\Scheduler::getContext();
         if(SPP_Global::is_set('__'.$appctxt.'_event_variables')) {
             $stack=SPP_Global::get('__'.$appctxt.'_event_variables');
             $arr=$stack->getTop();
             if($arr===false)
             {
-                throw new SPP_Exception('Event variable used outside event function.');
+                throw new \SPP\SPP_Exception('Event variable used outside event function.');
             }
             else
             {
@@ -293,7 +295,7 @@ class SPP_Event extends SPP_Object
                 return $vars;
             }
         } else {
-            throw new SPP_Exception('Event variable used outside event function.');
+            throw new \SPP\SPP_Exception('Event variable used outside event function.');
         }
     }
  */
@@ -306,7 +308,7 @@ class SPP_Event extends SPP_Object
      */
 /*     public static function startEvent($event, $variables=array())
     {
-        $appctxt=SPP_Scheduler::getContext();
+        $appctxt=\SPP\Scheduler::getContext();
         $hnd='';
         //$ev['vars']=$variables;
         $stack='';
@@ -316,22 +318,22 @@ class SPP_Event extends SPP_Object
         }
         else
         {
-            $stack=new SPP_Stack();
+            $stack=new \SPP\Stack();
         }
         $arr['evname']=$event;
         $arr['vars']=$variables;
         //print_r($arr);
         $stack->push($arr);
         SPP_Global::set('__'.$appctxt.'_event_variables', $stack);
-        $hnd=SPP_Registry::get('__events=>'.$event.'=>handler');
-        $mhnd=SPP_Registry::get('__events=>'.$event.'=>handlers');
+        $hnd=\SPP\Registry::get('__events=>'.$event.'=>handler');
+        $mhnd=\SPP\Registry::get('__events=>'.$event.'=>handlers');
         if($hnd!==false||$mhnd!==false)
         {
 //                var_dump($hnd);
             $occr='';
             if($hnd!==false)
             {
-                $occr=SPP_Registry::get('__events=>'.$event.'=>occurence');
+                $occr=\SPP\Registry::get('__events=>'.$event.'=>occurence');
                 switch($occr)
                 {
                     case 'before':
@@ -340,10 +342,10 @@ class SPP_Event extends SPP_Object
                     case 'after':
                         break;
                     case 'instead':
-                        throw new SPP_Exception('"instead" occurence type used for a non overridable event : '.$event);
+                        throw new \SPP\SPP_Exception('"instead" occurence type used for a non overridable event : '.$event);
                         break;
                     default:
-                        throw new SPP_Exception('Wrong occurence type '.$occr.' is registered');
+                        throw new \SPP\SPP_Exception('Wrong occurence type '.$occr.' is registered');
                         break;
                 }
             }
@@ -363,7 +365,7 @@ class SPP_Event extends SPP_Object
                         case 'after':
                             break;
                         default:
-                            throw new SPP_Exception('Wrong occurence type '.$occr.' is registered for handler '.$hnd);
+                            throw new \SPP\SPP_Exception('Wrong occurence type '.$occr.' is registered for handler '.$hnd);
                     }
                 }
             }
@@ -378,7 +380,7 @@ class SPP_Event extends SPP_Object
      */
 /*     public static function endEvent($event)
     {
-        $appctxt=SPP_Scheduler::getContext();
+        $appctxt=\SPP\Scheduler::getContext();
         $hnd='';
         //$ev['vars']=$variables;
         $stack='';
@@ -388,27 +390,27 @@ class SPP_Event extends SPP_Object
         }
         else
         {
-            throw new SPP_Exception('"endEvent" used outside an event.');
+            throw new \SPP\SPP_Exception('"endEvent" used outside an event.');
         }
         $arr=$stack->getTop();
         //print_r($arr);
         if(array_key_exists('callback', $arr))
         {
-            throw new SPP_Exception('"endEvent" used inside an overridable event');
+            throw new \SPP\SPP_Exception('"endEvent" used inside an overridable event');
         }
         elseif($arr['evname']!=$event)
         {
-            throw new SPP_Exception('"endEvent" for event '.$event.' used inside the event "'.$arr['evname'].'".');
+            throw new \SPP\SPP_Exception('"endEvent" for event '.$event.' used inside the event "'.$arr['evname'].'".');
         }
-        $hnd=SPP_Registry::get('__events=>'.$event.'=>handler');
-        $mhnd=SPP_Registry::get('__events=>'.$event.'=>handlers');
+        $hnd=\SPP\Registry::get('__events=>'.$event.'=>handler');
+        $mhnd=\SPP\Registry::get('__events=>'.$event.'=>handlers');
 //                var_dump($hnd);
         if($hnd!==false||$mhnd!==false)
         {
             $occr='';
             if($hnd!==false)
             {
-                $occr=SPP_Registry::get('__events=>'.$event.'=>occurence');
+                $occr=\SPP\Registry::get('__events=>'.$event.'=>occurence');
                 switch($occr)
                 {
                     case 'before':
@@ -417,10 +419,10 @@ class SPP_Event extends SPP_Object
                         self::callHandler($hnd);
                         break;
                     case 'instead':
-                        throw new SPP_Exception('"instead" occurence type used for a non overridable event : '.$event);
+                        throw new \SPP\SPP_Exception('"instead" occurence type used for a non overridable event : '.$event);
                         break;
                     default:
-                        throw new SPP_Exception('Wrong occurence type '.$occr.' is registered');
+                        throw new \SPP\SPP_Exception('Wrong occurence type '.$occr.' is registered');
                         break;
                 }
             }
@@ -439,7 +441,7 @@ class SPP_Event extends SPP_Object
                             self::callHandler($hnd);
                             break;
                         default:
-                            throw new SPP_Exception('Wrong occurence type '.$occr.' is registered for handler '.$hnd);
+                            throw new \SPP\SPP_Exception('Wrong occurence type '.$occr.' is registered for handler '.$hnd);
                             break;
                     }
                 }
@@ -459,7 +461,7 @@ class SPP_Event extends SPP_Object
      */
 /*     public static function fireEvent($event, $evfunc, $variables=array())
     {
-        $appctxt=SPP_Scheduler::getContext();
+        $appctxt=\SPP\Scheduler::getContext();
         $hnd='';
         //$ev['vars']=$variables;
         $stack='';
@@ -469,21 +471,21 @@ class SPP_Event extends SPP_Object
         }
         else
         {
-            $stack=new SPP_Stack();
+            $stack=new \SPP\Stack();
         }
         $arr['evname']=$event;
         $arr['callback']=$evfunc;
         $arr['vars']=$variables;
         $stack->push($arr);
         SPP_Global::set('__'.$appctxt.'_event_variables', $stack);
-        $hnd=SPP_Registry::get('__events=>'.$event.'=>handler');
-        $mhnd=SPP_Registry::get('__events=>'.$event.'=>handlers');
+        $hnd=\SPP\Registry::get('__events=>'.$event.'=>handler');
+        $mhnd=\SPP\Registry::get('__events=>'.$event.'=>handlers');
         if($hnd!==false||$mhnd!==false)
         {
             $occr='';
             if($hnd!==false)
             {
-                $occr=SPP_Registry::get('__events=>'.$event.'=>occurence');
+                $occr=\SPP\Registry::get('__events=>'.$event.'=>occurence');
                 switch($occr)
                 {
                     case 'before':
@@ -498,7 +500,7 @@ class SPP_Event extends SPP_Object
                         self::callHandler($hnd);
                         break;
                     default:
-                        throw new SPP_Exception('Wrong occurence type '.$occr.' is registered');
+                        throw new \SPP\SPP_Exception('Wrong occurence type '.$occr.' is registered');
                         break;
                 }
             }
@@ -519,7 +521,7 @@ class SPP_Event extends SPP_Object
                             self::callHandler($hnd);
                             break;
                         default:
-                            throw new SPP_Exception('Wrong occurence type '.$occr.' is registered');
+                            throw new \SPP\SPP_Exception('Wrong occurence type '.$occr.' is registered');
                             break;
                     }
                 }
@@ -539,13 +541,13 @@ class SPP_Event extends SPP_Object
      */
 /*     public static function callOriginalHandler()
     {
-        $appctxt=SPP_Scheduler::getContext();
+        $appctxt=\SPP\Scheduler::getContext();
         if(SPP_Global::is_set('__'.$appctxt.'_event_variables')) {
             $stack=SPP_Global::get('__'.$appctxt.'_event_variables');
             $arr=$stack->getTop();
             if($arr===false)
             {
-                throw new SPP_Exception('Event variable used outside event function.');
+                throw new \SPP\SPP_Exception('Event variable used outside event function.');
             }
             elseif(array_key_exists('callback', $arr))
             {
@@ -554,10 +556,10 @@ class SPP_Event extends SPP_Object
             }
             else
             {
-                throw new SPP_Exception(__FUNCTION__.' used in a non-overridable event.');
+                throw new \SPP\SPP_Exception(__FUNCTION__.' used in a non-overridable event.');
             }
         } else {
-            throw new SPP_Exception('Event variable used outside event function.');
+            throw new \SPP\SPP_Exception('Event variable used outside event function.');
         }
     }
  */    
@@ -574,17 +576,17 @@ class SPP_Event extends SPP_Object
         {
             if(is_callable($handler))
             {
-                SPP_Registry::register('__events=>'.$event.'=>handler', $handler);
-                SPP_Registry::register('__events=>'.$event.'=>occurence', $occurence);
+                \SPP\Registry::register('__events=>'.$event.'=>handler', $handler);
+                \SPP\Registry::register('__events=>'.$event.'=>occurence', $occurence);
             }
             else
             {
-                throw new SPP_Exception('Invalid event handler '.$handler.' was registered');
+                throw new \SPP\SPP_Exception('Invalid event handler '.$handler.' was registered');
             }
         }
         else
         {
-            throw new SPP_Exception('Unknown occurence type '.$occurence.' specified.');
+            throw new \SPP\SPP_Exception('Unknown occurence type '.$occurence.' specified.');
         }
     }
  */
@@ -602,7 +604,7 @@ class SPP_Event extends SPP_Object
             if(is_callable($handler))
             {
                 //echo '<br /><br />----- Registering handler -----<br /><br />';
-                $hnd=SPP_Registry::get('__events=>'.$event.'=>handlers');
+                $hnd=\SPP\Registry::get('__events=>'.$event.'=>handlers');
                 if(!is_array($hnd))
                 {
                     $hnd=array();
@@ -610,18 +612,18 @@ class SPP_Event extends SPP_Object
                 $hnd[]=array('handler'=>$handler,'occurence'=>$occurence);
                 $hnd=array_values($hnd);
                 //var_dump($hnd);
-                SPP_Registry::register('__events=>'.$event.'=>handlers', $hnd);
-                //var_dump(SPP_Registry::get('__events=>'.$event.'=>handlers'));
+                \SPP\Registry::register('__events=>'.$event.'=>handlers', $hnd);
+                //var_dump(\SPP\Registry::get('__events=>'.$event.'=>handlers'));
                 //echo '<br /><br />----- Registered handler -----<br /><br />';
             }
             else
             {
-                throw new SPP_Exception('Invalid event handler '.$handler.' was registered');
+                throw new \SPP\SPP_Exception('Invalid event handler '.$handler.' was registered');
             }
         }
         else
         {
-            throw new SPP_Exception('Unknown occurence type '.$occurence.' specified.');
+            throw new \SPP\SPP_Exception('Unknown occurence type '.$occurence.' specified.');
         }
     }
  */

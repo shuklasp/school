@@ -11,17 +11,15 @@
 <module>
     <name>spphtml</name>
     <version>0.5</version>
-    <pubname>SPP HTML</pubname>
+    <pubname>SPP View</pubname>
     <modgroup>SPP_Optional</modgroup>
     <pubdesc>Handles HTML in SPP.</pubdesc>
     <includes>
-        <include>class.spphtmlelement.php</include>
-        <include>class.spphtmltable.php</include>
+        <include>class.sppviewtag.php</include>
         <include>class.sppform.php</include>
         <include>class.sppformelement.php</include>
-        <include>class.spphtmlpage.php</include>
+        <include>class.sppviewpage.php</include>
         <include>classes.formelements.php</include>
-        <include>classes.htmlelements.php</include>
     </includes>
     <deps>
         <depends>sppdb</depends>

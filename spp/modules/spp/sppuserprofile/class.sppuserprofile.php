@@ -33,7 +33,7 @@ class SPP_UserProfile {
         }
         else
         {
-            throw(new SPP_Exception('Profile for this user does not exist!'));
+            throw(new \SPP\SPP_Exception('Profile for this user does not exist!'));
         }
         $sql='select profval from profiles where profid=? and profkey=?';
     }

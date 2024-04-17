@@ -1,15 +1,16 @@
 <?php
+namespace SPP;
 /*require_once 'class.sppregistry.php';
 require_once 'sppsystemexceptions.php';*/
 
 /**
- * class SPP_Module
+ * class \SPP\Module
  * Defines a new module in Satya Portal Pack.
  *
  * @author Satya Prakash Shukla
  */
 
-class SPP_Module extends SPP_Object {
+class Module extends \SPP\SPP_Object {
     //private $int_name, $pub_name, $pub_desc, $inc_files, $req_mods, $ver,$group;
     //private $install_script, $uninstall_script, $modpath, $specxml;
     protected $_setprops=array('PublicName','PublicDesc','InternalName','Version','InstallScript','UninstallScript','ModuleGroup','IncludeFiles','Dependencies','ModPath','ConfigFile');
@@ -24,9 +25,9 @@ class SPP_Module extends SPP_Object {
     /*public function __construct($int_name, $ver)
     {
         parent::__construct();
-        if(SPP_Registry::get('__mods=>'.$int_name)!==false)
+        if(\SPP\Registry::get('__mods=>'.$int_name)!==false)
         {
-            SPP_Registry::register('__mods=>'.$int_name, 1);
+            \SPP\Registry::register('__mods=>'.$int_name, 1);
             $this->int_name=$int_name;
             $this->ver=$ver;
         }
@@ -81,7 +82,7 @@ class SPP_Module extends SPP_Object {
                     $this->Dependencies=$val['depends'];
                     break;
                 default:
-                    throw new SPP_Exception('module parse error!');
+                    throw new \SPP\SPP_Exception('module parse error!');
                     break;
             }
         }
@@ -97,10 +98,10 @@ class SPP_Module extends SPP_Object {
     public static function getConfig($varname,$modname)
     {
         //$mod=self::getModule($modname);
-        //var_dump(SPP_Registry::$reg);
+        //var_dump(\SPP\Registry::$reg);
         //echo '<br />';
         //var_dump($mod);
-        $modpath=SPP_Registry::get('__mods=>'.$modname);
+        $modpath=\SPP\Registry::get('__mods=>'.$modname);
         //var_dump($_SESSION);
         $spp_ds=SPP_DS;
         //var_dump($spp_ds);
@@ -126,7 +127,7 @@ class SPP_Module extends SPP_Object {
         }
         else
         {
-            $proc=SPP_Scheduler::getActiveProc();
+            $proc=\SPP\Scheduler::getActiveProc();
             $confdir=$proc->getModsConfDir();
             $confdir.=SPP_DS.$modname;
             //$xml=simplexml_load_file(SPP_MODSCONF_DIR.SPP_DS.$modname.SPP_DS.'config.xml');
@@ -150,7 +151,7 @@ class SPP_Module extends SPP_Object {
      */
     public static function getConfDir($modname)
     {
-        $dir=SPP_Scheduler::getModsConfDir();
+        $dir=\SPP\Scheduler::getModsConfDir();
         $dir.=SPP_DS.$modname;
         return $dir;
     }
@@ -172,16 +173,16 @@ class SPP_Module extends SPP_Object {
 
     /**
      * static function getModule()
-     * Gets a SPP_Module object for modname.
+     * Gets a \SPP\Module object for modname.
      * 
-     * @return SPP_Module
+     * @return \SPP\Module
      */
     public static function getModule($modname)
     {
-        //var_dump(SPP_Registry::get('__mods'));
-        $modpath=SPP_Registry::get('__mods=>'.$modname);
+        //var_dump(\SPP\Registry::get('__mods'));
+        $modpath=\SPP\Registry::get('__mods=>'.$modname);
         $modpath.=SPP_DS.'module.xml';
-        $mod=new SPP_Module($modpath);
+        $mod=new \SPP\Module($modpath);
         return $mod;
     }
 
@@ -217,13 +218,13 @@ class SPP_Module extends SPP_Object {
      */
     public function register()
     {
-        if(SPP_Registry::get('__mods=>'.$this->InternalName)===false)
+        if(\SPP\Registry::get('__mods=>'.$this->InternalName)===false)
         {
-            SPP_Registry::register('__mods=>'.$this->InternalName, $this->ModPath);
+            \SPP\Registry::register('__mods=>'.$this->InternalName, $this->ModPath);
         }
         else
         {
-            throw new DuplicateModuleException('Duplicate Module '.$this->InternalName.' included!');
+            throw new \DuplicateModuleException('Duplicate Module '.$this->InternalName.' included!');
         }
     }
 
@@ -233,7 +234,7 @@ class SPP_Module extends SPP_Object {
      */
     public function isRegistered()
     {
-        if(SPP_Registry::get('__mods=>'.$this->InternalName)===false)
+        if(\SPP\Registry::get('__mods=>'.$this->InternalName)===false)
         {
             return false;
         }
@@ -252,9 +253,9 @@ class SPP_Module extends SPP_Object {
     {
         $xml_file='';
         $mods_xml='';
-        if(SPP_Scheduler::getContext()!='')
+        if(\SPP\Scheduler::getContext()!='')
         {
-            $xml_file=SPP_ETC_DIR.SPP_DS.'apps'.SPP_DS.SPP_Scheduler::getContext().SPP_DS.'modules.xml';
+            $xml_file=SPP_ETC_DIR.SPP_DS.'apps'.SPP_DS.\SPP\Scheduler::getContext().SPP_DS.'modules.xml';
         }
         else
         {
@@ -266,7 +267,7 @@ class SPP_Module extends SPP_Object {
         }
         else
         {
-            throw new SPP_Exception('Modules config file not found : '.$xml_file);
+            throw new \SPP\SPP_Exception('Modules config file not found : '.$xml_file);
         }
         $mods=$mods_xml->xpath('/modules/module[status=\'active\']');
         foreach($mods as $mod)
@@ -281,7 +282,7 @@ class SPP_Module extends SPP_Object {
                 $path=str_replace('/', '\\', $path);
             }
             $path=SPP_MODULES_DIR.SPP_DS.$path.SPP_DS.'module.xml';
-            $module=new SPP_Module($path);
+            $module=new \SPP\Module($path);
             $module->register();
             $module->includeFiles();
         }
@@ -296,7 +297,7 @@ class SPP_Module extends SPP_Object {
      */
     public static function isEnabled($mod)
     {
-        if(SPP_Registry::get('__mods=>'.$mod)!==false)
+        if(\SPP\Registry::get('__mods=>'.$mod)!==false)
         {
             return true;
         }

@@ -9,7 +9,7 @@ require_once 'classes.sppvalidators.php';*/
  *
  * @author Satya Prakash Shukla
  */
-class SPP_Form extends SPP_HTML_Element {
+class SPP_Form extends SPP_ViewTag {
     private $method;
     private $action;
     private $onsubmit;
@@ -21,13 +21,12 @@ class SPP_Form extends SPP_HTML_Element {
     private static $valstatus=true;
 
     public function  __construct($ename,$act='') {
-        parent::__construct($ename);
+        parent::__construct('form',$ename);
         $this->isemptyflag=false;
-        $this->tagname='form';
         $this->attrlist=array('action','accept','accept-charset','enctype','method','name','target');
         $this->eventattrlist[]='onsubmit';
         $this->eventattrlist[]='onreset';
-        SPP_HTML_Page::addForm($this);
+        SPP_ViewPage::addForm($this);
         if($act=='')
         {
             $this->attributes['action']=$_SERVER['PHP_SELF'];
@@ -57,7 +56,7 @@ class SPP_Form extends SPP_HTML_Element {
         $this->validators[]=$val;
     }
 
-    public function attachValidator(SPP_Validator $val, SPP_HTML_Element $elem, $event, $errhold, $msg='')
+    public function attachValidator(SPP_Validator $val, SPP_ViewTag $elem, $event, $errhold, $msg='')
     {
         $val->setErrorHolder($errhold);
         $val->attachTo($elem, $event, $msg);
@@ -89,7 +88,7 @@ class SPP_Form extends SPP_HTML_Element {
      * @param mixed $elem
      */
 
-    public function addElement(SPP_HTML_Element $elem)
+    public function addElement(SPP_ViewTag $elem)
     {
         $ename=$elem->getAttribute('id');
         if(array_key_exists($ename, $_POST))
@@ -128,13 +127,13 @@ class SPP_Form extends SPP_HTML_Element {
      */
     public function getFormGlobal($gvar)
     {
-        if(array_key_exists($this->globalset, $gvar))
+        if(array_key_exists($gvar,$this->globalset))
         {
             return $this->globalset[$gvar];
         }
         else
         {
-            throw new VarNotFoundException();
+            throw new VarNotFoundException('Variable '.$gvar.' not found in form '.$this->getAttribute('name').' in class '.get_class($this).'. Please check your code ');
         }
     }
 
@@ -161,22 +160,20 @@ class SPP_Form extends SPP_HTML_Element {
         {
             case 'name':
                 return $this->name;
-                break;
             case 'id':
                 return $this->id;
-                break;
             case 'action':
                 return $this->action;
-                break;
             case 'method':
                 return $this->method;
-                break;
             case 'element':
                 return $this->elements;
-                break;
+            case 'onsubmit':
+                return $this->onsubmit;
+            case 'validators':
+                return $this->validators;
             default:
                 throw new UnknownPropertyException('Unknown property '.$propname.' in form');
-                break;
         }
     }
 
@@ -223,4 +220,3 @@ class SPP_Form extends SPP_HTML_Element {
         }
     }
 }
-?>

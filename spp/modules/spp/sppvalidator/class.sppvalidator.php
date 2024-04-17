@@ -8,14 +8,17 @@
 /* require_once 'class.sppbase.php';
  require_once 'sppconstants.php';*/
  
-abstract class SPP_Validator extends SPP_Object {
+abstract class SPP_Validator extends \SPP\SPP_Object {
     protected $jsfunc,$applicabletags=array(),$errorholder,$msg='';
     protected $attachedto=array();
 
-    public function __construct()
+    public function __construct($errorholder, $msg, $jsfunc)
     {
-        SPP_HTML_Page::addCssIncludeFile(SPP_CSS_URI.SPP_US.'core/sppvalidations.css');
-        SPP_HTML_Page::addJsIncludeFile(SPP_JS_URI.SPP_US.'core/sppvalidations.js');
+        $this->errorholder=$errorholder;
+        $this->msg=$msg;
+        $this->jsfunc=$jsfunc;
+        SPP_ViewPage::addCssIncludeFile(SPP_CSS_URI.SPP_US.'core/sppvalidations.css');
+        SPP_ViewPage::addJsIncludeFile(SPP_JS_URI.SPP_US.'core/sppvalidations.js');
     }
 
     public function setErrorHolder($hld)
@@ -47,7 +50,7 @@ abstract class SPP_Validator extends SPP_Object {
 
     public abstract function validate();
 
-    public function attachTo(SPP_HTML_Element $elem,$event,$msg='')
+    public function attachTo(SPP_ViewTag $elem,$event,$msg='')
     {
         if($msg!='')
         {

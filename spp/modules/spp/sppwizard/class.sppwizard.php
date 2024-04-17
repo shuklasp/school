@@ -7,7 +7,7 @@
  */
 // require_once 'class.sppbase.php';
  
-class SPP_Wizard extends SPP_Object {
+class SPP_Wizard extends \SPP\SPP_Object {
     /**
      * static function get()
      * Gets the value of a wizard variable.
@@ -18,11 +18,11 @@ class SPP_Wizard extends SPP_Object {
      */
     public static function get($varname, $wname)
     {
-        if(!SPP_Session::sessionExists())
+        if(!\SPP\SPP_Session::sessionExists())
         {
             throw new SessionDoesNotExistException('No session exists!');
         }
-        $wizards=SPP_Session::getSessionVar('__wizards__');
+        $wizards= \SPP\SPP_Session::getSessionVar('__wizards__');
         return $wizards[$wname];
     }
 
@@ -32,11 +32,11 @@ class SPP_Wizard extends SPP_Object {
      */
     public static function cleanup()
     {
-        if(!SPP_Session::sessionExists())
+        if(!\SPP\SPP_Session::sessionExists())
         {
             throw new SessionDoesNotExistException('No session exists!');
         }
-        SPP_Session::setSessionVar('__wizards__',array());
+        \SPP\SPP_Session::setSessionVar('__wizards__',array());
     }
 
     /**
@@ -47,7 +47,7 @@ class SPP_Wizard extends SPP_Object {
      */
     public static function dropWizard($wname) {
         //self::startSession();
-        if(!SPP_Session::sessionExists())
+        if(!\SPP\SPP_Session::sessionExists())
         {
             throw new SessionDoesNotExistException('No session exists!');
         }
@@ -55,9 +55,9 @@ class SPP_Wizard extends SPP_Object {
         {
             self::createWizard($wname);
         }*/
-        $wizards=SPP_Session::getSessionVar('__wizards__');
+        $wizards= \SPP\SPP_Session::getSessionVar('__wizards__');
         unset($wizards[$wname]);
-        SPP_Session::setSessionVar('__wizards__',$wizards);
+        \SPP\SPP_Session::setSessionVar('__wizards__',$wizards);
     }
 
     /**
@@ -69,7 +69,7 @@ class SPP_Wizard extends SPP_Object {
      */
     public static function existsWizard($wname) {
         //self::startSession();
-        if(!SPP_Session::sessionExists())
+        if(!\SPP\SPP_Session::sessionExists())
         {
             throw new SessionDoesNotExistException('No session exists!');
         }
@@ -77,7 +77,7 @@ class SPP_Wizard extends SPP_Object {
         {
             self::createWizard($wname);
         }*/
-        $wizards=SPP_Session::getSessionVar('__wizards__');
+        $wizards= \SPP\SPP_Session::getSessionVar('__wizards__');
         if(array_key_exists($wname,$wizards))
         {
             return true;
@@ -114,7 +114,7 @@ class SPP_Wizard extends SPP_Object {
      */
     public static function collectSubmittedVars($wname,$method='post')
     {
-        if(!SPP_Session::sessionExists())
+        if(!\SPP\SPP_Session::sessionExists())
         {
             throw new SessionDoesNotExistException('No session exists!');
         }
@@ -122,7 +122,7 @@ class SPP_Wizard extends SPP_Object {
         {
             self::createWizard($wname);
         }*/
-        $wizards=SPP_Session::getSessionVar('__wizards__');
+        $wizards= \SPP\SPP_Session::getSessionVar('__wizards__');
         if($method=='post')
         {
             foreach($_POST as $key=>$val)

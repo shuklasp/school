@@ -9,10 +9,10 @@
  * Defines the use of dojo in SPP
  *
  * @author Satya Prakash Shukla
- * @package SPP_Modules
+ * @package \SPP\Modules
  * @subpackage SPP_Dojo
  */
-class SPP_Dojo extends SPP_Object {
+class SPP_Dojo extends \SPP\SPP_Object {
     private static $source='spp';
     private static $srcver='';
     private static $src_url='';
@@ -47,7 +47,7 @@ class SPP_Dojo extends SPP_Object {
         $did=$dijit->getId();
         if(array_key_exists($did, self::$dijits))
         {
-            throw new SPP_Exception('Duplicate dijit declaration : '.$did);
+            throw new \SPP\SPP_Exception('Duplicate dijit declaration : '.$did);
         }
         else
         {
@@ -84,10 +84,10 @@ class SPP_Dojo extends SPP_Object {
         if(!self::$init)
         {
             self::$init=true;
-            SPP_Event::setDefaultEventHandler('event_spp_core_dojo_inc', 'SPP_Dojo::includeDojoJS', 'instead');
-            SPP_Event::addEventHandler('event_spp_include_js_files', 'SPP_Dojo::includeDojoLoadJS', 'after');
-            SPP_Event::addEventHandler('event_spp_include_js_files', 'SPP_Dojo::includeDojoOptions', 'before');
-            SPP_Event::addEventHandler('event_spp_include_css_files', 'SPP_Dojo::includeDojoStyle', 'before');
+            \SPP\SPP_Event::setDefaultEventHandler('event_spp_core_dojo_inc', 'SPP_Dojo::includeDojoJS', 'instead');
+            \SPP\SPP_Event::addEventHandler('event_spp_include_js_files', 'SPP_Dojo::includeDojoLoadJS', 'after');
+            \SPP\SPP_Event::addEventHandler('event_spp_include_js_files', 'SPP_Dojo::includeDojoOptions', 'before');
+            \SPP\SPP_Event::addEventHandler('event_spp_include_css_files', 'SPP_Dojo::includeDojoStyle', 'before');
             if($source_name=='')
             {
                 self::setSource('spp', $version, $url);
@@ -118,7 +118,7 @@ class SPP_Dojo extends SPP_Object {
         }
         else
         {
-            throw new SPP_Exception('Dojo source not set.');
+            throw new \SPP\SPP_Exception('Dojo source not set.');
         }
     }
 
@@ -185,7 +185,7 @@ class SPP_Dojo extends SPP_Object {
         }
         else
         {
-            throw new SPP_Exception('Dojo source not set.');
+            throw new \SPP\SPP_Exception('Dojo source not set.');
         }
     }
 
@@ -217,13 +217,13 @@ class SPP_Dojo extends SPP_Object {
         elseif($version!='')
         {
             self::$srcver=$version;
-            $conffile=SPP_Module::getConfFile('sppdojo', 'dojosources.xml');
+            $conffile=\SPP\Module::getConfFile('sppdojo', 'dojosources.xml');
             $xml=simplexml_load_file($conffile);
             //$xml=simplexml_load_file(SPP_MODSCONF_DIR.SPP_DS.'sppdojo'.SPP_DS.'dojosources.xml');
             $src=$xml->xpath('/dojosrc/src[name=\''.$source_name.'\']/version[@value=\''.$version.'\']');
             if(sizeof($src)<1)
             {
-                throw new SPP_Exception('Invalid source name or version: Source - '.$source_name.', Version - '.$version);
+                throw new \SPP\SPP_Exception('Invalid source name or version: Source - '.$source_name.', Version - '.$version);
             }
             else
             {
@@ -245,9 +245,9 @@ class SPP_Dojo extends SPP_Object {
         }
         else
         {
-            $conffile=SPP_Module::getConfFile('sppdojo', 'dojosources.xml');
+            $conffile=\SPP\Module::getConfFile('sppdojo', 'dojosources.xml');
             $xml=simplexml_load_file($conffile);
-            //$moddir=SPP_Scheduler::getModsConfDir();
+            //$moddir=\SPP\Scheduler::getModsConfDir();
             //echo $moddir;
             //echo '<br>'.$moddir.SPP_DS.'sppdojo'.SPP_DS.'dojosources.xml';
             //$xml=simplexml_load_file($moddir.SPP_DS.'sppdojo'.SPP_DS.'dojosources.xml');
@@ -255,7 +255,7 @@ class SPP_Dojo extends SPP_Object {
             $src=(array)$src;
             if(sizeof($src)<1)
             {
-                throw new SPP_Exception('Invalid source name or version: Source - '.$source_name.', Version - '.$version);
+                throw new \SPP\SPP_Exception('Invalid source name or version: Source - '.$source_name.', Version - '.$version);
             }
             else
             {
@@ -293,11 +293,11 @@ class SPP_Dojo extends SPP_Object {
         self::init();
         if(self::$source=='')
         {
-            throw new SPP_Exception('Dojo source not set.');
+            throw new \SPP\SPP_Exception('Dojo source not set.');
         }
         elseif($dojostyle==''&&self::$dojocss=='')
         {
-            throw new SPP_Exception('Dojo css path not set.');
+            throw new \SPP\SPP_Exception('Dojo css path not set.');
         }
         elseif($url!='')
         {
@@ -306,12 +306,12 @@ class SPP_Dojo extends SPP_Object {
         }
         elseif(self::$srcver=='')
         {
-            throw new SPP_Exception('Dojo version not set.');
+            throw new \SPP\SPP_Exception('Dojo version not set.');
         }
         elseif(self::$srcver!='')
         {
-            //$moddir=SPP_Scheduler::getModsConfDir();
-            $conffile=SPP_Module::getConfFile('sppdojo', 'dojosources.xml');
+            //$moddir=\SPP\Scheduler::getModsConfDir();
+            $conffile=\SPP\Module::getConfFile('sppdojo', 'dojosources.xml');
             //$xml=simplexml_load_file($moddir.SPP_DS.'sppdojo'.SPP_DS.'dojosources.xml');
             $xml=simplexml_load_file($conffile);
             $src=$xml->xpath('/dojosrc/src[name=\''.self::$source.'\']/version[@value=\''.self::$srcver.'\']/themes/theme[name=\''.$theme_name.'\']');
@@ -319,7 +319,7 @@ class SPP_Dojo extends SPP_Object {
             //var_dump($src);
             if(sizeof($src)<1)
             {
-                throw new SPP_Exception('Invalid theme name : '.$theme_name);
+                throw new \SPP\SPP_Exception('Invalid theme name : '.$theme_name);
             }
             else
             {
@@ -357,7 +357,7 @@ class SPP_Dojo extends SPP_Object {
                 return self::$src_url;
                 break;
             default:
-                throw new SPP_Exception('Illegal property : '.$prop);
+                throw new \SPP\SPP_Exception('Illegal property : '.$prop);
                 break;
         }
     }

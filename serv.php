@@ -13,6 +13,6 @@ else if(SPP_Ajax::isComponentRequest()){
     SPP_Ajax::loadPageComponent();
 }
 else{
-    throw new SPP_Exception('Unknown request!');
+    throw new \SPP\SPP_Exception('Unknown request!');
 }
 ?>

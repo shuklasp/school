@@ -6,7 +6,7 @@ require_once('class.sppentityrelations.php');
  * Defines an entity
  */
 
- class SPP_Entity{
+ abstract class SPP_Entity{
    protected $id=NULL;
    protected static $_id_field='id';
    protected static $_sequence='entities';
@@ -21,13 +21,25 @@ require_once('class.sppentityrelations.php');
     * @param int $id
     */
    public function __construct($id=null){
+    $this->_values=array();
+    self::addAttributes($this->define_attributes());
+    $this->after_creation();
     $this->id = $id;
     if($id!=null)
     {
       $this->load($id);
     }
    }
-   
+
+   public function define_attributes()
+   {
+    throw new \SPP\SPP_Exception('Required method define_attributes() not defined in entity '.get_class($this).'.');
+   }
+
+   public function after_creation(){
+    // To be implemented in derived classes
+   }
+
    /**
     * public function __toString()
     * Returns the name of the entity

@@ -1,11 +1,12 @@
 <?php
+namespace SPP;
 /**
  * class SPP_Settings
  * Displayes and gets settings from settings.xml
  *
  * @author Satya Prakash Shukla
  */
-class SPP_Settings extends SPP_Object {
+class SPP_Settings extends \SPP\SPP_Object {
     private $setxml;
     
     public function __construct()

@@ -1,4 +1,5 @@
 <?php
+namespace SPP;
 //require_once 'class.sppobject.php';
 /**
  * class SPP_Entity
@@ -7,7 +8,7 @@
  *
  * @author Satya Prakash Shukla
  */
-abstract class SPP_Entity extends SPP_Object{
+abstract class SPP_Entity extends \SPP\SPP_Object{
     protected $attributes=array();
     protected $getprops=array(),$setprops=array();
 
@@ -16,7 +17,7 @@ abstract class SPP_Entity extends SPP_Object{
      * Load attribute values here.
      */
     public function  __construct() {
-        parent::__construct();
+        //parent::__construct();
     }
 
     /**
@@ -68,7 +69,7 @@ abstract class SPP_Entity extends SPP_Object{
         }
         else
         {
-            throw new UnknownPropertyException('Unknown property '.$propname);
+            throw new \UnknownPropertyException('Unknown property '.$propname);
         }
     }
 
@@ -88,7 +89,7 @@ abstract class SPP_Entity extends SPP_Object{
         }
         else
         {
-            throw new UnknownPropertyException('Unknown property '.$propname);
+            throw new \UnknownPropertyException('Unknown property '.$propname);
         }
     }
 }

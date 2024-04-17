@@ -1,30 +1,31 @@
 <?php
+namespace SPP;
 /* 
  * file class.sppapp.php
- * Defines SPP_App class.
+ * Defines \SPP\App class.
 */
 
 /**
- * class SPP_App
+ * class \SPP\App
  * Defines application in SPP.
  *
  * @author Satya Prakash Shukla
  */
-class SPP_App extends SPP_Object {
+class App extends \SPP\SPP_Object {
     private $appname='';
     private $modsloaded=false;
     private $errobj=0;
     private $app_status=self::APP_EXEC;
-    public static const APP_EXEC=1;
-    public static const APP_WAITING=2;
-    public static const APP_STOPPED=3;
-    public static const APP_ERROR=4;
-    private const data_dir=SPP_ETC_DIR.SPP_DS.'apps'.SPP_DS.$appname.SPP_DS.'data'.SPP_DS;
-    private const log_dir=SPP_ETC_DIR.SPP_DS.'apps'.SPP_DS.$appname.SPP_DS.'logs'.SPP_DS;
-    private const cache_dir=SPP_ETC_DIR.SPP_DS.'apps'.SPP_DS.$appname.SPP_DS.'cache'.SPP_DS;
-    private const tmp_dir=SPP_ETC_DIR.SPP_DS.'apps'.SPP_DS.$appname.SPP_DS.'tmp'.SPP_DS;
-    private const conf_dir=SPP_ETC_DIR.SPP_DS.'apps'.SPP_DS.$appname.SPP_DS.'conf'.SPP_DS;
-    private const mod_dir=SPP_ETC_DIR.SPP_DS.'apps'.SPP_DS.$appname.SPP_DS.'mods'.SPP_DS;
+    public const APP_EXEC=1;
+    public const APP_WAITING=2;
+    public const APP_STOPPED=3;
+    public const APP_ERROR=4;
+    private static $data_dir;
+    private static $log_dir;
+    private static $cache_dir;
+    private static $tmp_dir;
+    private static $conf_dir;
+    private static $mod_dir;
 
     /**
      * function __construct()
@@ -39,13 +40,19 @@ class SPP_App extends SPP_Object {
             $appname='default';
         }
         $this->appname=$appname;
-        if(SPP_Registry::isRegistered('__apps'.$appname.'=>status')) {
-            throw new SPP_Exception('Application '.$appname.' already exists.');
+        self::$data_dir=SPP_ETC_DIR.SPP_DS.'apps'.SPP_DS.$appname.SPP_DS.'data'.SPP_DS;
+        self::$log_dir=SPP_ETC_DIR.SPP_DS.'apps'.SPP_DS.$appname.SPP_DS.'logs'.SPP_DS;
+        self::$cache_dir=SPP_ETC_DIR.SPP_DS.'apps'.SPP_DS.$appname.SPP_DS.'cache'.SPP_DS;
+        self::$tmp_dir=SPP_ETC_DIR.SPP_DS.'apps'.SPP_DS.$appname.SPP_DS.'tmp'.SPP_DS;
+        self::$conf_dir=SPP_ETC_DIR.SPP_DS.'apps'.SPP_DS.$appname.SPP_DS.'conf'.SPP_DS;
+        self::$mod_dir=SPP_ETC_DIR.SPP_DS.'apps'.SPP_DS.$appname.SPP_DS.'mods'.SPP_DS;
+        if(\SPP\Registry::isRegistered('__apps'.$appname.'=>status')) {
+            throw new \SPP\SPP_Exception('Application '.$appname.' already exists.');
         }
         else {
             if($init_level>=1) {
-                SPP_Scheduler::regProc($this);
-                SPP_Scheduler::setContext($appname);
+                \SPP\Scheduler::regProc($this);
+                \SPP\Scheduler::setContext($appname);
             }
             if($init_level>=2) {
                 $this->loadModules();
@@ -64,14 +71,14 @@ class SPP_App extends SPP_Object {
 
     public static function getApp()
     {
-        $context=SPP_Scheduler::getContext();
-        $app=new SPP_App($context);
+        $context=\SPP\Scheduler::getContext();
+        $app=new \SPP\App($context);
         return $app;
     }
 
     public static function getActiveApp()
     {
-        $context=SPP_Scheduler::getContext();
+        $context=\SPP\Scheduler::getContext();
         return $context;
     }
 
@@ -85,7 +92,7 @@ class SPP_App extends SPP_Object {
      * Sets the status of application.
      *
      * @param integer $status Status of the application.
-     * @throws SPP_Exception If the status is invalid.
+     * @throws \SPP\SPP_Exception If the status is invalid.
      */
     public function setStatus($status)
     {
@@ -94,7 +101,7 @@ class SPP_App extends SPP_Object {
             $this->app_status = $status;
         }
         else {
-            throw new SPP_Exception('Invalid application status.');
+            throw new \SPP\SPP_Exception('Invalid application status.');
         }
     }
 
@@ -113,32 +120,32 @@ class SPP_App extends SPP_Object {
 
     public function getLogDir()
     {
-        return self::log_dir;
+        return self::$log_dir;
     }
 
     public function getCacheDir()
     {
-        return self::cache_dir;
+        return self::$cache_dir;
     }
 
     public function getTmpDir()
     {
-        return self::tmp_dir;
+        return self::$tmp_dir;
     }
 
     public function getConfDir()
     {
-        return self::conf_dir;
+        return self::$conf_dir;
     }
 
     public function getModDir()
     {
-        return self::mod_dir;
+        return self::$mod_dir;
     }
 
     public function getDataDir()
     {
-        return self::data_dir;
+        return self::$data_dir;
     }
 
     /**
@@ -206,14 +213,14 @@ class SPP_App extends SPP_Object {
     public static function killSession()
     {
         $ssname=self::getSessionName();
-        SPP_Event::startEvent('ev_kill_session');
+        \SPP\SPP_Event::startEvent('ev_kill_session');
         $ssname=self::getSessionName();
         if(SPP_Session::sessionExists())
         {
             unset($_SESSION[$ssname]);
             //session_destroy();
         }
-        SPP_Event::endEvent('spp_event_kill_session');
+        \SPP\SPP_Event::endEvent('spp_event_kill_session');
     }
 
     /**
@@ -224,7 +231,7 @@ class SPP_App extends SPP_Object {
      */
     public static function getSessionName()
     {
-        $context=SPP_Scheduler::getContext();
+        $context=\SPP\Scheduler::getContext();
         $ssnname='__'.$context.'_sppsession';
         return $ssnname;
     }
@@ -232,10 +239,10 @@ class SPP_App extends SPP_Object {
     {
         if($status==self::APP_EXEC||$status==self::APP_WAITING)
         {
-            $oldcontext=SPP_Scheduler::getContext();
-            SPP_Scheduler::setContext($this->appname);
-            SPP_Registry::register('status', $status);
-            SPP_Scheduler::setContext($oldcontext);
+            $oldcontext=\SPP\Scheduler::getContext();
+            \SPP\Scheduler::setContext($this->appname);
+            \SPP\Registry::register('status', $status);
+            \SPP\Scheduler::setContext($oldcontext);
         }
     }
 
@@ -243,10 +250,10 @@ class SPP_App extends SPP_Object {
     {
         if($status==self::APP_EXEC||$status==self::APP_WAITING)
         {
-            $oldcontext=SPP_Scheduler::getContext();
-            SPP_Scheduler::setContext($this->appname);
-            SPP_Registry::register('status', $status);
-            SPP_Scheduler::setContext($oldcontext);
+            $oldcontext=\SPP\Scheduler::getContext();
+            \SPP\Scheduler::setContext($this->appname);
+            \SPP\Registry::register('status', $status);
+            \SPP\Scheduler::setContext($oldcontext);
         }
     }*/
 
@@ -256,10 +263,10 @@ class SPP_App extends SPP_Object {
      */
     public function loadModules() {
         if($this->modsloaded===false) {
-            $oldcontext=SPP_Scheduler::getContext();
-            SPP_Scheduler::setContext($this->appname);
-            SPP_Module::loadAllModules();
-            SPP_Scheduler::setContext($oldcontext);
+            $oldcontext=\SPP\Scheduler::getContext();
+            \SPP\Scheduler::setContext($this->appname);
+            \SPP\Module::loadAllModules();
+            \SPP\Scheduler::setContext($oldcontext);
             $this->modsloaded=true;
         }
     }
