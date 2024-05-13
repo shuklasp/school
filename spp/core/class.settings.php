@@ -1,18 +1,21 @@
 <?php
 namespace SPP;
 /**
- * class SPP_Settings
+ * class SPP\Settings
  * Displayes and gets settings from settings.xml
  *
  * @author Satya Prakash Shukla
  */
-class SPP_Settings extends \SPP\SPP_Object {
+class Settings extends \SPP\SPPObject {
     private $setxml;
+    private $yamlfile = 'settings.yaml';
+    private $settings;
     
     public function __construct()
     {
         $dir=$GLOBALS['app']->getAppConfDir();
-        $this->setxml=simplexml_load_file($dir.'/settings.xml');
+        $this->settings=yaml_parse_file($dir.$this->yamlfile);
+        //$this->setxml=simplexml_load_file($dir.'/settings.xml');
     }
 
     public function getProfile()
@@ -26,7 +29,7 @@ class SPP_Settings extends \SPP\SPP_Object {
         $prof=$this->getProfile();
         $path='/settings/profiles/profile[pname=\''.$prof.'\']';
         $settings=$this->setxml->xpath($path);
-        return SPP_XML::xml2phpArray($settings[0]);
+        return SPPXml::xml2phpArray($settings[0]);
     }
 
     public function getProfileSetting($sval)
@@ -45,7 +48,7 @@ class SPP_Settings extends \SPP\SPP_Object {
     {
         /*$path='/settings//'.$sval;
         $settings=$this->setxml->xpath($path);
-        $value=SPP_XML::xml2phpArray($settings[0]);*/
+        $value=SPPXml::xml2phpArray($settings[0]);*/
 
         $dir=$GLOBALS['app']->getAppConfDir();
         $xml=simplexml_load_file($dir.'/settings.xml');

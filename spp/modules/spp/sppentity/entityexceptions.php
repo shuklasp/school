@@ -1,11 +1,13 @@
 <?php
-class AttributeNotFoundException extends \SPP\SPP_Exception{
+namespace SPP\Exceptions;
+
+class AttributeNotFoundException extends \SPP\SPPException{
     public function  __construct($message,$code=2000) {
         parent::__construct($message, $code);
     }
 }
 
-class EntityNotFoundException extends \SPP\SPP_Exception
+class EntityNotFoundException extends \SPP\SPPException
 {
     public function  __construct($message, $code = 2000)
     {

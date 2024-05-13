@@ -7,7 +7,7 @@ namespace SPP;
  *
  * @author Satya Prakash Shukla
  */
-class Stack extends \SPP\SPP_Object{
+class Stack extends \SPP\SPPObject{
     private $values;
     private $curkey;
     

@@ -1,4 +1,7 @@
 <?php
+
+namespace SPPMod;
+
 /**
  * class SPP_Validator
  * Defines a field validator.
@@ -8,7 +11,7 @@
 /* require_once 'class.sppbase.php';
  require_once 'sppconstants.php';*/
  
-abstract class SPP_Validator extends \SPP\SPP_Object {
+abstract class SPP_Validator extends \SPP\SPPObject {
     protected $jsfunc,$applicabletags=array(),$errorholder,$msg='';
     protected $attachedto=array();
 

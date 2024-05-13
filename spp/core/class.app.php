@@ -11,7 +11,7 @@ namespace SPP;
  *
  * @author Satya Prakash Shukla
  */
-class App extends \SPP\SPP_Object {
+class App extends \SPP\SPPObject {
     private $appname='';
     private $modsloaded=false;
     private $errobj=0;
@@ -47,7 +47,7 @@ class App extends \SPP\SPP_Object {
         self::$conf_dir=SPP_ETC_DIR.SPP_DS.'apps'.SPP_DS.$appname.SPP_DS.'conf'.SPP_DS;
         self::$mod_dir=SPP_ETC_DIR.SPP_DS.'apps'.SPP_DS.$appname.SPP_DS.'mods'.SPP_DS;
         if(\SPP\Registry::isRegistered('__apps'.$appname.'=>status')) {
-            throw new \SPP\SPP_Exception('Application '.$appname.' already exists.');
+            throw new \SPP\SPPException('Application '.$appname.' already exists.');
         }
         else {
             if($init_level>=1) {
@@ -58,13 +58,13 @@ class App extends \SPP\SPP_Object {
                 $this->loadModules();
             }
             if($init_level>=3) {
-                if(!SPP_Session::sessionExists()) {
-                    $ssn=new SPP_Session();
+                if(!SPPSession::sessionExists()) {
+                    $ssn=new SPPSession();
                     $_SESSION['__'.$appname.'_sppsession']=serialize($ssn);
                 }
             }
             if($init_level>=4) {
-                $this->errobj=new SPP_Error($handleerror);
+                $this->errobj=new SPPError($handleerror);
             }
         }
     }
@@ -92,7 +92,7 @@ class App extends \SPP\SPP_Object {
      * Sets the status of application.
      *
      * @param integer $status Status of the application.
-     * @throws \SPP\SPP_Exception If the status is invalid.
+     * @throws \SPP\SPPException If the status is invalid.
      */
     public function setStatus($status)
     {
@@ -101,7 +101,7 @@ class App extends \SPP\SPP_Object {
             $this->app_status = $status;
         }
         else {
-            throw new \SPP\SPP_Exception('Invalid application status.');
+            throw new \SPP\SPPException('Invalid application status.');
         }
     }
 
@@ -152,7 +152,7 @@ class App extends \SPP\SPP_Object {
      * function getErrorObj()
      * Gets the error object for this application.
      * 
-     * @return SPP_Error The error object.
+     * @return SPPError The error object.
      */
     public function getErrorObj() {
         return $this->errobj;
@@ -199,9 +199,9 @@ class App extends \SPP\SPP_Object {
     public static function initSession()
     {
         $ssname=self::getSessionName();
-        if(!SPP_Session::sessionExists())
+        if(!SPPSession::sessionExists())
         {
-            $ssn=new SPP_Session();
+            $ssn=new SPPSession();
             $_SESSION[$ssname]=serialize($ssn);
         }
     }
@@ -213,14 +213,14 @@ class App extends \SPP\SPP_Object {
     public static function killSession()
     {
         $ssname=self::getSessionName();
-        \SPP\SPP_Event::startEvent('ev_kill_session');
+        \SPP\SPPEvent::startEvent('ev_kill_session');
         $ssname=self::getSessionName();
-        if(SPP_Session::sessionExists())
+        if(SPPSession::sessionExists())
         {
             unset($_SESSION[$ssname]);
             //session_destroy();
         }
-        \SPP\SPP_Event::endEvent('spp_event_kill_session');
+        \SPP\SPPEvent::endEvent('spp_event_kill_session');
     }
 
     /**

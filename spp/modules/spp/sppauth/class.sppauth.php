@@ -1,4 +1,8 @@
 <?php
+namespace SPPMod;
+use SPP\Exceptions\ConfigVarExistsException as ConfigVarExistsException;
+use SPP\Exceptions\NoAuthSessionException as NoAuthSessionException;
+use SPP\Exceptions\UnknownPropertyException as UnknownPropertyException;
 /*require_once 'class.sppusersession.php';
 require_once 'sppsystemevents.php';
 require_once 'sppfuncs.php';*/
@@ -8,7 +12,7 @@ require_once 'sppfuncs.php';*/
  *
  * @author Satya Prakash Shukla
  */
-class SPP_Auth extends \SPP\SPP_Object{
+class SPP_Auth extends \SPP\SPPObject{
     /**
      * static function login()
      * Authenticates a userid/password and creates session.
@@ -19,7 +23,7 @@ class SPP_Auth extends \SPP\SPP_Object{
     public static function login($uname,$passwd)
     {
         $ssn=new SPP_User_Session($uname,$passwd);
-        \SPP\SPP_Session::setSessionVar('__sppauth__', $ssn);
+        \SPP\SPPSession::setSessionVar('__sppauth__', $ssn);
         return $ssn;
         /*$ev=new LoginEvent();
         $ev->handle();*/
@@ -35,7 +39,7 @@ class SPP_Auth extends \SPP\SPP_Object{
         $ev->handle();*/
         if(self::authSessionExists())
         {
-            $ssn=\SPP\SPP_Session::getSessionVar('__sppauth__');
+            $ssn=\SPP\SPPSession::getSessionVar('__sppauth__');
             $ssn->kill();
             session_destroy();
         }
@@ -49,10 +53,10 @@ class SPP_Auth extends \SPP\SPP_Object{
      */
     public static function authSessionExists($consider_timeout=false)
     {
-        if(\SPP\SPP_Session::sessionVarExists('__sppauth__'))
+        if(\SPP\SPPSession::sessionVarExists('__sppauth__'))
         {
             //echo 'sessvar';
-            /*$ssn=SPP_Session::getSessionVar('__sppauth__');
+            /*$ssn=SPPSession::getSessionVar('__sppauth__');
             if($ssn->isValid($consider_timeout))
             {*/
                 return true;
@@ -75,7 +79,7 @@ class SPP_Auth extends \SPP\SPP_Object{
      * Valid Properties:
      *          UserName
      *          UserId
-     *          SPP_Session Variable
+     *          SPPSession Variable
      * 
      * @param string $propname
      * @return mixed
@@ -84,7 +88,7 @@ class SPP_Auth extends \SPP\SPP_Object{
     {
         if(self::authSessionExists())
         {
-            $ssn= \SPP\SPP_Session::getSessionVar('__sppauth__');
+            $ssn= \SPP\SPPSession::getSessionVar('__sppauth__');
             switch($propname)
             {
                 case 'UserName':
@@ -100,7 +104,7 @@ class SPP_Auth extends \SPP\SPP_Object{
         }
         else
         {
-            throw new NoAuthSessionException('No Authenticated SPP_Session Exists!');
+            throw new NoAuthSessionException('No Authenticated SPPSession Exists!');
         }
     }
 
@@ -116,12 +120,12 @@ class SPP_Auth extends \SPP\SPP_Object{
     {
         if(self::authSessionExists())
         {
-            $ssn= \SPP\SPP_Session::getSessionVar('__sppauth__');
+            $ssn= \SPP\SPPSession::getSessionVar('__sppauth__');
             return $ssn->validVarExists($varname);
         }
         else
         {
-            throw new NoAuthSessionException('No Authenticated SPP_Session Exists!');
+            throw new NoAuthSessionException('No Authenticated SPPSession Exists!');
         }
     }
 
@@ -136,12 +140,12 @@ class SPP_Auth extends \SPP\SPP_Object{
     {
         if(self::authSessionExists())
         {
-            $ssn= \SPP\SPP_Session::getSessionVar('__sppauth__');;
+            $ssn= \SPP\SPPSession::getSessionVar('__sppauth__');;
             return $ssn->getVar($varname);
         }
         else
         {
-            throw new NoAuthSessionException('No Authenticated SPP_Session Exists!');
+            throw new NoAuthSessionException('No Authenticated SPPSession Exists!');
         }
     }
 
@@ -156,12 +160,12 @@ class SPP_Auth extends \SPP\SPP_Object{
 	{
         if(self::authSessionExists())
         {
-            $ssn= \SPP\SPP_Session::getSessionVar('__sppauth__');;
+            $ssn= \SPP\SPPSession::getSessionVar('__sppauth__');;
             return $ssn->hasRight($rt);
         }
         else
         {
-            throw new NoAuthSessionException('No Authenticated SPP_Session Exists!');
+            throw new NoAuthSessionException('No Authenticated SPPSession Exists!');
         }
 	}
 

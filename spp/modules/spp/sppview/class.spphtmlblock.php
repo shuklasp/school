@@ -1,6 +1,8 @@
 <?php
 
-class SPP_HTML_Block extends SPP_HTML_Element {
+namespace SPPMod;
+
+class SPP_HTML_Block extends SPP_ViewTag {
 
 	public $content;
     public $tag = 'div';
@@ -40,8 +42,8 @@ class SPP_HTML_Block extends SPP_HTML_Element {
         if (isset($this->attributes['id']))
             $this->attributes['id'] = $this->id;
         $this->content_attributes['id'] = $this->id . '-content';
-        $html= '<' . $this->tag . SPP_HTML_Element::RenderAttributes() . '>';
-        $html.= '<div ' . SPP_HTML_Element::renderAttributes() . '>' . $this->content . '</div>';
+        $html= '<' . $this->tag . SPP_ViewTag::RenderAttributes() . '>';
+        $html.= '<div ' . SPP_ViewTag::renderAttributes() . '>' . $this->content . '</div>';
   
         $html=parent::render();
         $html.=$this->content;

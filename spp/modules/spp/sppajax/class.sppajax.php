@@ -3,12 +3,12 @@ require_once('ajaxexceptions.php');
 
 /**
  * class SPP_Ajax
- * extends \SPP\SPP_Object
+ * extends \SPP\SPPObject
  * Deals with ajax calls
  * 
  * SPP Services are defined in SPP_DIR/services.php
  */
-class SPP_Ajax extends \SPP\SPP_Object{
+class SPP_Ajax extends \SPP\SPPObject{
     function __construct()
     {
         
@@ -23,8 +23,8 @@ class SPP_Ajax extends \SPP\SPP_Object{
     {
         $serv=$_REQUEST['service'];
         //global $services, $servdir;
-        $services=SPP_Global::get('services');      // Gets the list of pages for services defined
-        $servdir=SPP_Global::get('servdir');        // Gets directory of server scripts of services.
+        $services=SPPGlobal::get('services');      // Gets the list of pages for services defined
+        $servdir=SPPGlobal::get('servdir');        // Gets directory of server scripts of services.
         require_once($servdir.$services[$serv]);    // Call the page of service to be called.
     }
 
@@ -35,8 +35,8 @@ class SPP_Ajax extends \SPP\SPP_Object{
      */
     public static function getPageLocation($page)
     {
-        $pages=SPP_Global::get('pages');
-        $pagedir=SPP_Global::get('pagedir');
+        $pages=SPPGlobal::get('pages');
+        $pagedir=SPPGlobal::get('pagedir');
         return($pagedir.$pages[$page]['page']);
     }
 

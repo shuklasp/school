@@ -1,4 +1,6 @@
 <?php
+
+namespace SPPMod;
 //require_once 'class.spphtmlelement.php';
 
 class SPP_HTML_Anchor extends SPP_HTML_Element{

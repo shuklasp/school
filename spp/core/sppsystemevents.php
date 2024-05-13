@@ -2,17 +2,17 @@
 require_once 'class.sppevent.php';
 require_once 'class.spplogger.php';
 
-class LoginEvent extends \SPP\SPP_Event{
+class LoginEvent extends \SPP\SPPEvent{
     protected function handler()
     {
-        SPP_Logger::write_to_log('Login');
+        \SPPMod\SPP_Logger::write_to_log('Login');
     }
 }
 
-class LogoutEvent extends \SPP\SPP_Event{
+class LogoutEvent extends \SPP\SPPEvent{
     protected function handler()
     {
-        SPP_Logger::write_to_log('Logout');
+        \SPPMod\SPP_Logger::write_to_log('Logout');
     }
 }
 ?>

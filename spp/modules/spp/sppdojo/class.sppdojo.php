@@ -12,7 +12,7 @@
  * @package \SPP\Modules
  * @subpackage SPP_Dojo
  */
-class SPP_Dojo extends \SPP\SPP_Object {
+class SPP_Dojo extends \SPP\SPPObject {
     private static $source='spp';
     private static $srcver='';
     private static $src_url='';
@@ -47,7 +47,7 @@ class SPP_Dojo extends \SPP\SPP_Object {
         $did=$dijit->getId();
         if(array_key_exists($did, self::$dijits))
         {
-            throw new \SPP\SPP_Exception('Duplicate dijit declaration : '.$did);
+            throw new \SPP\SPPException('Duplicate dijit declaration : '.$did);
         }
         else
         {
@@ -84,10 +84,10 @@ class SPP_Dojo extends \SPP\SPP_Object {
         if(!self::$init)
         {
             self::$init=true;
-            \SPP\SPP_Event::setDefaultEventHandler('event_spp_core_dojo_inc', 'SPP_Dojo::includeDojoJS', 'instead');
-            \SPP\SPP_Event::addEventHandler('event_spp_include_js_files', 'SPP_Dojo::includeDojoLoadJS', 'after');
-            \SPP\SPP_Event::addEventHandler('event_spp_include_js_files', 'SPP_Dojo::includeDojoOptions', 'before');
-            \SPP\SPP_Event::addEventHandler('event_spp_include_css_files', 'SPP_Dojo::includeDojoStyle', 'before');
+            \SPP\SPPEvent::setDefaultEventHandler('event_spp_core_dojo_inc', 'SPP_Dojo::includeDojoJS', 'instead');
+            \SPP\SPPEvent::addEventHandler('event_spp_include_js_files', 'SPP_Dojo::includeDojoLoadJS', 'after');
+            \SPP\SPPEvent::addEventHandler('event_spp_include_js_files', 'SPP_Dojo::includeDojoOptions', 'before');
+            \SPP\SPPEvent::addEventHandler('event_spp_include_css_files', 'SPP_Dojo::includeDojoStyle', 'before');
             if($source_name=='')
             {
                 self::setSource('spp', $version, $url);
@@ -118,7 +118,7 @@ class SPP_Dojo extends \SPP\SPP_Object {
         }
         else
         {
-            throw new \SPP\SPP_Exception('Dojo source not set.');
+            throw new \SPP\SPPException('Dojo source not set.');
         }
     }
 
@@ -185,7 +185,7 @@ class SPP_Dojo extends \SPP\SPP_Object {
         }
         else
         {
-            throw new \SPP\SPP_Exception('Dojo source not set.');
+            throw new \SPP\SPPException('Dojo source not set.');
         }
     }
 
@@ -223,7 +223,7 @@ class SPP_Dojo extends \SPP\SPP_Object {
             $src=$xml->xpath('/dojosrc/src[name=\''.$source_name.'\']/version[@value=\''.$version.'\']');
             if(sizeof($src)<1)
             {
-                throw new \SPP\SPP_Exception('Invalid source name or version: Source - '.$source_name.', Version - '.$version);
+                throw new \SPP\SPPException('Invalid source name or version: Source - '.$source_name.', Version - '.$version);
             }
             else
             {
@@ -255,7 +255,7 @@ class SPP_Dojo extends \SPP\SPP_Object {
             $src=(array)$src;
             if(sizeof($src)<1)
             {
-                throw new \SPP\SPP_Exception('Invalid source name or version: Source - '.$source_name.', Version - '.$version);
+                throw new \SPP\SPPException('Invalid source name or version: Source - '.$source_name.', Version - '.$version);
             }
             else
             {
@@ -293,11 +293,11 @@ class SPP_Dojo extends \SPP\SPP_Object {
         self::init();
         if(self::$source=='')
         {
-            throw new \SPP\SPP_Exception('Dojo source not set.');
+            throw new \SPP\SPPException('Dojo source not set.');
         }
         elseif($dojostyle==''&&self::$dojocss=='')
         {
-            throw new \SPP\SPP_Exception('Dojo css path not set.');
+            throw new \SPP\SPPException('Dojo css path not set.');
         }
         elseif($url!='')
         {
@@ -306,7 +306,7 @@ class SPP_Dojo extends \SPP\SPP_Object {
         }
         elseif(self::$srcver=='')
         {
-            throw new \SPP\SPP_Exception('Dojo version not set.');
+            throw new \SPP\SPPException('Dojo version not set.');
         }
         elseif(self::$srcver!='')
         {
@@ -319,7 +319,7 @@ class SPP_Dojo extends \SPP\SPP_Object {
             //var_dump($src);
             if(sizeof($src)<1)
             {
-                throw new \SPP\SPP_Exception('Invalid theme name : '.$theme_name);
+                throw new \SPP\SPPException('Invalid theme name : '.$theme_name);
             }
             else
             {
@@ -357,7 +357,7 @@ class SPP_Dojo extends \SPP\SPP_Object {
                 return self::$src_url;
                 break;
             default:
-                throw new \SPP\SPP_Exception('Illegal property : '.$prop);
+                throw new \SPP\SPPException('Illegal property : '.$prop);
                 break;
         }
     }

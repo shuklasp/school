@@ -4,14 +4,14 @@ require_once('../sppinit.php');
 //require_once SPP_BASE_DIR.SPPUS.'sppbase.php')
 //session_start();
 //require_once SPP_BASE_DIR.SPPUS.'sppauth.php';
-//\SPP\SPP_Base::useModule('SPP_Auth');
-//\SPP\SPP_Base::useModule('SPPHtml');
-/* if(!SPP_Dev::isDevEnvSetup())
+//\SPP\SPPBase::useModule('SPP_Auth');
+//\SPP\SPPBase::useModule('SPPHtml');
+/* if(!SPPDev::isDevEnvSetup())
 {
-    header('Location: '.\SPP\SPP_Base::sppLink('devsetup.php'));
+    header('Location: '.\SPP\SPPBase::sppLink('devsetup.php'));
 }
 require_once 'model.index.php';
-//require_once 'class.SPP_Dev.php';
+//require_once 'class.SPPDev.php';
 if(array_key_exists('login', $_POST))
 {
     SPP_Auth::login($_POST['login'], $_POST['passwd']);

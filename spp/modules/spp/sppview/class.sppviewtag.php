@@ -1,4 +1,7 @@
 <?php
+
+namespace SPPMod;
+
 /**
  * file class.sppviewtag.php
  * Defines the SPP_ViewTag class.
@@ -11,7 +14,7 @@
  *
  * @author Satya Prakash Shukla
  */
-class SPP_ViewTag extends \SPP\SPP_Object {
+class SPP_ViewTag extends \SPP\SPPObject {
     protected $tagname;
     protected $isemptyflag=false;
     protected $matter_text;
@@ -78,7 +81,7 @@ class SPP_ViewTag extends \SPP\SPP_Object {
         }
         else
         {
-            throw new \SPP\SPP_Exception('Cannot have multiple elements with same id: '.$tag->id);
+            throw new \SPP\SPPException('Cannot have multiple elements with same id: '.$tag->id);
         }
     }
 

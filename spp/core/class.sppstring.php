@@ -1,12 +1,12 @@
 <?php
 namespace SPP;
 /**
- * class SPP_String
+ * class SPPString
  * Does string handling in SPP.
  *
  * @author Satya Prakash Shukla
  */
-class SPP_String extends \SPP\SPP_Object {
+class SPPString extends \SPP\SPPObject {
     private $str;
 
     public function __toString()

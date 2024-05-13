@@ -1,4 +1,6 @@
 <?php
+
+namespace SPPMod;
 //require_once 'class.spphtmlelement.php';
 
 /**

@@ -11,7 +11,7 @@ require_once 'class.sppstack.php';*/
  *
  * @author Satya Prakash Shukla
  */
-class Registry extends \SPP\SPP_Object {
+class Registry extends \SPP\SPPObject {
     //private static $functions=array();
     //private static $objects=array();
 //    private static $events=array();
@@ -267,11 +267,11 @@ class Registry extends \SPP\SPP_Object {
     }
 
 
-/*    public static function callHandler(\SPP\SPP_Event $event) {
+/*    public static function callHandler(\SPP\SPPEvent $event) {
         self::$events[$event]();
     }
 
-    public static function registerObject(\SPP\SPP_Object $ojb) {
+    public static function registerObject(\SPP\SPPObject $ojb) {
         self::$objects[]=$obj;
     }*/
 }

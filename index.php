@@ -1,10 +1,31 @@
 <?php
 require_once('spp/sppinit.php');
 require_once('global.php');
-$obj=new \SPP\SPP_Settings();
+//$obj=new \SPP\Settings();
 //require_once('vendor/autoload.php');
 include('src/home.php');
-//var_dump($_SESSION);
+/* try{
+    $k=1;
+    if($k==1)
+    {
+        throw new FakeException('This is a fake exception');
+    }
+    if($k==2)
+    {
+        throw new AotherException('This is another exception');
+    }
+//throw new FakeException('This is a fake exception');
+}
+catch(FakeException $e){
+    echo get_class($e);
+    //echo $e->getMessage();
+    echo $e;
+}
+catch(AotherException $e){
+    //echo $e->getMessage();
+    echo $e;
+}
+ *///var_dump($_SESSION);
 /*if($set=$obj->getSetting('src'))
 //print_r($obj);
 {

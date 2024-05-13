@@ -1,7 +1,9 @@
 <?php
+namespace SPPMod;
 global $___globals;
 $___globals=array();
-class SPP_Global{
+namespace SPPMod;
+class SPPGlobal{
     public function __construct()
     {
         

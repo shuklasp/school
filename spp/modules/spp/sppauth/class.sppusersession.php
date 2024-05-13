@@ -1,4 +1,11 @@
 <?php
+
+namespace SPPMod;
+use SPP\Exceptions\UserBannedException;
+use SPP\Exceptions\UserAuthenticationException;
+use SPP\Exceptions\InvalidUserSessionException;
+use SPP\Exceptions\UnknownPropertyException;
+
 require_once('class.sppuser.php');
 /*require_once 'class.sppsession.php';
 require_once 'class.sppbase.php';*/
@@ -8,7 +15,7 @@ require_once 'class.sppbase.php';*/
  *
  * @author Satya Parakash Shukla
  */
-class SPP_User_Session extends \SPP\SPP_Session
+class SPP_User_Session extends \SPP\SPPSession
 {
     private $user, $sessid;
 
@@ -25,7 +32,7 @@ class SPP_User_Session extends \SPP\SPP_Session
         if($this->user->verifyPassword($pswd))
         {
             $db=new SPP_DB();
-            $sql='select * from '.\SPP\SPP_Base::sppTable('users').' where uname=?';
+            $sql='select * from '.\SPP\SPPBase::sppTable('users').' where uname=?';
             $values=array($unm);
             $result=array();
             $result=$db->execute_query($sql, $values);
@@ -35,12 +42,12 @@ class SPP_User_Session extends \SPP\SPP_Session
             }
             //session_regenerate_id();
             $this->sessid=session_id();
-            $sql='select now() nowtime from '.\SPP\SPP_Base::sppTable('users');
+            $sql='select now() nowtime from '.\SPP\SPPBase::sppTable('users');
             $result=$db->execute_query($sql);
             $nowtime=$result[0]['nowtime'];
             //echo $nowtime;
             //$nowtime=date('Y-m-d G:i:s',time());
-            $sql='insert into '.\SPP\SPP_Base::sppTable('loginrec').'(sessid,uid,logintime,ipaddr,lastaccess) values(?,?,?,?,?)';
+            $sql='insert into '.\SPP\SPPBase::sppTable('loginrec').'(sessid,uid,logintime,ipaddr,lastaccess) values(?,?,?,?,?)';
             $values=array($this->sessid,$this->user->get('UserId'),$nowtime,getVisitorIP(),$nowtime);
             $db->execute_query($sql, $values);
             //echo $sql;
@@ -64,7 +71,7 @@ class SPP_User_Session extends \SPP\SPP_Session
     public function isValid($consider_timeout=true)
     {
         $db=new SPP_DB();
-        $sql='select time_to_sec(timediff(now(),lastaccess)) elapsed_time, lastaccess, now() currtime from '.\SPP\SPP_Base::sppTable('loginrec').' where sessid=?';
+        $sql='select time_to_sec(timediff(now(),lastaccess)) elapsed_time, lastaccess, now() currtime from '.\SPP\SPPBase::sppTable('loginrec').' where sessid=?';
         $values=array($this->sessid);
         $result=$db->execute_query($sql, $values);
         //echo $result[0]['lastaccess'].'::::::'.$result[0]['currtime'];
@@ -110,7 +117,7 @@ class SPP_User_Session extends \SPP\SPP_Session
     public function kill()
     {
         $db=new SPP_DB();
-        $sql='delete from '.\SPP\SPP_Base::sppTable('loginrec').' where sessid=?';
+        $sql='delete from '.\SPP\SPPBase::sppTable('loginrec').' where sessid=?';
         $values=array($this->sessid);
         $result=$db->execute_query($sql, $values);
     }

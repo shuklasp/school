@@ -1,11 +1,13 @@
 <?php
 
-\SPP\SPP_Event::registerEvent('event_spp_include_css_files');
-\SPP\SPP_Event::registerEvent('event_spp_include_js_files');
-\SPP\SPP_Event::registerEvent('event_spp_core_dojo_inc');
-\SPP\SPP_Event::registerEvent('event_spp_process_xml_form');
-\SPP\SPP_Event::registerEvent('event_spp_process_xml_form_element');
-\SPP\SPP_Event::registerEvent('event_spp_process_xml_form_validation');
+namespace SPPMod;
+
+\SPP\SPPEvent::registerEvent('event_spp_include_css_files');
+\SPP\SPPEvent::registerEvent('event_spp_include_js_files');
+\SPP\SPPEvent::registerEvent('event_spp_core_dojo_inc');
+\SPP\SPPEvent::registerEvent('event_spp_process_xml_form');
+\SPP\SPPEvent::registerEvent('event_spp_process_xml_form_element');
+\SPP\SPPEvent::registerEvent('event_spp_process_xml_form_validation');
 
 /**
  * class SPP_HTML_Page
@@ -14,7 +16,7 @@
  *
  * @author Satya Prakash Shukla
  */
- class SPP_ViewPage extends \SPP\SPP_Object
+ class SPP_ViewPage extends \SPP\SPPObject
 {
     protected static $jsincludelist = array();
     protected static $cssincludelist = array();
@@ -450,7 +452,7 @@ public static function getPageMeta()
     {
         if (file_exists($fl)) {
             self::$xml = simplexml_load_file($fl);
-            //\SPP\SPP_Event::fireEvent('event_spp_process_xml_form', 'SPP_HTML_Page::processXMLForm', array('xml'=>$xml));
+            //\SPP\SPPEvent::fireEvent('event_spp_process_xml_form', 'SPP_HTML_Page::processXMLForm', array('xml'=>$xml));
             //print_r($xml);
             return true;
         } else {
@@ -467,7 +469,7 @@ public static function getPageMeta()
 public static function processXMLForm()
     {
         $xml = self::$xml;
-        $arr = \SPP\SPP_Utils::xml2phpArray($xml);
+        $arr = \SPP\SPPUtils::xml2phpArray($xml);
         //echo '<br><br>';
         //print_r($arr['forms']);
         if (array_key_exists('forms', $arr))
@@ -524,7 +526,7 @@ public static function processXMLForm()
             //print_r($ctrls);
             $val = new $arr['type']($ctrls);
         } else {
-            SPP_Error::triggerDevError('Error reading validations from array');
+            SPPError::triggerDevError('Error reading validations from array');
         }
         if (array_key_exists('message', $arr)) {
             $form->addValidator($val, $arr['message']);
@@ -572,7 +574,7 @@ public static function processXMLForm()
             }
         }
         self::$elementslist[$ename->getAttribute('id')] = $ename;
-        //\SPP\SPP_Event::fireEvent('event_spp_core_dojo_inc', 'SPP_HTML_Page::event_dojo_included');
+        //\SPP\SPPEvent::fireEvent('event_spp_core_dojo_inc', 'SPP_HTML_Page::event_dojo_included');
         return true;
     }
 
@@ -636,14 +638,14 @@ public static function processXMLForm()
     public static function includeJSFiles()
     {
         $jsi = self::$jsincludelist;
-        \SPP\SPP_Event::startEvent('event_spp_include_js_files');
+        \SPP\SPPEvent::startEvent('event_spp_include_js_files');
         self::$jsincludelist = $jsi;
         echo '<!-- Including Javascript files for Satya Portal Pack -->';
         foreach (self::$jsincludelist as $fl) {
             echo '<script src="' . $fl . '" type="text/JavaScript"></script>';
         }
         echo '<!-- Include ends -->';
-        \SPP\SPP_Event::endEvent('event_spp_include_js_files');
+        \SPP\SPPEvent::endEvent('event_spp_include_js_files');
     }
 
     
@@ -655,12 +657,12 @@ public static function processXMLForm()
      */
     public static function includeCSSFiles()
     {
-        \SPP\SPP_Event::startEvent('event_spp_include_css_files');
+        \SPP\SPPEvent::startEvent('event_spp_include_css_files');
         echo '<!-- Including CSS files for Satya Portal Pack -->';
         foreach (self::$cssincludelist as $fl) {
             echo '<link rel="stylesheet" href="' . $fl . '" />';
         }
         echo '<!-- Include ends -->';
-        \SPP\SPP_Event::endEvent('event_spp_include_css_files');
+        \SPP\SPPEvent::endEvent('event_spp_include_css_files');
     }
 }

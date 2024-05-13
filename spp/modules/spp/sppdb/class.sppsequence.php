@@ -1,4 +1,7 @@
 <?php
+namespace SPPMod;
+use SPP\Exceptions\SequenceDoesNotExistException;
+use SPP\Exceptions\SequenceExistsException;
 /*require_once('class.sppdatabase.php');
 require_once 'class.sppbase.php';
 require_once('sppfuncs.php');
@@ -9,7 +12,7 @@ require_once 'sppsystemexceptions.php';*/
  *
  * Handles all the sequences in the system.
  */
-class SPP_Sequence extends \SPP\SPP_Object
+class SPP_Sequence extends \SPP\SPPObject
 {
     /**
      * function next()
@@ -22,7 +25,7 @@ class SPP_Sequence extends \SPP\SPP_Object
 	public static function next($seqname,$fortoday=false)
 	{
 		$db=new SPP_DB();
-		$sql='select * from '.\SPP\SPP_Base::sppTable('sequences').' where seqname=?';
+		$sql='select * from '.\SPP\SPPBase::sppTable('sequences').' where seqname=?';
 		$result=$db->execute_query($sql,Array($seqname));
 		if(sizeof($result)>0)
 		{
@@ -53,7 +56,7 @@ class SPP_Sequence extends \SPP\SPP_Object
                 $seq+=$res['incval'];
             }
 			$acc=time();
-			$sql='update '.\SPP\SPP_Base::sppTable('sequences').' set seqval=?, lastaccess=? where seqname=?';
+			$sql='update '.\SPP\SPPBase::sppTable('sequences').' set seqval=?, lastaccess=? where seqname=?';
 			$db->execute_query($sql,Array($seq,$acc,$seqname));
 			return $seq;
 		}
@@ -72,7 +75,7 @@ class SPP_Sequence extends \SPP\SPP_Object
     public static function sequenceExists($seqname)
     {
         $db=new SPP_DB();
-        $sql='select * from '.\SPP\SPP_Base::sppTable('sequences').' where seqname=?';
+        $sql='select * from '.\SPP\SPPBase::sppTable('sequences').' where seqname=?';
         $values=array($seqname);
         $result=$db->execute_query($sql, $values);
         if(sizeof($result)>0)
@@ -98,7 +101,7 @@ class SPP_Sequence extends \SPP\SPP_Object
         $db= new SPP_DB();
         if(!self::sequenceExists($seqname))
         {
-            $sql='insert into '.\SPP\SPP_Base::sppTable('sequences').' values(?,?,?,?,?)';
+            $sql='insert into '.\SPP\SPPBase::sppTable('sequences').' values(?,?,?,?,?)';
             $values=array($seqname,$initval,0,$incval,0);
             $db->execute_query($sql, $values);
         }
@@ -120,7 +123,7 @@ class SPP_Sequence extends \SPP\SPP_Object
         $db=new SPP_DB();
         if(self::sequenceExists($seqname))
         {
-            $sql='delete from '.\SPP\SPP_Base::sppTable('sequences').' where seqname=?';
+            $sql='delete from '.\SPP\SPPBase::sppTable('sequences').' where seqname=?';
             $values=array($seqname);
             $db->execute_query($sql, $values);
             return true;

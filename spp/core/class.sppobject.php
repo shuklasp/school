@@ -1,14 +1,14 @@
 <?php
 namespace SPP;
 /**
- * class \SPP\SPP_Object
+ * class \SPP\SPPObject
  *
  * Top level class for all the spp classes.
  *
  * @author Satya Prakash Shukla
  */
 use SPP\Exceptions\UnknownPropertyException;
-abstract class SPP_Object {
+abstract class SPPObject {
     protected $_attributes=array();
     protected $_getprops=array(),$_setprops=array();
 
@@ -61,7 +61,7 @@ abstract class SPP_Object {
         }
         else
         {
-            throw new \UnknownPropertyException('Unknown property '.$propname);
+            throw new UnknownPropertyException('Unknown property '.$propname);
         }
     }
 

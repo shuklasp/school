@@ -1,9 +1,9 @@
 <?php
 clearstatcache() ;
-$obj=new \SPP\SPP_Settings();
-$src=($obj->getSetting('src'));
+//$obj=new \SPP\Settings();
+//$src=($obj->getSetting('src'));
 //print_r($_SESSION);
-\SPP\SPP_Error::destroyErrors();
+\SPP\SPPError::destroyErrors();
             require_once('server/class.person.php');
             $p = new \School\Person();
             //var_dump($p);

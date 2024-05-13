@@ -1,4 +1,7 @@
 <?php
+
+namespace SPPMod;
+
 class SPP_ViewErrors{
     protected static $errorHolders = array();
     public static function addError(string $errorHolder, string $errorMessage, string $errorType= 'error')

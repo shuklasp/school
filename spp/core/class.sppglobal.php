@@ -1,12 +1,12 @@
 <?php
 namespace SPP;
 /**
- * class SPP_Global
+ * class SPPGlobal
  * Manages global variables in SPP
  *
  * @author Satya Prakash Shukla
  */
-final class SPP_Global extends \SPP\SPP_Object {
+final class SPPGlobal extends \SPP\SPPObject {
     private static $globals=array();
 
     
@@ -48,7 +48,7 @@ final class SPP_Global extends \SPP\SPP_Object {
         }
         else
         {
-            throw new \SPP\SPP_Exception('Invalid SPP_Global variable "'.$prop.'" was accessed!');
+            throw new \SPP\SPPException('Invalid SPPGlobal variable "'.$prop.'" was accessed!');
         }
     }
 

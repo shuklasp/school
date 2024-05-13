@@ -1,5 +1,5 @@
 <?php
-use SPP\SPP_Global as SPP_Global;
+use SPP\SPPGlobal as SPPGlobal;
 global $services, $pages, $servdir;
 
 $servdir='src/server/';
@@ -16,9 +16,9 @@ $pages=array(
     'welcome'=>array('page'=>'home-welcome.php','rights'=>array())
 );
 
-SPP_Global::set('servdir',$servdir);
-SPP_Global::set('services',$services);
-SPP_Global::set('pages',$pages);
-SPP_Global::set('pagedir',$pagedir);
+SPPGlobal::set('servdir',$servdir);
+SPPGlobal::set('services',$services);
+SPPGlobal::set('pages',$pages);
+SPPGlobal::set('pagedir',$pagedir);
 
 ?>

@@ -1,4 +1,6 @@
 <?php
+
+namespace SPPMod;
 /*require_once("class.sppconfig.php");
 require_once 'class.sppobject.php';*/
 //\SPP\Module::initWS('sppdb');
@@ -9,8 +11,7 @@ require_once 'class.sppobject.php';*/
  * @author Satya Prakash Shukla
  */
 
- \SPP\SPP_Event::registerEvent('spp_db_connection');
-class SPP_DB extends PDO {
+ class SPP_DB extends \PDO {
     private $con,$numrows,$numcols,$insertedid;
     /**
      * public function __construct
@@ -26,9 +27,10 @@ class SPP_DB extends PDO {
     public function __construct($dburl=null,$dbuser=null,$dbpasswd=null,$options=null) {
         $dbmapper=array();
         try {
-            $url='old';
-            \SPP\SPP_Event::startEvent('spp_db_connection');
-          //  echo 'Creating connection'.$url.$dbuser;
+            $url=null;
+            $vars=array($url,$dbuser,$dbpasswd,$options);
+            \SPP\SPPEvent::startEvent('spp_db_connection', $vars);
+            //echo 'Creating connection'.$url.$dbuser;
             if($dburl==null)
             {
                 $dbtype=\SPP\Module::getConfig('dbtype','sppdb');
@@ -55,14 +57,15 @@ class SPP_DB extends PDO {
                 parent::__construct($url,$dbuser,$dbpasswd,$options);
             }
             //$this->con = new PDO($url,$dbuser,$dbpasswd);
+            \SPP\SPPEvent::endEvent('spp_db_connection', $vars);
         }
-        catch(PDOException $e)
+        catch(\PDOException $e)
         {
             print "Error!: " . $e->getMessage() . "<br/>";
             die();
 
         }
-        //\SPP\SPP_Event::endEvent('spp_db_connection');
+        //\SPP\SPPEvent::endEvent('spp_db_connection');
     }
 
     /**
@@ -78,11 +81,11 @@ class SPP_DB extends PDO {
         $result=$sql;
         if(is_array($tabname)){
             foreach($tabname as $tab){
-                $result=\SPP\SPP_Utils::str_replace_count('%tab%', $tab, $result, 1);
+                $result=\SPP\SPPUtils::str_replace_count('%tab%', $tab, $result, 1);
             }
         }
         else{
-            $result = \SPP\SPP_Utils::str_replace_count('%tab%', $tabname, $result, 1);
+            $result = \SPP\SPPUtils::str_replace_count('%tab%', $tabname, $result, 1);
         }
         return $result;
     }
@@ -117,7 +120,7 @@ class SPP_DB extends PDO {
             if(sizeof($values) > 0) {
                 $stmt=$this->prepare($sql);
                 $stmt->execute($values);
-                $result=$stmt->fetchAll(PDO::FETCH_ASSOC);
+                $result=$stmt->fetchAll(\PDO::FETCH_ASSOC);
             }
             else {
                 foreach($this->query($sql) as $row) {
@@ -126,7 +129,7 @@ class SPP_DB extends PDO {
             }
             $this->numrows=count($result);
         }
-        catch(PDOException $e)
+        catch(\PDOException $e)
         {
             print "Error!: " . $e->getMessage() . "<br/>";
             die();
@@ -186,7 +189,7 @@ class SPP_DB extends PDO {
         // Run it in try-catch in case PDO is in ERRMODE_EXCEPTION.
         try {
             $result = $this->query("SELECT 1 FROM {$table} LIMIT 1");
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             // We got an exception (table not found)
             return FALSE;
         }
@@ -212,12 +215,12 @@ class SPP_DB extends PDO {
             try{
             $result = $this->query($query);
             }
-            catch (Exception $e) {
+            catch (\Exception $e) {
                 return false;
             }
         }
         else{
-            throw new \SPP\SPP_Exception('Table not found');
+            throw new \SPP\SPPException('Table not found');
         }
         return true;
     }

@@ -1,4 +1,8 @@
 <?php
+
+namespace SPPMod;
+use SPP\Exceptions\UnknownPropertyException as UnknownPropertyException;
+use SPP\Exceptions\VarNotFoundException as VarNotFoundException;
 /*require_once 'sppsystemexceptions.php';
 require_once 'class.spphtmlelement.php';
 require_once 'classes.sppvalidators.php';*/

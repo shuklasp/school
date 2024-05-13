@@ -1,4 +1,6 @@
 <?php
+
+namespace SPPMod;
 /* 
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
@@ -9,7 +11,7 @@
  *
  * @author Satya Prakash Shukla
  */
-class SPP_Validate extends \SPP\SPP_Object {
+class SPP_Validate extends \SPP\SPPObject {
     //put your code here
 }
 ?>

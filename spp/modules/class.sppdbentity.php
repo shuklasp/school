@@ -8,7 +8,7 @@ require_once 'class.sppentity.php';
  *
  * @author Satya Prakash Shukla
  */
-abstract class SPP_DB_Entity extends SPP_Entity{
+abstract class SPP_DB_Entity extends SPPEntity{
 
     /**
      * Constructor

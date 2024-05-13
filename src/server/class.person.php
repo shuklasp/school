@@ -1,9 +1,9 @@
 <?php
 namespace School;
 
-use SPP_EntityRelations;
+use SPPEntityRelations;
 
-class Person extends \SPP_Entity
+class Person extends \SPPMod\SPPEntity
 {
     const TABLENAME = 'person';
     
@@ -24,7 +24,7 @@ class Person extends \SPP_Entity
         //$this->name = 'Shukla';
         //$this->install();
         //$this->save();
-        //$this->children=new \SPP_EntityRelations($this, 'ER_OneToMany','id', 'person_id', 'Children');
+        //$this->children=new \SPPEntityRelations($this, 'ER_OneToMany','id', 'person_id', 'Children');
         
     }
  */
@@ -56,6 +56,6 @@ class Person extends \SPP_Entity
     }
 }
 
-SPP_EntityRelations::registerEntityRelation('\School\Person', 'id', '\School\Person', 'person_id', 'ER_OneToOne');
-SPP_EntityRelations::relateEntities('\School\Person=>\School\Person','100027','100037');
+\SPPMod\SPPEntityRelations::registerEntityRelation('\School\Person', 'id', '\School\Person', 'person_id', 'ER_OneToOne');
+\SPPMod\SPPEntityRelations::relateEntities('\School\Person=>\School\Person','100027','100037');
 ?>

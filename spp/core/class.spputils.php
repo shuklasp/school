@@ -1,13 +1,13 @@
 <?php
 namespace SPP;
 /**
- * class SPP_Utils
+ * class SPPUtils
  * Provides some utility functions for SPP.
  *
  * @author Satya Prakash Shukla
  */
 // require_once 'class.sppobject.php';
-class SPP_Utils extends \SPP\SPP_Object {
+class SPPUtils extends \SPP\SPPObject {
     public static function valueIn(array $array, $value) {
         return in_array($value,$array);
     }

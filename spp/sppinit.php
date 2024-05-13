@@ -36,17 +36,37 @@ if(!defined('SPP_VER'))
      * Include core files.
      */
 
-    require_once SPP_CORE_DIR.SPP_DS.'sppfuncs.php';
+  spl_autoload_register(function ($class_name) {
+    $path = explode('\\', $class_name);
+    $class=array_pop($path);
+    if(file_exists(SPP_CORE_DIR . SPP_DS .'class.'. strtolower($class) . '.php')){
+      require_once SPP_CORE_DIR . SPP_DS .'class.'. strtolower($class) . '.php';
+    }
+  });
+
+  spl_autoload_register(function ($class_name) {
+    //var_dump( $class_name);
+    //var_dump($class_path);
+    if(substr($class_name, strlen('Exception')*(-1)) == 'Exception') {
+      require_once SPP_CORE_DIR . SPP_DS .'class.sppexception.php';
+      class_alias('SPP\SPPException', $class_name);
+      class_alias('SPP\SPPException', 'SPPException');
+      //SPP\SPPException::createException($class_name);
+      //return;
+    }
+  });
+
+    /* require_once SPP_CORE_DIR.SPP_DS.'sppfuncs.php';
     require_once SPP_CORE_DIR.SPP_DS.'class.sppobject.php';
-    require_once SPP_CORE_DIR.SPP_DS.'class.sppapp.php';
-    require_once SPP_CORE_DIR.SPP_DS.'class.sppscheduler.php';
+    require_once SPP_CORE_DIR.SPP_DS.'class.app.php';
+    require_once SPP_CORE_DIR.SPP_DS.'class.scheduler.php';
     require_once SPP_CORE_DIR.SPP_DS.'class.sppglobal.php';
     require_once SPP_CORE_DIR.SPP_DS.'class.sppxml.php';
-    require_once SPP_CORE_DIR.SPP_DS.'class.sppstack.php';
-    require_once SPP_CORE_DIR.SPP_DS.'class.sppsettings.php';
+    require_once SPP_CORE_DIR.SPP_DS.'class.stack.php';
+    require_once SPP_CORE_DIR.SPP_DS.'class.settings.php';
     require_once SPP_CORE_DIR.SPP_DS.'class.sppsession.php';
     require_once SPP_CORE_DIR.SPP_DS.'class.sppbase.php';
-    require_once SPP_CORE_DIR.SPP_DS.'class.sppregistry.php';
+    require_once SPP_CORE_DIR.SPP_DS.'class.registry.php';
     //require_once SPP_CORE_DIR.SPP_DS.'class.spphtmlelement.php';
     //require_once SPP_CORE_DIR.SPP_DS.'class.spphtmltable.php';
     //require_once SPP_CORE_DIR.SPP_DS.'class.sppformelement.php';
@@ -61,9 +81,9 @@ if(!defined('SPP_VER'))
     require_once SPP_CORE_DIR.SPP_DS.'class.spperror.php';
     require_once SPP_CORE_DIR.SPP_DS.'class.sppevent.php';
     require_once SPP_CORE_DIR.SPP_DS.'class.sppexception.php';
-    require_once SPP_CORE_DIR.SPP_DS.'class.sppmodule.php';
+    require_once SPP_CORE_DIR.SPP_DS.'class.module.php';
     require_once SPP_CORE_DIR.SPP_DS.'class.spputils.php';
-    require_once SPP_CORE_DIR . SPP_DS . 'int.sppimodule.php';
+    require_once SPP_CORE_DIR . SPP_DS . 'int.imodule.php';
     require_once SPP_CORE_DIR . SPP_DS . 'int.sppientity.php';
     //require_once SPP_CORE_DIR.SPP_DS.'class.sppentity.php';
     require_once SPP_CORE_DIR.SPP_DS.'class.sppfs.php';
@@ -71,24 +91,24 @@ if(!defined('SPP_VER'))
     //require_once SPP_CORE_DIR.SPP_DS.'class.sppdev.php';
     //require_once SPP_CORE_DIR.SPP_DS.'class.sppbase.php';
 
-
-    //\SPP\SPP_Event::registerEvent('spp_init');
-  //  \SPP\SPP_Event::startEvent('spp_init');
+ */
+    //\SPP\SPPEvent::registerEvent('spp_init');
+  //  \SPP\SPPEvent::startEvent('spp_init');
 //    define('SPP_SRC_URI',$str.SPP_DS.SPP_Setti)
     /**
-     * Initiate SPP_Session and SPP_Error
+     * Initiate SPPSession and SPPError
      */
-    //\SPP\SPP_Base::initSession();
+    //\SPP\SPPBase::initSession();
     $app=new \SPP\App('');
-  //  \SPP\SPP_Event::endEvent('spp_init');
+  //  \SPP\SPPEvent::endEvent('spp_init');
 
-    //$spperror=new SPP_Error();
+    //$spperror=new SPPError();
     //\SPP\Module::loadAllModules();
-    //SPP_Error::init();
+    //SPPError::init();
 }
 //\SPP\App::getAppConfDir()
 //session_destroy();
-//print SPP_Error::getUlErrors('Line: !linenum!, File: !filename!, Error No.: !errno!, Error message: !errmsg!');
+//print SPPError::getUlErrors('Line: !linenum!, File: !filename!, Error No.: !errno!, Error message: !errmsg!');
 /**
  * Load all active modules.
  */

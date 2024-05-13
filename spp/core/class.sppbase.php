@@ -9,11 +9,11 @@ require_once 'sppconstants.php';*/
  */
 
 /**
- * class \SPP\SPP_Base
+ * class \SPP\SPPBase
  *
  * @author Satya Prakash Shukla
  */
-class SPP_Base extends \SPP\SPP_Object {
+class SPPBase extends \SPP\SPPObject {
     /*public static function useModule($modname)
     {
         switch($modname)
@@ -27,35 +27,35 @@ class SPP_Base extends \SPP\SPP_Object {
             case 'SPP_Profile':
                 require_once SPP_BASE_DIR.SPPUS.'sppprofile.php';
                 break;
-            case 'SPP_Dev':
+            case 'SPPDev':
                 require_once SPP_BASE_DIR.SPPUS.'sppdev.php';
                 break;
             case 'SPPDB':
                 require_once SPP_BASE_DIR.SPPUS.'sppdb.php';
                 break;
-            case 'SPP_Session':
+            case 'SPPSession':
                 require_once SPP_BASE_DIR.SPPUS.'sppsession.php';
                 break;
             case 'SPP_Wizard':
                 require_once SPP_BASE_DIR.SPPUS.'sppwizard.php';
                 break;
             default:
-                throw new \SPP\SPP_Exception('Illegal module inclusion :'.$modname);
+                throw new \SPP\SPPException('Illegal module inclusion :'.$modname);
         }
     }*/
 
     public static function initSession()
     {
-        if(!SPP_Session::sessionExists())
+        if(!SPPSession::sessionExists())
         {
-            $ssn=new SPP_Session();
+            $ssn=new SPPSession();
             $_SESSION['sppsession']=serialize($ssn);
         }
     }
 
     public static function killSession()
     {
-        if(SPP_Session::sessionExists())
+        if(SPPSession::sessionExists())
         {
             unset($_SESSION['sppsession']);
             session_destroy();

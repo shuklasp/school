@@ -38,7 +38,7 @@ abstract class SPP_Dijit {
     {
         if($this->finalized===false)
         {
-            throw new \SPP\SPP_Exception('Digit not finalized. Cannot get digit source.');
+            throw new \SPP\SPPException('Digit not finalized. Cannot get digit source.');
         }
         //parent::getHTML();
     }
@@ -110,12 +110,12 @@ abstract class SPP_Dijit {
             /*}
             else
             {
-                throw new \SPP\SPP_Exception('Invalid porperty set for dijit '.$this->id.' : '.$prop);
+                throw new \SPP\SPPException('Invalid porperty set for dijit '.$this->id.' : '.$prop);
             }*/
         }
         else
         {
-            throw new \SPP\SPP_Exception('Digit '.$this->id.' already finalized. Cannot set property.');
+            throw new \SPP\SPPException('Digit '.$this->id.' already finalized. Cannot set property.');
         }
     }
 

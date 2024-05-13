@@ -1,13 +1,13 @@
 <?php
 namespace SPP;
 /**
- * class SPP_XML
+ * class SPPXml
  * Does XML Handling
  *
  * @author Satya Prakash Shukla
  */
 
-class SPP_XML extends \SPP\SPP_Object {
+class SPPXml extends \SPP\SPPObject {
 
     private $xmlelement;
     
@@ -31,7 +31,7 @@ class SPP_XML extends \SPP\SPP_Object {
             {
                 $errors.=$err->message.'\n\r';
             }
-            throw new \SPP\SPP_Exception('XML Parsing error: '.$xml.'. '.$errors);
+            throw new \SPP\SPPException('XML Parsing error: '.$xml.'. '.$errors);
         }
     }
 

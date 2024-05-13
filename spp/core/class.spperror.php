@@ -1,18 +1,18 @@
 <?php
 namespace SPP;
 /**
- * class SPP_Error
+ * class SPPError
  *
  * @author Administrator
  */
 /*require_once 'class.sppobject.php';
 require_once 'classes.htmlelements.php';*/
 /**
- * class SPP_Error
+ * class SPPError
  *
  * @author Administrator
  */
-class SPP_Error extends \SPP\SPP_Object {
+class SPPError extends \SPP\SPPObject {
     //private $errordiv='';
     private $customerrhnd;
     private $appname='';
@@ -62,13 +62,13 @@ class SPP_Error extends \SPP\SPP_Object {
 
    private function init(){
        $this->appname=\SPP\Scheduler::getContext();
-       if(SPP_Session::sessionVarExists('__errors__'.$this->appname))
+       if(SPPSession::sessionVarExists('__errors__'.$this->appname))
        {
-            $this->errors=SPP_Session::getSessionVar('__errors__'.$this->appname);
+            $this->errors=SPPSession::getSessionVar('__errors__'.$this->appname);
        }
        if(is_callable($this->customerrhnd) && $this->customerrhnd!='')
        {
-           set_error_handler('SPP_Error::errorHandler');
+           set_error_handler('SPPError::errorHandler');
        }
    }
 
@@ -115,7 +115,7 @@ class SPP_Error extends \SPP\SPP_Object {
         if(is_callable($err->customerrhnd))
            call_user_func($err->customerrhnd);
        }
-       SPP_Session::setSessionVar('__errors__'.$pname, $err->errors);
+       SPPSession::setSessionVar('__errors__'.$pname, $err->errors);
    }
 
    
@@ -294,7 +294,7 @@ class SPP_Error extends \SPP\SPP_Object {
        {
            $this->errors[$errnum]=array();
        }
-       SPP_Session::setSessionVar('__errors__'.$this->appname, $this->errors);
+       SPPSession::setSessionVar('__errors__'.$this->appname, $this->errors);
    }
 
    public static function getErrorDetails($errno)

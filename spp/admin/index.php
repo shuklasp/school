@@ -22,9 +22,9 @@ require_once 'controls.devsetup.php';
         <div align="center" name="errordiv" id="errordiv" style="background-color:gray;border-color:red;color:blue;border-left-width:30;border-right-width:30">
         <?php
         //echo $hello;
-        echo SPP_Error::getOlErrors('!errno! - !errmsg! - !filename! - !linenum!.');
-// echo SPP_Error::getOlErrors();
- SPP_Error::destroyErrors();
+        echo SPPError::getOlErrors('!errno! - !errmsg! - !filename! - !linenum!.');
+// echo SPPError::getOlErrors();
+ SPPError::destroyErrors();
  ?>
         </div>
         <br /><br />

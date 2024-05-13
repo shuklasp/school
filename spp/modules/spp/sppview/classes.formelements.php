@@ -1,4 +1,6 @@
 <?php
+
+namespace SPPMod;
 //require_once 'class.sppformelement.php';
 
 class SPP_Form_Input extends SPP_Form_Element{

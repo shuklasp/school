@@ -1,13 +1,15 @@
 <?php
+namespace SPPMod;
+
 
 /**
- * class SPP_EntityRelations
+ * class SPPEntityRelations
  * Defines the relations between entities
  * @author  Satya Prakash Shukla
  * @version 1.0
  * @since   2015-09-15
  */
-class SPP_EntityRelations
+class SPPEntityRelations
 {
     protected static $related_entities=array();
 
@@ -20,7 +22,7 @@ class SPP_EntityRelations
      * @param string $child_entity
      * @param string $child_entity_field
      * @param string $relation_type
-     * @throws \SPP\SPP_Exception
+     * @throws \SPP\SPPException
      */
     public static function registerEntityRelation(
         string $parent_entity,
@@ -35,11 +37,11 @@ class SPP_EntityRelations
         $rel_array['child_entity'] = $child_entity;
         $rel_array['child_entity_field'] = $child_entity_field;
         $rel_array['relation_type'] = $relation_type;
-        if (!SPP_Entity::entityExists($parent_entity)) {
-            throw new \SPP\SPP_Exception("Invalid parent entity class");
+        if (!SPPEntity::entityExists($parent_entity)) {
+            throw new \SPP\SPPException("Invalid parent entity class ".$parent_entity . " found");
         }
-        if (!SPP_Entity::entityExists($child_entity)) {
-            throw new \SPP\SPP_Exception("Invalid child entity class");
+        if (!SPPEntity::entityExists($child_entity)) {
+            throw new \SPP\SPPException("Invalid child entity class". $child_entity . " found");
         }
         $prev_rel = array();
         if (\SPP\Registry::isRegistered('EntityRelations')) {
@@ -75,7 +77,7 @@ class SPP_EntityRelations
      * public static function getChilren(string $parent_entity)
      * @param string $parent_entity
      * @return array
-     * @throws \SPP\SPP_Exception
+     * @throws \SPP\SPPException
      */
     public static function getChildren(string $parent_entity)
     {
@@ -86,7 +88,7 @@ class SPP_EntityRelations
      * public static function getParents(string $child_entity)
      * @param string $child_entity
      * @return array
-     * @throws \SPP\SPP_Exception
+     * @throws \SPP\SPPException
      */
     public static function getParents(string $child_entity)
     {
@@ -116,16 +118,16 @@ class SPP_EntityRelations
     {
         $parent_entity = trim(strtok(($relation), '=>'));
         $child_entity = trim(strtok('=>'));
-        if(!SPP_Entity::entityExists($parent_entity)||!SPP_Entity::entityExists($child_entity))
+        if(!SPPEntity::entityExists($parent_entity)||!SPPEntity::entityExists($child_entity))
         {
-            throw new \SPP\SPP_Exception('Invalid entity class');
+            throw new \SPP\SPPException('Invalid entity class');
         }
         if (array_key_exists($parent_entity, self::$related_entities)) {
             if (!in_array($child_entity, self::$related_entities[$parent_entity])) {
-                throw new \SPP\SPP_Exception('No child entity ' . $child_entity . ' in relation ' . $relation . ' found');
+                throw new \SPP\SPPException('No child entity ' . $child_entity . ' in relation ' . $relation . ' found');
             }
         } else {
-            throw new \SPP\SPP_Exception('No parent entity ' . $parent_entity . ' in relation ' . $relation . ' found');
+            throw new \SPP\SPPException('No parent entity ' . $parent_entity . ' in relation ' . $relation . ' found');
         }
         $rel_record=\SPP\Registry::get('EntityRelations');
         $rel=array();
@@ -137,7 +139,7 @@ class SPP_EntityRelations
         }
         if(empty($rel))
         {
-            throw new \SPP\SPP_Exception('No relation found for '.$parent_entity.'=>'.$child_entity);
+            throw new \SPP\SPPException('No relation found for '.$parent_entity.'=>'.$child_entity);
         }
         $child_entity_id_field=$rel['child_entity_field'];
         $child_ent = new $child_entity();
@@ -159,15 +161,15 @@ class SPP_EntityRelations
     {
         $parent_entity = trim(strtok(($relation), '=>'));
         $child_entity = trim(strtok('=>'));
-        if (!SPP_Entity::entityExists($parent_entity) || !SPP_Entity::entityExists($child_entity)) {
-            throw new \SPP\SPP_Exception('Invalid entity class');
+        if (!SPPEntity::entityExists($parent_entity) || !SPPEntity::entityExists($child_entity)) {
+            throw new \SPP\SPPException('Invalid entity class');
         }
         if (array_key_exists($parent_entity, self::$related_entities)) {
             if (!in_array($child_entity, self::$related_entities[$parent_entity])) {
-                throw new \SPP\SPP_Exception('No child entity ' . $child_entity . ' in relation ' . $relation . ' found');
+                throw new \SPP\SPPException('No child entity ' . $child_entity . ' in relation ' . $relation . ' found');
             }
         } else {
-            throw new \SPP\SPP_Exception('No parent entity ' . $parent_entity . ' in relation ' . $relation . ' found');
+            throw new \SPP\SPPException('No parent entity ' . $parent_entity . ' in relation ' . $relation . ' found');
         }
         $rel_record = \SPP\Registry::get('EntityRelations');
         $rel = array();
@@ -177,7 +179,7 @@ class SPP_EntityRelations
             }
         }
         if (empty($rel)) {
-            throw new \SPP\SPP_Exception('No relation found for ' . $parent_entity . '=>' . $child_entity);
+            throw new \SPP\SPPException('No relation found for ' . $parent_entity . '=>' . $child_entity);
         }
         $parent_entity_id_field = $rel['parent_entity_field'];
         $parent_ent = new $parent_entity();
@@ -193,24 +195,24 @@ class SPP_EntityRelations
      * @param $parent_id
      * @param $child_id
      * @return boolean
-     * @throws \SPP\SPP_Exception
+     * @throws \SPP\SPPException
      */
     public static function relateEntities(string $relation, $parent_id, $child_id)
     {
         $parent_entity = trim(strtok(($relation), '=>'));
         $child_entity = trim(strtok('=>'));
-        if (!SPP_Entity::entityExists($parent_entity) || !SPP_Entity::entityExists($child_entity)) {
-            throw new \SPP\SPP_Exception('Invalid entity class');
+        if (!SPPEntity::entityExists($parent_entity) || !SPPEntity::entityExists($child_entity)) {
+            throw new \SPP\SPPException('Invalid entity class');
         }
         //print_r(self::$related_entities);
         //echo "<br>".$parent_entity;
         //echo "<br>" . $child_entity;
         if (array_key_exists($parent_entity, self::$related_entities)) {
             if (!in_array($child_entity, self::$related_entities[$parent_entity])) {
-                throw new \SPP\SPP_Exception('No child entity ' . $child_entity . ' in relation ' . $relation . ' found');
+                throw new \SPP\SPPException('No child entity ' . $child_entity . ' in relation ' . $relation . ' found');
             }
         } else {
-            throw new \SPP\SPP_Exception('No parent entity ' . $parent_entity . ' in relation ' . $relation . ' found');
+            throw new \SPP\SPPException('No parent entity ' . $parent_entity . ' in relation ' . $relation . ' found');
         }
         $rel_record = \SPP\Registry::get('EntityRelations');
         $rel = array();
@@ -221,7 +223,7 @@ class SPP_EntityRelations
         }
         //print_r($rel_record);
         if (empty($rel)) {
-            throw new \SPP\SPP_Exception('No relation found for ' . $parent_entity . '=>' . $child_entity);
+            throw new \SPP\SPPException('No relation found for ' . $parent_entity . '=>' . $child_entity);
         }
         $child_entity_id_field = $rel['child_entity_field'];
         $child_ent = new $child_entity($child_id);
@@ -238,22 +240,22 @@ class SPP_EntityRelations
      * @param $parent_id
      * @param $child_id
      * @return boolean
-     * @throws \SPP\SPP_Exception
+     * @throws \SPP\SPPException
      * 
      *  */
     public static function unrelateEntities(string $relation, $parent_id, $child_id)
     {
         $parent_entity = trim(strtok(($relation), '=>'));
         $child_entity = trim(strtok('=>'));
-        if (!SPP_Entity::entityExists($parent_entity) || !SPP_Entity::entityExists($child_entity)) {
-            throw new \SPP\SPP_Exception('Invalid entity class');
+        if (!SPPEntity::entityExists($parent_entity) || !SPPEntity::entityExists($child_entity)) {
+            throw new \SPP\SPPException('Invalid entity class');
         }
         if (array_key_exists($parent_entity, self::$related_entities)) {
             if (!in_array($child_entity, self::$related_entities[$parent_entity])) {
-                throw new \SPP\SPP_Exception('No child entity ' . $child_entity . ' in relation ' . $relation . ' found');
+                throw new \SPP\SPPException('No child entity ' . $child_entity . ' in relation ' . $relation . ' found');
             }
         } else {
-            throw new \SPP\SPP_Exception('No parent entity ' . $parent_entity . ' in relation ' . $relation . ' found');
+            throw new \SPP\SPPException('No parent entity ' . $parent_entity . ' in relation ' . $relation . ' found');
         }
         $rel_record = \SPP\Registry::get('EntityRelations');
         $rel = array();
@@ -263,7 +265,7 @@ class SPP_EntityRelations
             }
         }
         if (empty($rel)) {
-            throw new \SPP\SPP_Exception('No relation found for ' . $parent_entity . '=>' . $child_entity);
+            throw new \SPP\SPPException('No relation found for ' . $parent_entity . '=>' . $child_entity);
         }
         $child_entity_id_field = $rel['child_entity_field'];
         $child_ent = new $child_entity($child_id);
@@ -279,22 +281,22 @@ class SPP_EntityRelations
      * @param $parent_id
      * @param $attributes
      * @return boolean
-     * @throws \SPP\SPP_Exception
+     * @throws \SPP\SPPException
      * 
      */
     public static function addChildEntity(string $relation, $parent_id, $attributes)
     {
         $parent_entity = trim(strtok(($relation), '=>'));
         $child_entity = trim(strtok('=>'));
-        if (!SPP_Entity::entityExists($parent_entity) || !SPP_Entity::entityExists($child_entity)) {
-            throw new \SPP\SPP_Exception('Invalid entity class');
+        if (!SPPEntity::entityExists($parent_entity) || !SPPEntity::entityExists($child_entity)) {
+            throw new \SPP\SPPException('Invalid entity class');
         }
         if (array_key_exists($parent_entity, self::$related_entities)) {
             if (!in_array($child_entity, self::$related_entities[$parent_entity])) {
-                throw new \SPP\SPP_Exception('No child entity ' . $child_entity . ' in relation ' . $relation . ' found');
+                throw new \SPP\SPPException('No child entity ' . $child_entity . ' in relation ' . $relation . ' found');
             }
         } else {
-            throw new \SPP\SPP_Exception('No parent entity ' . $parent_entity . ' in relation ' . $relation . ' found');
+            throw new \SPP\SPPException('No parent entity ' . $parent_entity . ' in relation ' . $relation . ' found');
         }
         $rel_record = \SPP\Registry::get('EntityRelations');
         $rel = array();
@@ -304,7 +306,7 @@ class SPP_EntityRelations
             }
         }
         if (empty($rel)) {
-            throw new \SPP\SPP_Exception('No relation found for ' . $parent_entity . '=>' . $child_entity);
+            throw new \SPP\SPPException('No relation found for ' . $parent_entity . '=>' . $child_entity);
         }
         $child_entity_id_field = $rel['child_entity_field'];
         $child_ent = new $child_entity();

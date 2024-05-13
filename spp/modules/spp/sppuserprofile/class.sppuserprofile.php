@@ -1,4 +1,6 @@
 <?php
+
+namespace SPPMod;
 /*
  * class.sppuserprofile.php
  * Defines SPP_UserProfile class.
@@ -33,7 +35,7 @@ class SPP_UserProfile {
         }
         else
         {
-            throw(new \SPP\SPP_Exception('Profile for this user does not exist!'));
+            throw(new \SPP\SPPException('Profile for this user does not exist!'));
         }
         $sql='select profval from profiles where profid=? and profkey=?';
     }

@@ -1,5 +1,6 @@
 <?php
 namespace SPP;
+use SPP\Exceptions\DuplicateModuleException;
 /*require_once 'class.sppregistry.php';
 require_once 'sppsystemexceptions.php';*/
 
@@ -10,7 +11,7 @@ require_once 'sppsystemexceptions.php';*/
  * @author Satya Prakash Shukla
  */
 
-class Module extends \SPP\SPP_Object {
+class Module extends \SPP\SPPObject {
     //private $int_name, $pub_name, $pub_desc, $inc_files, $req_mods, $ver,$group;
     //private $install_script, $uninstall_script, $modpath, $specxml;
     protected $_setprops=array('PublicName','PublicDesc','InternalName','Version','InstallScript','UninstallScript','ModuleGroup','IncludeFiles','Dependencies','ModPath','ConfigFile');
@@ -82,7 +83,7 @@ class Module extends \SPP\SPP_Object {
                     $this->Dependencies=$val['depends'];
                     break;
                 default:
-                    throw new \SPP\SPP_Exception('module parse error!');
+                    throw new \SPP\SPPException('module parse error!');
                     break;
             }
         }
@@ -194,7 +195,7 @@ class Module extends \SPP\SPP_Object {
      */
     public static function scanModules()
     {
-        return SPP_FS::findFile('module.xml', SPP_MODULES_DIR);
+        return SPPFS::findFile('module.xml', SPP_MODULES_DIR);
     }
 
     /**
@@ -210,6 +211,10 @@ class Module extends \SPP\SPP_Object {
           //  echo $this->ModPath.SPP_DS.$file.'<br />';
             require_once($this->ModPath.SPP_DS.$file);
         }
+        if(file_exists($this->ModPath.SPP_DS.'modinit.php'))
+        {
+            require_once($this->ModPath.SPP_DS.'modinit.php');
+        }
     }
 
     /**
@@ -224,7 +229,7 @@ class Module extends \SPP\SPP_Object {
         }
         else
         {
-            throw new \DuplicateModuleException('Duplicate Module '.$this->InternalName.' included!');
+            throw new DuplicateModuleException('Duplicate Module '.$this->InternalName.' included!');
         }
     }
 
@@ -267,12 +272,12 @@ class Module extends \SPP\SPP_Object {
         }
         else
         {
-            throw new \SPP\SPP_Exception('Modules config file not found : '.$xml_file);
+            throw new \SPP\SPPException('Modules config file not found : '.$xml_file);
         }
         $mods=$mods_xml->xpath('/modules/module[status=\'active\']');
         foreach($mods as $mod)
         {
-            //$module=SPP_XML::xml2phpArray($mod);
+            //$module=SPPXml::xml2phpArray($mod);
             //print_r($mod);
             //echo '<br />';
             $mod=(array)$mod;

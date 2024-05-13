@@ -6,7 +6,7 @@ Core part of Satya Portal Pack is almost near completion now. It includes:
 
 1) Booting
 
-2) SPP_Session Management
+2) SPPSession Management
 
 3) Modules architecture
 

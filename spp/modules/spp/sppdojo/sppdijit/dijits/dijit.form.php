@@ -22,7 +22,7 @@ class Dijit_Form extends SPP_Dijit {
         $id=$elem->getId();
         if(array_key_exists($id, $this->form_elements))
         {
-            throw new \SPP\SPP_Exception('Duplicate digit used : '.$elid);
+            throw new \SPP\SPPException('Duplicate digit used : '.$elid);
         }
         else
         {
