@@ -1,5 +1,5 @@
 <?php
-namespace SPPMod;
+namespace SPPMod\SPPEntity;
 use SPP\Exceptions\AttributeNotFoundException;
 use SPP\Exceptions\EntityNotFoundException;
 
@@ -139,7 +139,7 @@ require_once('class.sppentityrelations.php');
    public static function entityExists(mixed $entity_name){
      if(class_exists($entity_name))
      {
-       if(is_a($entity_name,'\SPPMod\SPPEntity',true))
+       if(is_a($entity_name,'\SPPMod\SPPEntity\SPPEntity',true))
        {
          return true;
        }
@@ -341,7 +341,7 @@ require_once('class.sppentityrelations.php');
     */
    protected static function install()
    {
-     $db=new SPP_DB();
+     $db=new \SPPMod\SPPDB\SPP_DB();
      if(!$db->tableExists(self::$_table))
      {
       $sql='create table %tab% ('. self::$_id_field.' varchar(20))';
@@ -355,7 +355,7 @@ require_once('class.sppentityrelations.php');
     * uninstalls the entity and drops all the columns except id and name
     */
    protected function uninstall(){
-     $db=new SPP_DB();
+     $db=new \SPPMod\SPPDB\SPP_DB();
      $db->remove_columns(self::$_table, $this->_attributes);
    }
    
@@ -385,10 +385,10 @@ require_once('class.sppentityrelations.php');
     */
    protected function createId()
    {
-        if (!SPP_Sequence::sequenceExists(self::$_sequence)) {
-            SPP_Sequence::createSequence(self::$_sequence, self::$_initial_id, 1);
+        if (!\SPPMod\SPPDB\SPP_Sequence::sequenceExists(self::$_sequence)) {
+            \SPPMod\SPPDB\SPP_Sequence::createSequence(self::$_sequence, self::$_initial_id, 1);
         }
-        $new_id = SPP_Sequence::next(self::$_sequence);
+        $new_id = \SPPMod\SPPDB\SPP_Sequence::next(self::$_sequence);
         return $new_id;
     }
    
@@ -399,7 +399,7 @@ require_once('class.sppentityrelations.php');
     */
    public function insert()
    {
-     $db=new SPP_DB();
+     $db=new \SPPMod\SPPDB\SPP_DB();
      $new_id=$this->createId();
      $this->id=$new_id;
      $val_array=array_merge(array(self::$_id_field=>$new_id),$this->_values);
@@ -414,7 +414,7 @@ require_once('class.sppentityrelations.php');
     */
    public function update()
    {
-     $db=new SPP_DB();
+     $db=new \SPPMod\SPPDB\SPP_DB();
      if($this->id!=null)
      {
       $db->updateValues(self::$_table, $this->_values, self::$_id_field . '=' . $this->id);
@@ -432,7 +432,7 @@ require_once('class.sppentityrelations.php');
     */
    public function delete()
    {
-     $db=new SPP_DB();
+     $db=new \SPPMod\SPPDB\SPP_DB();
      $sql='delete from %tab% where '. self::$_id_field.'=?';
      $db->exec_squery($sql, self::$_table, array($this->id));
      $this->id=null;
@@ -447,7 +447,7 @@ require_once('class.sppentityrelations.php');
     **/
    public function load($id)
    {
-     $db=new SPP_DB();
+     $db=new \SPPMod\SPPDB\SPP_DB();
      $sql='select * from %tab% where '. self::$_id_field.'=?';
      $result=$db->exec_squery($sql, self::$_table,array($id));
      //print_r($result);
@@ -477,7 +477,7 @@ require_once('class.sppentityrelations.php');
     */
    public function loadBy($attribute, $value)
    {
-     $db=new SPP_DB();
+     $db=new \SPPMod\SPPDB\SPP_DB();
      $sql='select * from %tab% where '.$attribute.'=?';
      $result=$db->exec_squery($sql, self::$_table,$value);
      if(sizeof($result)>0)
@@ -500,7 +500,7 @@ require_once('class.sppentityrelations.php');
     */
    public function loadAll()
    {
-     $db=new SPP_DB();
+     $db=new \SPPMod\SPPDB\SPP_DB();
      $sql='select * from %tab%';
      $result=$db->exec_squery($sql, self::$_table);
      $entities=array();
@@ -521,7 +521,7 @@ require_once('class.sppentityrelations.php');
     */
    public function loadMultiple(array $attributes, array $values)
    {
-     $db = new SPP_DB();
+     $db = new \SPPMod\SPPDB\SPP_DB();
      $sql = 'select * from %tab% where ' . implode('=?, ', $attributes) . '=? ';
      $result = $db->exec_squery($sql, self::$_table,$values);
      $entities = array();

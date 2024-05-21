@@ -1,15 +1,22 @@
 <?php
+namespace SPPMod\SPPProfile;
+use SPP\Exceptions\ProfileDoesNotExistException;
+use SPP\Exceptions\NoProfileSelectedException;
+use SPP\Exceptions\UnknownProfileFieldException;
+use SPP\Exceptions\NotAssociativeArrayException;
+use SPP\Exceptions\ProfileAlreadyExistsException;
+use SPP\Exceptions\NotIntegerException;
 /*require_once 'class.sppbase.php';
 require_once 'sppsystemexceptions.php';
 require_once 'class.sppdatabase.php';
 require_once 'class.sppsequence.php';*/
 /**
- * class SPP_Profile
+ * class \SPPMod\SPProfile\SPPProfile
  * defines the profile of users.
  *
  * @author Satya Prakash Shukla
  */
-class SPP_Profile extends \SPP\SPPObject{
+class SPPProfile extends \SPP\SPPObject{
     protected $profname,$proftabname,$selectedrow,$profid,$profseqname,$selectedprof,$valarray=null, $idfield;
 
     /**
@@ -17,7 +24,7 @@ class SPP_Profile extends \SPP\SPPObject{
      * @param string $pname
      */
     public function  __construct($pname) {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         $sql='select * from '.\SPP\SPPBase::sppTable('profiletabs').' where profname=?';
         $values=array($pname);
         $result=$db->execute_query($sql, $values);
@@ -43,7 +50,7 @@ class SPP_Profile extends \SPP\SPPObject{
      */
     function getFields()
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         if($this->proftabname==null||$this->proftabname=='')
                 throw(new \SPP\SPPException ('No profile tab!'));
         $sql='show columns from '.\SPP\SPPBase::sppTable($this->proftabname);
@@ -68,7 +75,7 @@ class SPP_Profile extends \SPP\SPPObject{
      */
     function seekValue($fld,$val)
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         if($this->proftabname==null||$this->proftabname=='')
                 throw(new \SPP\SPPException ('No profile tab!'));
         $sql='select * from '.\SPP\SPPBase::sppTable($this->proftabname).' where '.$fld.'=?';
@@ -112,7 +119,7 @@ class SPP_Profile extends \SPP\SPPObject{
      * @return array
      */
     public function getAll() {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         $sql=$sql='select * from '.\SPP\SPPBase::sppTable($this->proftabname);
         $result=$db->execute_query($sql);
         return $result;
@@ -127,7 +134,7 @@ class SPP_Profile extends \SPP\SPPObject{
      */
     public function seekProfile($pid)
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         $sql='select * from '.\SPP\SPPBase::sppTable($this->proftabname).' where '.$this->idfield.'=?';
         $values=array($pid);
         $result=$db->execute_query($sql, $values);
@@ -244,7 +251,7 @@ class SPP_Profile extends \SPP\SPPObject{
      */
     public function update()
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
     //$db->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
         if(is_null($this->selectedrow))
         {
@@ -279,8 +286,8 @@ class SPP_Profile extends \SPP\SPPObject{
      */
     public function appendNew()
     {
-        $db=new SPP_DB();
-        $nprofid=SPP_Sequence::next($this->profseqname);
+        $db=new \SPPMod\SPPDB\SPP_DB();
+        $nprofid=\SPPMod\SPPDB\SPP_Sequence::next($this->profseqname);
         $sql='insert into '.\SPP\SPPBase::sppTable($this->proftabname).'('.$this->idfield.') values(?)';
         $values=array($nprofid);
         $result=$db->execute_query($sql, $values);
@@ -291,11 +298,11 @@ class SPP_Profile extends \SPP\SPPObject{
 
     public function appendSave($flds)
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
     //$db->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
         $db->beginTransaction();
         try{
-        $nprofid=SPP_Sequence::next($this->profseqname);
+        $nprofid=\SPPMod\SPPDB\SPP_Sequence::next($this->profseqname);
         $sql='insert into '.\SPP\SPPBase::sppTable($this->proftabname).' set ';
         $values=array();
         $i=0;
@@ -318,7 +325,7 @@ class SPP_Profile extends \SPP\SPPObject{
         $result=$db->execute_query($sql, $values);
         $db->commit();
         }
-        catch(Exception $ex)
+        catch(\Exception $ex)
         {
             $db->rollBack();
         }
@@ -334,7 +341,7 @@ class SPP_Profile extends \SPP\SPPObject{
      */
     public function deleteMe()
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         if(is_null($this->selectedrow))
         {
             return false;
@@ -358,7 +365,7 @@ class SPP_Profile extends \SPP\SPPObject{
      */
     public static function doesProfileExist($pname)
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         $sql='select * from '.\SPP\SPPBase::sppTable('profiletabs').' where profname=?';
         $values=array($pname);
         $result=$db->execute_query($sql, $values);
@@ -381,7 +388,7 @@ class SPP_Profile extends \SPP\SPPObject{
      */
     public static function dropProfile($pname)
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         if(self::doesProfileExist($pname))
         {
             $sql='select * from '.\SPP\SPPBase::sppTable('profiletabs').' where profname=?';
@@ -394,7 +401,7 @@ class SPP_Profile extends \SPP\SPPObject{
             $result=$db->execute_query($sql);
             $sql='delete from '.\SPP\SPPBase::sppTable('profiletabs').' where profname=?';
             $result=$db->execute_query($sql, $values);
-            SPP_Sequence::dropSequence($seqname);
+            \SPPMod\SPPDB\SPP_Sequence::dropSequence($seqname);
             return true;
         }
         else
@@ -412,7 +419,7 @@ class SPP_Profile extends \SPP\SPPObject{
      */
     public static function createProfile($pname,$flds=array())
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         if(self::doesProfileExist($pname))
         {
             throw new ProfileAlreadyExistsException('Profile with this name already exists!');
@@ -439,7 +446,7 @@ class SPP_Profile extends \SPP\SPPObject{
                 }
             }
             $sql.=')';
-            SPP_Sequence::createSequence('prof_'.$pname.'_seq', 1, 1);
+            \SPPMod\SPPDB\SPP_Sequence::createSequence('prof_'.$pname.'_seq', 1, 1);
             $result=$db->execute_query($sql);
             $sql='insert into '.\SPP\SPPBase::sppTable('profiletabs').' values(?,?,?,?)';
             $values=array($pname,'prof_'.$pname,'prof_'.$pname.'_seq','profid');

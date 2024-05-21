@@ -5,14 +5,14 @@ require_once 'class.spplogger.php';
 class LoginEvent extends \SPP\SPPEvent{
     protected function handler()
     {
-        \SPPMod\SPP_Logger::write_to_log('Login');
+        \SPPMod\SPPLogger\SPPLogger::write_to_log('Login');
     }
 }
 
 class LogoutEvent extends \SPP\SPPEvent{
     protected function handler()
     {
-        \SPPMod\SPP_Logger::write_to_log('Logout');
+        \SPPMod\SPPLogger\SPPLogger::write_to_log('Logout');
     }
 }
 ?>

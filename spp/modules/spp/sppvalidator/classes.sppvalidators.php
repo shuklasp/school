@@ -1,6 +1,6 @@
 <?php
 
-namespace SPPMod;
+namespace SPPMod\SPPValidator;
 /*require_once 'class.sppsinglevalidator.php';
 require_once 'class.sppmultiplevalidator.php';
 require_once 'class.spperror.php';*/
@@ -27,7 +27,7 @@ class SPP_Validator_RequiredValidator extends SPP_Single_validator {
 
 
 class SPP_Validator_NumericValidator extends SPP_Single_validator {
-    public function __construct(SPP_ViewTag $elem) {
+    public function __construct(\SPPMod\SPPView\SPPViewTag $elem) {
         parent::__construct($elem);
         $this->applicabletags=array('input');
         $this->jsfunc='validateNumeric';

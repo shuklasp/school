@@ -198,6 +198,7 @@ class Module extends \SPP\SPPObject {
         return SPPFS::findFile('module.xml', SPP_MODULES_DIR);
     }
 
+
     /**
      * function includeFiles()
      * Includes required files.
@@ -214,6 +215,11 @@ class Module extends \SPP\SPPObject {
         if(file_exists($this->ModPath.SPP_DS.'modinit.php'))
         {
             require_once($this->ModPath.SPP_DS.'modinit.php');
+        }
+        if(file_exists($this->ModPath.SPP_DS.'events') && is_dir($this->ModPath.SPP_DS.'events')) //Register Event Directories
+        {
+            //\SPP\Registry::registerDir('events', $this->ModPath.SPP_DS.'events');
+            \SPP\SPPEvent::scanAndRegisterDirs($this->ModPath.SPP_DS.'events');
         }
     }
 
@@ -256,6 +262,7 @@ class Module extends \SPP\SPPObject {
      */
     public static function loadAllModules()
     {
+        //echo 'Loading Modules...<br />';
         $xml_file='';
         $mods_xml='';
         if(\SPP\Scheduler::getContext()!='')
@@ -277,6 +284,8 @@ class Module extends \SPP\SPPObject {
         $mods=$mods_xml->xpath('/modules/module[status=\'active\']');
         foreach($mods as $mod)
         {
+            //var_dump($mod);
+            //echo 'Loading '.$mod['name'].'<br />';
             //$module=SPPXml::xml2phpArray($mod);
             //print_r($mod);
             //echo '<br />';

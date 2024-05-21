@@ -1,6 +1,6 @@
 <?php
 
-namespace SPPMod;
+namespace SPPMod\SPPView;
 //require_once 'class.spphtmlelement.php';
 
 /**
@@ -9,7 +9,7 @@ namespace SPPMod;
  *
  * @author Satya Prakash Shukla
  */
-class SPP_HTML_TableField extends SPP_ViewTag {
+class SPP_HTML_TableField extends \SPPMod\SPPView\SPPViewTag {
     private $content;
     public function  __construct($ename, $isheading=false) {
         parent::__construct($ename);

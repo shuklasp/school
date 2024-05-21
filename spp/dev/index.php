@@ -4,7 +4,7 @@ require_once('../sppinit.php');
 //require_once SPP_BASE_DIR.SPPUS.'sppbase.php')
 //session_start();
 //require_once SPP_BASE_DIR.SPPUS.'sppauth.php';
-//\SPP\SPPBase::useModule('SPP_Auth');
+//\SPP\SPPBase::useModule('\SPPMod\SPPAuth\SPPAuth');
 //\SPP\SPPBase::useModule('SPPHtml');
 /* if(!SPPDev::isDevEnvSetup())
 {
@@ -14,7 +14,7 @@ require_once 'model.index.php';
 //require_once 'class.SPPDev.php';
 if(array_key_exists('login', $_POST))
 {
-    SPP_Auth::login($_POST['login'], $_POST['passwd']);
+    \SPPMod\SPPAuth\SPPAuth::login($_POST['login'], $_POST['passwd']);
 }
 ?>
 
@@ -33,7 +33,7 @@ if(array_key_exists('login', $_POST))
         <img src="<?php echo SPP_IMG_URI.SPP_US.'spp-logo.jpg'; ?>" alt="Satya Portal Pack Logo" height="125px" width="250px">
         <br /><hr />
         <?php
-        if(!SPP_Auth::authSessionExists())
+        if(!\SPPMod\SPPAuth\SPPAuth::authSessionExists())
         {
         ?>
         <br /><br /><br /><br />
@@ -52,7 +52,7 @@ if(array_key_exists('login', $_POST))
         else
         {
             require('devconsole.php');
-            SPP_Auth::logout();
+            \SPPMod\SPPAuth\SPPAuth::logout();
         }
         ?>
         <br /> <br />

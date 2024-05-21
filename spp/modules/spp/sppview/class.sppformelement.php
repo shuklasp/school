@@ -1,6 +1,6 @@
 <?php
 
-namespace SPPMod;
+namespace SPPMod\SPPView;;
 //require_once 'class.spphtmlelement.php';
 
 /**
@@ -9,7 +9,7 @@ namespace SPPMod;
  *
  * @author Satya Prakash Shukla
  */
-class SPP_Form_Element extends SPP_ViewTag{
+class SPP_Form_Element extends \SPPMod\SPPView\SPPViewTag{
     protected $validators = array();
     protected $errors = array();
 

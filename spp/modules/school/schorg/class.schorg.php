@@ -6,7 +6,7 @@ require_once('entityexceptions.php');
  * extends \SPP\SPPObject
  * Deals with ajax calls
  */
-class Organiusation extends \SPPMod\SPPEntity{
+class Organiusation extends \SPPMod\SPPEntity\SPPEntity{
     protected $enttab;
     protected $props=[array('pname','varchar(40)'),
                                     array('pval','varchar(30)')];
@@ -23,7 +23,7 @@ class Organiusation extends \SPPMod\SPPEntity{
 
     public function install()
     {
-        $db = new \SPPMod\SPP_DB();
+        $db = new \SPPMod\SPPDB\SPP_DB();
         if ($db->tableExists($this->enttab)) {
             $query = 'create table '.$this->enttab.'(entid  varchar(20))';
             $db->execute_query($query);

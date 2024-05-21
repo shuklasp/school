@@ -18,13 +18,13 @@ class SPPBase extends \SPP\SPPObject {
     {
         switch($modname)
         {
-            case 'SPP_Auth':
+            case '\SPPMod\SPPAuth\SPPAuth':
                 require_once SPP_BASE_DIR.SPPUS.'sppauth.php';
                 break;
             case 'SPPHtml':
                 require_once SPP_BASE_DIR.SPPUS.'spphtml.php';
                 break;
-            case 'SPP_Profile':
+            case '\SPPMod\SPProfile\SPPProfile':
                 require_once SPP_BASE_DIR.SPPUS.'sppprofile.php';
                 break;
             case 'SPPDev':

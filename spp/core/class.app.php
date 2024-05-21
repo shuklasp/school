@@ -67,6 +67,8 @@ class App extends \SPP\SPPObject {
                 $this->errobj=new SPPError($handleerror);
             }
         }
+        \SPP\SPPEvent::registerDirs();
+        \SPP\SPPEvent::scanHandlers();
     }
 
     public static function getApp()

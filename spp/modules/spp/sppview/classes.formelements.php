@@ -1,6 +1,6 @@
 <?php
 
-namespace SPPMod;
+namespace SPPMod\SPPView;
 //require_once 'class.sppformelement.php';
 
 class SPP_Form_Input extends SPP_Form_Element{
@@ -82,13 +82,13 @@ class SPP_Form_Option extends SPP_Form_Element{
         $this->setAttribute('value', $optvalue);
     }
 
-    public function show()
+/*     public function show()
     {
         parent::show();
         echo $this->opttext;
         self::endOne();
     }
-
+ */
     public function render()
     {
         $htm=parent::render();
@@ -201,7 +201,7 @@ class SPP_Form_Select extends SPP_Form_Element{
 class SPP_Form_SQLDropDown extends SPP_Form_Select{
     public function  __construct($ename, $sql, $optdispfld, $optvalfld, $values=array(), $defval='', $optgrpfld='') {
         parent::__construct($ename);
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         $result=$db->execute_query($sql, $values);
         foreach($result as $res)
         {
@@ -326,7 +326,7 @@ class SPP_Form_DateChooser extends SPP_Form_Input
         SPP_HTML_Page::addJsIncludeFile(SPP_JS_URI.SPP_US.'datechooser/datechooser.js');
         SPP_HTML_Page::addCssIncludeFile(SPP_JS_URI.SPP_US.'datechooser/datechooser.css');
         parent::__construct($ename);
-        $this->setDateAttr('DateFormat', SPP_Config::get('defdateformat'));
+        $this->setDateAttr('DateFormat', \SPPMod\SPPConfig\SPPConfig::get('defdateformat'));
         $this->updateClass();
     }
 

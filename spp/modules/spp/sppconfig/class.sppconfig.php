@@ -1,6 +1,12 @@
 <?php
 
-namespace SPPMod;
+namespace SPPMod\SPPConfig;
+use SPP\Exceptions\UnknownConfigVarException;
+use SPP\Exceptions\UnknownConfigTabVarException;
+use SPP\Exceptions\ReadonlyConfigVarException;
+use SPP\Exceptions\UnknownConfigVarExecption;
+//use SPP\Exceptions\UnknownConfigTabVarException;
+
 /*require_once 'sppconstants.php';
 require_once 'class.sppdatabase.php';
 require_once 'class.sppobject.php';
@@ -15,7 +21,7 @@ require_once SPP_BASE_DIR.SPPUS.'appsettings.php';*/
  *
  * @author Satya Prakash Shukla
  */
-class SPP_Config extends \SPP\SPPObject{
+class SPPConfig extends \SPP\SPPObject{
     private static $configcache=array();
     private static $feelinglucky=true;
     /**
@@ -48,12 +54,12 @@ class SPP_Config extends \SPP\SPPObject{
         }
         else
         {
-            $db=new SPP_DB();
+            $db=new \SPPMod\SPPDB\SPP_DB();
             $query='select * from '.\SPP\SPPBase::sppTable('config').' where propname=?';
             $result=$db->execute_query($query, Array($propname));
             if(sizeof($result)<=0)
             {
-                throw new UnknownConfigVarExecption('Unknown config variable accessed '.$propname);
+                throw new UnknownConfigVarException('Unknown config variable accessed '.$propname);
             }
             else
             {
@@ -70,7 +76,7 @@ class SPP_Config extends \SPP\SPPObject{
                     $result=$db->execute_query($sql, $values);
                     if(sizeof($result)<=0)
                     {
-                        throw new UnknownConfigTabVarExecption('Unknown config tab variable accessed '.$propname);
+                        throw new UnknownConfigTabVarException('Unknown config tab variable accessed '.$propname);
                     }
                     else
                     {
@@ -96,7 +102,7 @@ class SPP_Config extends \SPP\SPPObject{
         {
             throw new ReadonlyConfigVarException('Config var in settings.php was tried to be modified!');
         }
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         $query='select * from '.\SPP\SPPBase::sppTable('config').' where propname=?';
         $result=$db->execute_query($query, Array($propname));
         if(sizeof($result)<=0)
@@ -155,7 +161,7 @@ class SPP_Config extends \SPP\SPPObject{
      */
     public static function varExists($propname)
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         $sql='select * from '.\SPP\SPPBase::sppTable('config').' where propname=?';
         $values=array($propname);
         $result=$db->execute_query($sql, $values);
@@ -187,7 +193,7 @@ class SPP_Config extends \SPP\SPPObject{
      */
     public static function createVar($propname, $propval)
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         if(self::varExists($propname))
         {
             return false;
@@ -215,7 +221,7 @@ class SPP_Config extends \SPP\SPPObject{
      */
     public static function createTabVar($propname, $tabname, $colname, $pkname, $pkval)
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         if(self::varExists($propname))
         {
             return false;
@@ -239,7 +245,7 @@ class SPP_Config extends \SPP\SPPObject{
      */
     public static function dropVar($propname)
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         if(self::varExists($propname)==0)
         {
             return false;
@@ -253,4 +259,3 @@ class SPP_Config extends \SPP\SPPObject{
         }
     }
 }
-?>

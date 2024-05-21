@@ -1,6 +1,6 @@
 <?php
 
-namespace SPPMod;
+namespace SPPMod\SPPView;
 
 class SPP_ViewErrors{
     protected static $errorHolders = array();

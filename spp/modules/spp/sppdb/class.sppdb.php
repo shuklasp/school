@@ -1,6 +1,6 @@
 <?php
 
-namespace SPPMod;
+namespace SPPMod\SPPDB;
 /*require_once("class.sppconfig.php");
 require_once 'class.sppobject.php';*/
 //\SPP\Module::initWS('sppdb');
@@ -29,7 +29,8 @@ require_once 'class.sppobject.php';*/
         try {
             $url=null;
             $vars=array($url,$dbuser,$dbpasswd,$options);
-            \SPP\SPPEvent::startEvent('spp_db_connection', $vars);
+            //\SPP\SPPEvent::startEvent('sppdb_connection', $vars);
+            //\SPP\SPPEvent::fireEvent('sppdb_connection', $vars);
             //echo 'Creating connection'.$url.$dbuser;
             if($dburl==null)
             {
@@ -57,7 +58,7 @@ require_once 'class.sppobject.php';*/
                 parent::__construct($url,$dbuser,$dbpasswd,$options);
             }
             //$this->con = new PDO($url,$dbuser,$dbpasswd);
-            \SPP\SPPEvent::endEvent('spp_db_connection', $vars);
+            //\SPP\SPPEvent::endEvent('sppdb_connection', $vars);
         }
         catch(\PDOException $e)
         {

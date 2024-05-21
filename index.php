@@ -1,6 +1,10 @@
 <?php
 require_once('spp/sppinit.php');
 require_once('global.php');
+\SPP\SPPEvent::fireEvent('test_event');
+\SPP\SPPEvent::fireEvent('another_test_event');
+\SPP\SPPEvent::startEvent('test_simple');
+\SPP\SPPEvent::startEvent('test_simple');
 //$obj=new \SPP\Settings();
 //require_once('vendor/autoload.php');
 include('src/home.php');

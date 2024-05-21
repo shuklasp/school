@@ -1,5 +1,5 @@
 <?php
-namespace SPPMod;
+namespace SPPMod\SPPAuth;
 use SPP\Exceptions\UnknownRoleException;
 /*require_once 'class.sppbase.php';
 require_once 'class.sppdatabase.php';
@@ -8,16 +8,16 @@ require_once 'sppsystemexceptions.php';
 require_once 'class.sppright.php';*/
 
 /**
- * class SPP_Role
+ * class SPPRole
  * Manages roles in the system.
  *
  * @author Satya Prakash Shukla
  */
-class SPP_Role extends \SPP\SPPObject {
+class SPPRole extends \SPP\SPPObject {
     private $rolename, $roleid;
     
     public function  __construct($rlnm) {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         $sql='select * from '. \SPP\SPPBase::sppTable('roles').' where rolename=?';
         $values=array($rlnm);
         $result=$db->execute_query($sql, $values);
@@ -40,9 +40,9 @@ class SPP_Role extends \SPP\SPPObject {
      */
     public static function createRole($rlnm)
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         $sql='insert into '. \SPP\SPPBase::sppTable('roles').' values (?,?)';
-        $values=array(SPP_Sequence::next('spproleid'),$rlnm);
+        $values=array(\SPPMod\SPPDB\SPP_Sequence::next('spproleid'),$rlnm);
         $db->execute_query($sql, $values);
     }
 
@@ -55,8 +55,8 @@ class SPP_Role extends \SPP\SPPObject {
      */
     public function hasRight($rt)
     {
-        $db=new SPP_DB();
-        $rtid=SPP_Right::getRightId($rt);
+        $db=new \SPPMod\SPPDB\SPP_DB();
+        $rtid=SPPRight::getRightId($rt);
         $sql='select * from '.\SPP\SPPBase::sppTable('roleright').' where roleid=? and rightid=?';
         $values=array($this->roleid,$rtid);
         $result=$db->execute_query($sql, $values);
@@ -79,7 +79,7 @@ class SPP_Role extends \SPP\SPPObject {
      */
     public function assignRight($rt)
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         if($this->hasRight($rt))
         {
             return false;
@@ -87,7 +87,7 @@ class SPP_Role extends \SPP\SPPObject {
         else
         {
             $sql='insert into '.\SPP\SPPBase::sppTable('roleright').' values(?,?)';
-            $values=array($this->roleid,SPP_Right::getRightId($rt));
+            $values=array($this->roleid,SPPRight::getRightId($rt));
             $db->execute_query($sql, $values);
             return true;
         }
@@ -102,7 +102,7 @@ class SPP_Role extends \SPP\SPPObject {
      */
     public static function getRoleId($rl)
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         $sql='select roleid from '.\SPP\SPPBase::sppTable('roles').' where rolename=?';
         $values=array($rl);
         $result=$db->execute_query($sql, $values);

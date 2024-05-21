@@ -15,9 +15,9 @@ function login()
     $uname=SPP_Ajax::getValue('uname');
     $passwd=SPP_Ajax::getValue('passwd');
     try{
-        if(!SPP_Auth::authSessionExists())
+        if(!\SPPMod\SPPAuth\SPPAuth::authSessionExists())
         {
-            SPP_Auth::login($uname, $passwd);
+            \SPPMod\SPPAuth\SPPAuth::login($uname, $passwd);
             $result['login']=true;
         }
     }
@@ -53,7 +53,7 @@ function login()
 function logout()
 {
     $result=array();
-    SPP_Auth::logout();
+    \SPPMod\SPPAuth\SPPAuth::logout();
     $result['callpage']='src/comp/loggedout.php';
     $result['msg']='';
     SPP_Ajax::returnAjax($result);

@@ -1,6 +1,6 @@
 <?php
 
-namespace SPPMod;
+namespace SPPMod\SPPValidator;
 
 /**
  * class SPP_Single_validator
@@ -12,12 +12,12 @@ namespace SPPMod;
 abstract class SPP_Single_validator extends SPP_Validator {
     protected $element;
 
-    public function __construct(SPP_ViewTag $elem, $errorholder, $msg, $jsfunc) {
+    public function __construct(\SPPMod\SPPView\SPPViewTag $elem, $errorholder, $msg, $jsfunc) {
         parent::__construct($errorholder, $msg, $jsfunc);
         $this->element=$elem;
     }
 
-    public function setElement(SPP_ViewTag $elem)
+    public function setElement(\SPPMod\SPPView\SPPViewTag $elem)
     {
         //parent::__construct();
         $this->element=$elem;

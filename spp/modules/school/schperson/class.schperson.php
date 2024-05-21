@@ -26,7 +26,7 @@ class SCH_Person extends SPPEntity{
 
     public function install()
     {
-        $db = new SPP_DB();
+        $db = new \SPPMod\SPPDB\SPP_DB();
         if ($db->tableExists($this->enttab)) {
             $query = 'create table '.$this->enttab.'(entid  varchar(20))';
             $db->execute_query($query);

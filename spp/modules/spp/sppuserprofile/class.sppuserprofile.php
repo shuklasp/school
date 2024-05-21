@@ -1,31 +1,31 @@
 <?php
 
-namespace SPPMod;
+namespace SPPMod\SPPUserProfile;
 /*
  * class.sppuserprofile.php
- * Defines SPP_UserProfile class.
+ * Defines SPPMod\SPPUserProfile\SPPUserProfile class.
  */
 
 /**
- * Description of SPP_UserProfile
+ * Description of SPPMod\SPPUserProfile\SPPUserProfile
  * Defines user profiles.
  *
  * @author Satya Prakash Shukla
  */
-class SPP_UserProfile {
+class SPPMod\SPPUserProfile\SPPUserProfile {
 
     public static function install() {
-        if(!SPP_Profile::doesProfileExist('users'))
-            SPP_Profile::createProfile ('users');
+        if(!\SPPMod\SPPProfile\SPPProfile::doesProfileExist('users'))
+            \SPPMod\SPPProfile\SPPProfile::createProfile ('users');
     }
     function getValue($fld,$unm='') {
         if($unm=='')
         {
-            $unm=SPP_Auth::get('UserName');
+            $unm=\SPPMod\SPPAuth\SPPAuth::get('UserName');
         }
-        $usr=new SPP_User($unm);
+        $usr=new \SPPMod\SPPAuth\SPPUser($unm);
         $uid=$usr->get('UserId');
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         $sql='select profid from userprofiles where uid=?';
         $result=$db->execute_query($sql, array($uid));
         $profid='';

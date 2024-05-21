@@ -28,6 +28,10 @@ if(!defined('SPP_VER'))
     define('SPP_IMG_URI',SPP_RES_URI.SPP_US.'images');
     define('SPP_MODULES_DIR', SPP_BASE_DIR.SPP_DS.'modules');
     define('SPP_ETC_DIR',SPP_BASE_DIR.SPP_DS.'etc');
+    define('SPP_APP_DIR', SPP_BASE_DIR . SPP_DS . '..');
+    //echo SPP_APP_DIR;
+    //$dirs=scandir(SPP_APP_DIR);
+    //var_dump($dirs);
     //define('SPP_APP_ETC',SPP_ETC_DIR.SPP_DS.'apps');
     //define('SPP_MODSCONF_DIR',SPP_ETC_DIR.SPP_DS.'modsconf');
     define('SPP_RC_DIR',SPP_ETC_DIR.SPP_DS.'rc.d');
@@ -55,6 +59,18 @@ if(!defined('SPP_VER'))
       //return;
     }
   });
+
+  spl_autoload_register(function ($class_name) {
+    $path = explode('\\', $class_name);
+    $class = array_pop($path);
+    if (file_exists(SPP_CORE_DIR . SPP_DS . strtolower($class) . '.php')) {
+      require_once SPP_CORE_DIR . SPP_DS . strtolower($class) . '.php';
+    }
+  });
+
+  //\SPP\SPPEvent::startEvent('spp_init');
+  //\SPP\SPPEvent::endEvent('spp_init');
+
 
     /* require_once SPP_CORE_DIR.SPP_DS.'sppfuncs.php';
     require_once SPP_CORE_DIR.SPP_DS.'class.sppobject.php';
@@ -106,11 +122,17 @@ if(!defined('SPP_VER'))
     //\SPP\Module::loadAllModules();
     //SPPError::init();
 }
-//\SPP\App::getAppConfDir()
+\SPP\SPPEvent::registerEvent('spp_init');
+//echo SPP_APP_DIR . SPP_DS . 'events';
+ //\SPP\App::getAppConfDir()
 //session_destroy();
 //print SPPError::getUlErrors('Line: !linenum!, File: !filename!, Error No.: !errno!, Error message: !errmsg!');
 /**
  * Load all active modules.
  */
-require_once('services.php');
+//require_once('services.php');
+//$dirs=\SPP\Registry::getDirs('events');
+//var_dump($dirs);
+//print_r(\SPP\Registry::$reg);
+//print_r(\SPP\Registry::$values);
 ?>

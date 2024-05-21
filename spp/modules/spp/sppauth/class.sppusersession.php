@@ -1,6 +1,6 @@
 <?php
 
-namespace SPPMod;
+namespace SPPMod\SPPAuth;
 use SPP\Exceptions\UserBannedException;
 use SPP\Exceptions\UserAuthenticationException;
 use SPP\Exceptions\InvalidUserSessionException;
@@ -10,12 +10,12 @@ require_once('class.sppuser.php');
 /*require_once 'class.sppsession.php';
 require_once 'class.sppbase.php';*/
 /**
- * class SPP_User_Session
+ * class SPPUserSession
  * Manages and stores all the session variable for an authenticated user.
  *
  * @author Satya Parakash Shukla
  */
-class SPP_User_Session extends \SPP\SPPSession
+class SPPUserSession extends \SPP\SPPSession
 {
     private $user, $sessid;
 
@@ -27,11 +27,11 @@ class SPP_User_Session extends \SPP\SPPSession
      */
 	public function __construct($unm,$pswd)
 	{
-        $db=new SPP_DB();
-        $this->user=new SPP_User($unm);
+        $db=new \SPPMod\SPPDB\SPP_DB();
+        $this->user=new \SPPMod\SPPAuth\SPPUser($unm);
         if($this->user->verifyPassword($pswd))
         {
-            $db=new SPP_DB();
+            $db=new \SPPMod\SPPDB\SPP_DB();
             $sql='select * from '.\SPP\SPPBase::sppTable('users').' where uname=?';
             $values=array($unm);
             $result=array();
@@ -70,7 +70,7 @@ class SPP_User_Session extends \SPP\SPPSession
      */
     public function isValid($consider_timeout=true)
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         $sql='select time_to_sec(timediff(now(),lastaccess)) elapsed_time, lastaccess, now() currtime from '.\SPP\SPPBase::sppTable('loginrec').' where sessid=?';
         $values=array($this->sessid);
         $result=$db->execute_query($sql, $values);
@@ -81,7 +81,7 @@ class SPP_User_Session extends \SPP\SPPSession
             if($consider_timeout)
             {
                 //echo 'considering timeout';
-                if($result[0]['elapsed_time']<=(SPP_Config::get('user_session_timeout')*60))
+                if($result[0]['elapsed_time']<=(\SPPMod\SPPConfig\SPPConfig::get('user_session_timeout')*60))
                 {
                     $sql='update loginrec set lastaccess=? where sessid=?';
                     $values=array($result[0]['currtime'],$this->sessid);
@@ -116,7 +116,7 @@ class SPP_User_Session extends \SPP\SPPSession
      */
     public function kill()
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         $sql='delete from '.\SPP\SPPBase::sppTable('loginrec').' where sessid=?';
         $values=array($this->sessid);
         $result=$db->execute_query($sql, $values);

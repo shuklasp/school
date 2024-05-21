@@ -1,5 +1,5 @@
 <?php
-namespace SPPMod;
+namespace SPPMod\SPPDB;
 use SPP\Exceptions\SequenceDoesNotExistException;
 use SPP\Exceptions\SequenceExistsException;
 /*require_once('class.sppdatabase.php');
@@ -24,7 +24,7 @@ class SPP_Sequence extends \SPP\SPPObject
      */
 	public static function next($seqname,$fortoday=false)
 	{
-		$db=new SPP_DB();
+		$db=new \SPPMod\SPPDB\SPP_DB();
 		$sql='select * from '.\SPP\SPPBase::sppTable('sequences').' where seqname=?';
 		$result=$db->execute_query($sql,Array($seqname));
 		if(sizeof($result)>0)
@@ -74,7 +74,7 @@ class SPP_Sequence extends \SPP\SPPObject
      */
     public static function sequenceExists($seqname)
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         $sql='select * from '.\SPP\SPPBase::sppTable('sequences').' where seqname=?';
         $values=array($seqname);
         $result=$db->execute_query($sql, $values);
@@ -98,7 +98,7 @@ class SPP_Sequence extends \SPP\SPPObject
      */
     public static function createSequence($seqname, $initval, $incval)
     {
-        $db= new SPP_DB();
+        $db= new \SPPMod\SPPDB\SPP_DB();
         if(!self::sequenceExists($seqname))
         {
             $sql='insert into '.\SPP\SPPBase::sppTable('sequences').' values(?,?,?,?,?)';
@@ -120,7 +120,7 @@ class SPP_Sequence extends \SPP\SPPObject
      */
     public static function dropSequence($seqname)
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         if(self::sequenceExists($seqname))
         {
             $sql='delete from '.\SPP\SPPBase::sppTable('sequences').' where seqname=?';

@@ -1,5 +1,5 @@
 <?php
-namespace SPPMod;
+namespace SPPMod\SPPEntity;
 
 
 /**

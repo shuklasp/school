@@ -1,6 +1,6 @@
 <?php
 
-namespace SPPMod;
+namespace SPPMod\SPPValidator;
 
 /**
  * class SPP_Validator
@@ -53,7 +53,7 @@ abstract class SPP_Validator extends \SPP\SPPObject {
 
     public abstract function validate();
 
-    public function attachTo(SPP_ViewTag $elem,$event,$msg='')
+    public function attachTo(\SPPMod\SPPView\SPPViewTag $elem,$event,$msg='')
     {
         if($msg!='')
         {

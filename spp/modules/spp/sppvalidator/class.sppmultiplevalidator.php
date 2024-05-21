@@ -1,6 +1,6 @@
 <?php
 
-namespace SPPMod;
+namespace SPPMod\SPPValidator;
 
 /**
  * class SPP_Single_validator

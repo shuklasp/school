@@ -1,5 +1,5 @@
 <?php
-namespace SPPMod;
+namespace SPPMod\SPPAuth;
 use SPP\Exceptions\ConfigVarExistsException as ConfigVarExistsException;
 use SPP\Exceptions\NoAuthSessionException as NoAuthSessionException;
 use SPP\Exceptions\UnknownPropertyException as UnknownPropertyException;
@@ -7,12 +7,12 @@ use SPP\Exceptions\UnknownPropertyException as UnknownPropertyException;
 require_once 'sppsystemevents.php';
 require_once 'sppfuncs.php';*/
 /**
- * class SPP_Auth
+ * class SPPAuth
  * Handles authentication system.
  *
  * @author Satya Prakash Shukla
  */
-class SPP_Auth extends \SPP\SPPObject{
+class SPPAuth extends \SPP\SPPObject{
     /**
      * static function login()
      * Authenticates a userid/password and creates session.
@@ -22,7 +22,7 @@ class SPP_Auth extends \SPP\SPPObject{
      */
     public static function login($uname,$passwd)
     {
-        $ssn=new SPP_User_Session($uname,$passwd);
+        $ssn=new SPPUserSession($uname,$passwd);
         \SPP\SPPSession::setSessionVar('__sppauth__', $ssn);
         return $ssn;
         /*$ev=new LoginEvent();
@@ -98,7 +98,7 @@ class SPP_Auth extends \SPP\SPPObject{
                     return $ssn->get('UserId');
                     break;
                 default:
-                    throw new UnknownPropertyException('Unknown property '.$propname.' accessed in SPP_Auth.');
+                    throw new UnknownPropertyException('Unknown property '.$propname.' accessed in SPPAuth.');
                     break;
             }
         }

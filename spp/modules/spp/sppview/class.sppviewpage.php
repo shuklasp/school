@@ -1,6 +1,6 @@
 <?php
 
-namespace SPPMod;
+namespace SPPMod\SPPView;
 
 \SPP\SPPEvent::registerEvent('event_spp_include_css_files');
 \SPP\SPPEvent::registerEvent('event_spp_include_js_files');
@@ -550,7 +550,7 @@ public static function processXMLForm()
      * @param array $arr
      * @return SPP_HTML_Element
      */
-    private static function createElementFromArray($arr)
+    private static function createElementFromArray($arr) : SPPViewTag
     {
         //print_r($arr);
         $elem = new $arr['type']($arr['name']);
@@ -563,10 +563,10 @@ public static function processXMLForm()
      * Function addElement($ename)
      * Adds the element to the list.
      *
-     * @param SPP_ViewTag $ename
+     * @param \SPPMod\SPPView\SPPViewTag $ename
      * @return bool
      */
-    public static function addElement(SPP_ViewTag $ename)
+    public static function addElement(\SPPMod\SPPView\SPPViewTag $ename)
     {
         foreach (self::$elementslist as $fl) {
             if ($fl == $ename) {

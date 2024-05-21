@@ -18,7 +18,7 @@ Core part of Satya Portal Pack is almost near completion now. It includes:
 
 At present, following parts of this framework are in various stages of development:
 
-1) SPP_Auth: Authentication System, complete with a login system and roles and rights management.
+1) \SPPMod\SPPAuth\SPPAuth: Authentication System, complete with a login system and roles and rights management.
 
 2) SPPDB: Database handling module.
 

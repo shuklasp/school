@@ -1,4 +1,8 @@
 <?php
+namespace SPPMod\SPPAjax;
+use SPP\SPPGlobal;
+use SPP\Exceptions\AjaxRoutineNotFoundException;
+use SPP\Exceptions\AjaxVariableNotFoundException;
 require_once('ajaxexceptions.php');
 
 /**

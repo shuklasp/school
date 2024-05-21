@@ -1,20 +1,20 @@
 <?php
 
-namespace SPPMod;
+namespace SPPMod\SPPView;
 
 /**
  * file class.sppviewtag.php
- * Defines the SPP_ViewTag class.
+ * Defines the \SPPMod\SPPView\SPPViewTag class.
  */
  
 /**
- * class SPP_ViewTag
+ * class \SPPMod\SPPView\SPPViewTag
  *
  * Represents a HTML Tag.
  *
  * @author Satya Prakash Shukla
  */
-class SPP_ViewTag extends \SPP\SPPObject {
+class SPPViewTag extends \SPP\SPPObject {
     protected $tagname;
     protected $isemptyflag=false;
     protected $matter_text;
@@ -72,9 +72,9 @@ class SPP_ViewTag extends \SPP\SPPObject {
      * function wrapTag()
      * Wraps the element into another tag.
      *
-     * @param SPP_ViewTag $tag
+     * @param \SPPMod\SPPView\SPPViewTag $tag
      */
-    public function wrapTag(SPP_ViewTag $tag){
+    public function wrapTag(\SPPMod\SPPView\SPPViewTag $tag){
         if(!isset($this->children[$tag->id]))
         {
             $this->children[$tag->id]=$tag;
@@ -92,10 +92,10 @@ class SPP_ViewTag extends \SPP\SPPObject {
      * @param string $tagname
      * @param string $ename
      *
-     * @return SPP_ViewTag
+     * @return \SPPMod\SPPView\SPPViewTag
      */
     public function wrapIntoTag(string $tagname, string $ename){
-        $tag= new SPP_ViewTag($tagname, $ename);
+        $tag= new \SPPMod\SPPView\SPPViewTag($tagname, $ename);
         $tag->wrapTag($this);
         return $tag;
     }
@@ -249,6 +249,15 @@ class SPP_ViewTag extends \SPP\SPPObject {
         return $pstr;
     }
 
+    /**
+     * function show()
+     * Shows the element.
+     */
+    public function show(){
+        echo $this->getHTML();
+    }
+
+
     /***
      * function getStart()
      * Gets the start tag of the element.
@@ -303,9 +312,9 @@ class SPP_ViewTag extends \SPP\SPPObject {
      * function addChild()
      * Adds a child to the element.
      *
-     * @param SPP_ViewTag $child
+     * @param \SPPMod\SPPView\SPPViewTag $child
      */
-    public function addChild(SPP_ViewTag $child){
+    public function addChild(\SPPMod\SPPView\SPPViewTag $child){
         $this->children[]=$child;
     }
 

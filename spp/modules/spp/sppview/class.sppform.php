@@ -1,6 +1,7 @@
 <?php
 
-namespace SPPMod;
+namespace SPPMod\SPPView;
+
 use SPP\Exceptions\UnknownPropertyException as UnknownPropertyException;
 use SPP\Exceptions\VarNotFoundException as VarNotFoundException;
 /*require_once 'sppsystemexceptions.php';
@@ -13,7 +14,7 @@ require_once 'classes.sppvalidators.php';*/
  *
  * @author Satya Prakash Shukla
  */
-class SPP_Form extends SPP_ViewTag {
+class SPP_Form extends \SPPMod\SPPView\SPPViewTag {
     private $method;
     private $action;
     private $onsubmit;
@@ -60,7 +61,7 @@ class SPP_Form extends SPP_ViewTag {
         $this->validators[]=$val;
     }
 
-    public function attachValidator(SPP_Validator $val, SPP_ViewTag $elem, $event, $errhold, $msg='')
+    public function attachValidator(SPP_Validator $val, \SPPMod\SPPView\SPPViewTag $elem, $event, $errhold, $msg='')
     {
         $val->setErrorHolder($errhold);
         $val->attachTo($elem, $event, $msg);
@@ -92,7 +93,7 @@ class SPP_Form extends SPP_ViewTag {
      * @param mixed $elem
      */
 
-    public function addElement(SPP_ViewTag $elem)
+    public function addElement(\SPPMod\SPPView\SPPViewTag $elem)
     {
         $ename=$elem->getAttribute('id');
         if(array_key_exists($ename, $_POST))

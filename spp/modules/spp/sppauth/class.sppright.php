@@ -1,17 +1,17 @@
 <?php
 
-namespace SPPMod;
+namespace SPPMod\SPPAuth;
 
 /*require_once 'class.sppbase.php';
 require_once 'class.sppdatabase.php';
 require_once 'class.sppsequence.php';*/
 
 /**
- * class SPP_Right
+ * class SPPRight
  *
  * @author Satya Prakash Shukla
  */
-class SPP_Right extends \SPP\SPPObject {
+class SPPRight extends \SPP\SPPObject {
 
     /**
      * function rightExists()
@@ -22,7 +22,7 @@ class SPP_Right extends \SPP\SPPObject {
      */
     public static function rightExists($rt)
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         $sql='select * from '.\SPP\SPPBase::sppTable('rights').' where rightname=?';
         $values=array($rt);
         $result=$db->execute_query($sql, $values);
@@ -44,9 +44,9 @@ class SPP_Right extends \SPP\SPPObject {
      */
     public static function createRight($rt)
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         $sql='insert into '.\SPP\SPPBase::sppTable('rights').'(rightid,rightname) values(?,?)';
-        $values=array(SPP_Sequence::next('spprightid'),$rt);
+        $values=array(\SPPMod\SPPDB\SPP_Sequence::next('spprightid'),$rt);
         $db->execute_query($sql, $values);
     }
 
@@ -58,7 +58,7 @@ class SPP_Right extends \SPP\SPPObject {
      */
     public static function dropRight($rt)
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         $sql='delete from '.\SPP\SPPBase::sppTable('rights').' where rightname=?';
         $values=array($rt);
         $db->execute_query($sql, $values);
@@ -73,7 +73,7 @@ class SPP_Right extends \SPP\SPPObject {
      */
     public static function getRightId($rt)
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         $sql='select rightid from '.\SPP\SPPBase::sppTable('rights').' where rightname=?';
         $values=array($rt);
         $result=$db->execute_query($sql, $values);

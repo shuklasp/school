@@ -34,7 +34,7 @@
                 </ul>
                 <span class="d-flex">
                     <?php
-                    if(!\SPPMod\SPP_Auth::authSessionExists())
+                    if(!\SPPMod\SPPAuth\SPPAuth::authSessionExists())
                     {
                     ?>
                     <button class="btn btn-outline-success" type="submit" onclick="$('#working-area').load('src/comp/login-form.php')">Login</button>

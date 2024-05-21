@@ -1,5 +1,5 @@
 <?php
-namespace SPPMod;
+namespace SPPMod\SPPGlobal;
 global $___globals;
 $___globals=array();
 namespace SPPMod;

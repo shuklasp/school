@@ -1,5 +1,5 @@
 <?php
-namespace SPPMod;
+namespace SPPMod\SPPAuth;
 use SPP\Exceptions\UserNotFoundException;
 use SPP\Exceptions\UnknownPropertyException;
 /*require_once 'class.spprole.php';
@@ -9,7 +9,7 @@ require_once 'class.sppbase.php';*/
  *
  * @author Administrator
  */
-class SPP_User extends \SPP\SPPObject {
+class SPPUser extends \SPP\SPPObject {
     private $uname,$uid,$enabled,$rights;
 
     /**
@@ -19,7 +19,7 @@ class SPP_User extends \SPP\SPPObject {
      */
 	public function __construct($unm)
 	{
-		$db=new SPP_DB();
+		$db=new \SPPMod\SPPDB\SPP_DB();
 		$res=array();
 		$qry='select uid, enabled from '. \SPP\SPPBase::sppTable('users').' where uname=?';
  		$res=$db->execute_query($qry,array($unm));
@@ -97,7 +97,7 @@ class SPP_User extends \SPP\SPPObject {
      */
     public function verifyPassword($passwd)
     {
-   		$db=new SPP_DB();
+   		$db=new \SPPMod\SPPDB\SPP_DB();
 		$res=array();
 		$qry='select uid, aes_decrypt(passwd,?) pswd, enabled from '. \SPP\SPPBase::sppTable('users').' where uname=?';
  		$res=$db->execute_query($qry,array($passwd,$this->uname));
@@ -128,7 +128,7 @@ class SPP_User extends \SPP\SPPObject {
      */
     public static function userExists($uname)
     {
-   		$db=new SPP_DB();
+   		$db=new \SPPMod\SPPDB\SPP_DB();
 		$res=array();
 		$qry='select uid, enabled from '.\SPP\SPPBase::sppTable('users').' where uname=?';
  		$res=$db->execute_query($qry,array($uname));
@@ -152,7 +152,7 @@ class SPP_User extends \SPP\SPPObject {
      */
     public static function verifyUserPassword($uname,$passwd)
     {
-   		$db=new SPP_DB();
+   		$db=new \SPPMod\SPPDB\SPP_DB();
 		$res=array();
 		$qry='select uid, aes_decrypt(passwd,?) pswd, enabled from '. \SPP\SPPBase::sppTable('users').' where uname=?';
  		$res=$db->execute_query($qry,array($passwd,$uname));
@@ -204,7 +204,7 @@ class SPP_User extends \SPP\SPPObject {
      */
     public static function createUser($uname,$passwd)
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         if(self::userExists($uname))
         {
             return false;
@@ -212,7 +212,7 @@ class SPP_User extends \SPP\SPPObject {
         else
         {
             $sql='insert into '. \SPP\SPPBase::sppTable('users').'(uid,uname,passwd,enabled) values(?,?,aes_encrypt(?,?),?)';
-            $values=array(SPP_Sequence::next('sppuid'),$uname,$passwd,$passwd,'Y');
+            $values=array(\SPPMod\SPPDB\SPP_Sequence::next('sppuid'),$uname,$passwd,$passwd,'Y');
             $db->execute_query($sql, $values);
             return true;
         }
@@ -227,7 +227,7 @@ class SPP_User extends \SPP\SPPObject {
      */
     public static function dropUser($uname)
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         if(self::userExists($uname)==false)
         {
             return false;
@@ -249,7 +249,7 @@ class SPP_User extends \SPP\SPPObject {
      */
     public function setPassword($passwd)
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         $sql='update '. \SPP\SPPBase::sppTable('users').' set passwd=aes_encrypt(?,?) where uid=?';
         $values=array($passwd,$passwd,$this->uid);
         $db->execute_query($sql, $values);
@@ -262,7 +262,7 @@ class SPP_User extends \SPP\SPPObject {
      */
     public function enable()
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         $sql='update '. \SPP\SPPBase::sppTable('users').' set enabled=? where uid=?';
         $values=array('Y',$this->uid);
         $db->execute_query($sql, $values);
@@ -275,7 +275,7 @@ class SPP_User extends \SPP\SPPObject {
      */
     public function disable()
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         $sql='update '. \SPP\SPPBase::sppTable('users').' set enabled=? where uid=?';
         $values=array('N',$this->uid);
         $db->execute_query($sql, $values);
@@ -290,9 +290,9 @@ class SPP_User extends \SPP\SPPObject {
      */
     public function hasRole($rolename)
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         $sql='select * from '. \SPP\SPPBase::sppTable('userroles').' where uid=? and roleid=?';
-        $values=array($this->uid,SPP_Role::getRoleId($rolename));
+        $values=array($this->uid,SPPRole::getRoleId($rolename));
         $result=$db->execute_query($sql, $values);
         if(sizeof($result)>0)
         {
@@ -313,7 +313,7 @@ class SPP_User extends \SPP\SPPObject {
      */
     public function assignRole($rolename)
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         if($this->hasRole($rolename))
         {
             return false;
@@ -321,7 +321,7 @@ class SPP_User extends \SPP\SPPObject {
         else
         {
             $sql='insert into '. \SPP\SPPBase::sppTable('userroles').' values(?,?)';
-            $values=array($this->uid,SPP_Role::getRoleId($rolename));
+            $values=array($this->uid,SPPRole::getRoleId($rolename));
             $db->execute_query($sql, $values);
             return true;
         }
@@ -337,11 +337,11 @@ class SPP_User extends \SPP\SPPObject {
      */
     public function removeRole($rolename)
     {
-        $db=new SPP_DB();
+        $db=new \SPPMod\SPPDB\SPP_DB();
         if($this->hasRole($rolename))
         {
             $sql='delete from '. \SPP\SPPBase::sppTable('userroles').' where uid=? and roleid=?';
-            $values=array($this->uid,SPP_Role::getRoleId($rolename));
+            $values=array($this->uid,SPPRole::getRoleId($rolename));
             $db->execute_query($sql, $values);
             return true;
         }

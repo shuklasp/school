@@ -3,7 +3,7 @@ namespace School;
 
 use SPPEntityRelations;
 
-class Person extends \SPPMod\SPPEntity
+class Person extends \SPPMod\SPPEntity\SPPEntity
 {
     const TABLENAME = 'person';
     
@@ -56,6 +56,6 @@ class Person extends \SPPMod\SPPEntity
     }
 }
 
-\SPPMod\SPPEntityRelations::registerEntityRelation('\School\Person', 'id', '\School\Person', 'person_id', 'ER_OneToOne');
-\SPPMod\SPPEntityRelations::relateEntities('\School\Person=>\School\Person','100027','100037');
+\SPPMod\SPPEntity\SPPEntityRelations::registerEntityRelation('\School\Person', 'id', '\School\Person', 'person_id', 'ER_OneToOne');
+\SPPMod\SPPEntity\SPPEntityRelations::relateEntities('\School\Person=>\School\Person','100027','100037');
 ?>
