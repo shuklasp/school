@@ -9,7 +9,7 @@ namespace SPPMod\SPPView;
  *
  * @author Satya Prakash Shukla
  */
-class SPP_HTML_TableField extends \SPPMod\SPPView\SPPViewTag {
+class SPP_HTML_TableField extends \SPPMod\SPPView\ViewTag {
     private $content;
     public function  __construct($ename, $isheading=false) {
         parent::__construct($ename);

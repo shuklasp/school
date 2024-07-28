@@ -9,7 +9,7 @@ $app1=new \SPP\App('demo');
 \SPP\Scheduler::setContext('demo');
 $mods=\SPP\Module::scanModules();
 //print_r($mods);
-//$opt=new SPP_Form_Input_Checkbox('sppoption');
+//$opt=new SPPViewForm_Input_Checkbox('sppoption');
 $i=1;
 foreach($mods as $modfile)
 {
@@ -18,13 +18,13 @@ foreach($mods as $modfile)
     $modarray[$mod->ModuleGroup][$mod->InternalName]['pubdesc']=$mod->PublicDesc;
     if(\SPP\Module::isEnabled($mod->InternalName))
     {
-        $modarray[$mod->ModuleGroup][$mod->InternalName]['chbox']=new SPP_Form_Input_Checkbox('sppoption'.$i,$modfile,true);
+        $modarray[$mod->ModuleGroup][$mod->InternalName]['chbox']=new SPPViewForm_Input_Checkbox('sppoption'.$i,$modfile,true);
         $i++;
 //        $opt->addOption($modfile, true);
     }
     else
     {
-        $modarray[$mod->ModuleGroup][$mod->InternalName]['chbox']=new SPP_Form_Input_Checkbox('sppoption'.$i,$modfile);
+        $modarray[$mod->ModuleGroup][$mod->InternalName]['chbox']=new SPPViewForm_Input_Checkbox('sppoption'.$i,$modfile);
         $i++;
         //$opt->addOption($modfile);
     }

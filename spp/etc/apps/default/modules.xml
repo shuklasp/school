@@ -73,59 +73,9 @@
         </dependencies>
     </module>
     <module>
-        <modname>sppdojo</modname>
-        <modpath>spp/sppdojo</modpath>
-        <status>active</status>
-        <dependencies>
-            <dependency>sppcore</dependency>
-            <dependency>sppdb</dependency>
-            <dependency>sppsession</dependency>
-        </dependencies>
-    </module>
-    <module>
-        <modname>sppdijit</modname>
-        <modpath>spp/sppdojo/sppdijit</modpath>
-        <status>active</status>
-        <dependencies>
-            <dependency>sppcore</dependency>
-            <dependency>sppdb</dependency>
-            <dependency>sppsession</dependency>
-        </dependencies>
-    </module>
-    <module>
-        <modname>sppvalidator</modname>
-        <modpath>spp/sppvalidator</modpath>
-        <status>active</status>
-        <dependencies>
-            <dependency>sppcore</dependency>
-            <dependency>sppdb</dependency>
-            <dependency>sppsession</dependency>
-        </dependencies>
-    </module>
-    <module>
         <modname>sppview</modname>
         <modpath>spp/sppview</modpath>
         <status>active</status>
-        <dependencies>
-            <dependency>sppcore</dependency>
-            <dependency>sppdb</dependency>
-            <dependency>sppsession</dependency>
-        </dependencies>
-    </module>
-    <module>
-        <modname>sppajax</modname>
-        <modpath>spp/sppajax</modpath>
-        <status>active</status>
-        <dependencies>
-            <dependency>sppcore</dependency>
-            <dependency>sppdb</dependency>
-            <dependency>sppsession</dependency>
-        </dependencies>
-    </module>
-    <module>
-        <modname>sppglobal</modname>
-        <modpath>spp/sppglobal</modpath>
-        <status>inactive</status>
         <dependencies>
             <dependency>sppcore</dependency>
             <dependency>sppdb</dependency>

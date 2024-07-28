@@ -2,7 +2,7 @@
 
 namespace SPPMod\SPPView;
 
-class SPP_HTML_Block extends \SPPMod\SPPView\SPPViewTag {
+class SPP_HTML_Block extends \SPPMod\SPPView\ViewTag {
 
 	public $content;
     public $tag = 'div';
@@ -42,8 +42,8 @@ class SPP_HTML_Block extends \SPPMod\SPPView\SPPViewTag {
         if (isset($this->attributes['id']))
             $this->attributes['id'] = $this->id;
         $this->content_attributes['id'] = $this->id . '-content';
-        $html= '<' . $this->tag . \SPPMod\SPPView\SPPViewTag::RenderAttributes() . '>';
-        $html.= '<div ' . \SPPMod\SPPView\SPPViewTag::renderAttributes() . '>' . $this->content . '</div>';
+        $html= '<' . $this->tag . \SPPMod\SPPView\ViewTag::RenderAttributes() . '>';
+        $html.= '<div ' . \SPPMod\SPPView\ViewTag::renderAttributes() . '>' . $this->content . '</div>';
   
         $html=parent::render();
         $html.=$this->content;

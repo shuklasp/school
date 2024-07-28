@@ -4,19 +4,19 @@ namespace SPPMod\SPPView;;
 //require_once 'class.spphtmlelement.php';
 
 /**
- * class SPP_Form_Element
+ * class SPPViewForm_Element
  * Represents an element of form.
  *
  * @author Satya Prakash Shukla
  */
-class SPP_Form_Element extends \SPPMod\SPPView\SPPViewTag{
+class SPPViewForm_Element extends \SPPMod\SPPView\ViewTag{
     protected $validators = array();
     protected $errors = array();
 
     /**
      * @param string $ename
      */
-    public function  __construct($ename, SPP_Validator $validator=null) {
+    public function  __construct($ename, SPPValidator $validator=null) {
         parent::__construct($tagname='input', $ename);
         $this->eventattrlist[]='onselect';
         $this->eventattrlist[]='onchange';
@@ -29,7 +29,7 @@ class SPP_Form_Element extends \SPPMod\SPPView\SPPViewTag{
         }
     }
 
-    public function addValidator(SPP_Validator $validator){
+    public function addValidator(SPPValidator $validator){
         $this->validators[] = $validator;
     }
 

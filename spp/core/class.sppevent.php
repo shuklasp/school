@@ -19,14 +19,6 @@ class SPPEvent extends \SPP\SPPObject
            // parent::__construct();
 	}
 
-    /**
-     * private static function callHandler()
-     * Calls a handler callback.
-     * 
-     * @param string $hnd Name of handler function
-     * @return mixed Return value of handler.
-     */
-
      /**
       * function registerEvent()
       * Registers an event.
@@ -78,6 +70,12 @@ class SPPEvent extends \SPP\SPPObject
         }
      }
 
+     /**
+      * function hasDefaultHandler()
+      * Checks if a default handler is registered for an event.
+      * 
+      * @param string $event_name Name of event.
+      */
      public static function hasDefaultHandler($event_name)
      {
         $default_handler=self::getDefaultHandler($event_name);
@@ -211,10 +209,10 @@ class SPPEvent extends \SPP\SPPObject
       * 
       * @param string $event_name Name of event.
       */
-     public static function startEvent($event_name, array &$params=array())
+     public static function startEvent(string $event_name, array &$params=array())
      {
-        //echo '<div style="text-align:center;font-size:80px;color:red">Starting event "'.$event_name.'"</div><br/>';
         $events=\SPP\Registry::get('__events');
+        //var_dump($events);
         if(array_key_exists($event_name, $events))
         {
             self::setParams($event_name, $params);
@@ -225,15 +223,8 @@ class SPPEvent extends \SPP\SPPObject
                 {
                     self::callHandler($hnd,'before');
                 }
-                foreach($events[$event_name]['params'] as $key => $value)
-                {
-                    $params[$key]=$value;
-                }
+                $params=self::getParams($event_name);
             }
-        }
-        else
-        {
-//            throw new \SPP\SPPException('Cannot start event "'.$event_name.'". Event not registered!');
         }
      }
 
@@ -255,15 +246,16 @@ class SPPEvent extends \SPP\SPPObject
                 foreach ($handlers as $hnd) {
                     self::callHandler($hnd, 'after');
                 }
-                foreach ($events[$event_name]['params'] as $key => $value) {
-                    $params[$key] = $value;
-                }
+                $params = self::getParams($event_name);
+                // foreach ($events[$event_name]['params'] as $key => $value) {
+                //     $params[$key] = $value;
+                // }
             }
         }
-        else
-        {
-//            throw new \SPP\SPPException('Cannot end event "'.$event_name.'". Event not registered!');
-        }
+        // else
+        // {
+        //     throw new \SPP\SPPException('Cannot end event "'.$event_name.'". Event not registered!');
+        // }
     }
 
 
@@ -286,15 +278,23 @@ class SPPEvent extends \SPP\SPPObject
                 foreach ($handlers as $hnd) {
                     self::callHandler($hnd, 'override');
                 }
-                foreach ($events[$event_name]['params'] as $key => $value) {
-                    $params[$key] = $value;
-                }
+                $params = self::getParams($event_name);
+                // foreach ($events[$event_name]['params'] as $key => $value) {
+                //     $params[$key] = $value;
             }
-        } else {
-            throw new \SPP\SPPException('Cannot start event "' . $event_name . '". Event not registered!');
         }
+        // else {
+        //     throw new \SPP\SPPException('Cannot start event "' . $event_name . '". Event not registered!');
+        // }
     }
 
+    /**
+     * function hasOverrider()
+     * Checks if an event has an overrider.
+     * 
+     * @param string $handler_name Name of handler.
+     * @return bool
+     */
     public static function hasOverrider($handler_name)
     {
         if(class_exists('\\EventHandlers\\'.$handler_name))
@@ -324,7 +324,7 @@ class SPPEvent extends \SPP\SPPObject
      * @return void
      * @throws \SPP\SPPException
      */
-    public static function fireEvent($event_name, array &$params=array())
+    public static function fireEvent($event_name, array &$params=array(), mixed $inline_handler=null)
     {
         $events = \SPP\Registry::get('__events');
         $overridden=false;
@@ -348,24 +348,33 @@ class SPPEvent extends \SPP\SPPObject
                 }
                 if(!$overridden)
                 {
-                    $default_handler = self::getDefaultHandler($event_name);
-                    if ($default_handler !== null) {
-                    //if(self::hasDefaultHandler($event_name)){
-                        self::callHandler($default_handler, 'default');
-                    } else {
-                        throw new \SPP\SPPException('Event "' . $event_name . '" is not overridable!');
+                    if(!is_null($inline_handler))
+                    {
+                        $inline_handler();
+                    }
+                    else{
+                        $default_handler = self::getDefaultHandler($event_name);
+                        if ($default_handler !== null) {
+                        //if(self::hasDefaultHandler($event_name)){
+                            self::callHandler($default_handler, 'default');
+                        } else {
+                            throw new \SPP\SPPException('Event "' . $event_name . '" is not overridable!');
+                        }
                     }
                 }
                 foreach ($handlers as $hnd) {
                     self::callHandler($hnd, 'after');
                 }
-                foreach ($events[$event_name]['params'] as $key => $value) {
-                    $params[$key] = $value;
-                }
+                $params = self::getParams($event_name);
+
+                // foreach ($events[$event_name]['params'] as $key => $value) {
+                //     $params[$key] = $value;
+                // }
             }
-        } else {
-//            throw new \SPP\SPPException('Cannot fire event "' . $event_name . '". Event not registered!');
         }
+        //else {
+        //     throw new \SPP\SPPException('Cannot fire event "' . $event_name . '". Event not registered!');
+        // }
     }
 
 
@@ -385,6 +394,18 @@ class SPPEvent extends \SPP\SPPObject
         $hnd=null;
         $hnd_str=null;
         try{
+            if($occurence=='inline')
+            {
+                if(is_callable($handler_name))
+                {
+                    $handler_name();
+                }
+                else
+                {
+                    throw new \SPP\SPPException('Invalid handler "'.$handler_name.' called!');
+
+                }
+            }
             if($occurence=='default')
             {
                 $hnd_str = '\\EventHandlers\\Defaults\\'.$handler_name;
@@ -413,6 +434,12 @@ class SPPEvent extends \SPP\SPPObject
     }
 
 
+    /**
+     * function scanHandlers()
+     * Scans the event handlers.
+     * 
+     * @return void
+     */
     public static function scanHandlers()
     {
         $dirs=array(SPP_DS.'events', SPP_MODULES_DIR.'events', SPP_MODULES_DIR.'eventHandlers');
@@ -441,12 +468,26 @@ class SPPEvent extends \SPP\SPPObject
         }
     }
 
+    /**
+     * function registerDirs()
+     * Registers directories for events.
+     * 
+     * @return void
+     */
     public static function registerDirs()
     {
         \SPP\SPPEvent::scanAndRegisterDirs(SPP_BASE_DIR . SPP_DS . 'events');
         \SPP\SPPEvent::scanAndRegisterDirs(SPP_APP_DIR . SPP_DS . 'events');
     }
 
+    /**
+     * function scanAndRegisterDirs()
+     * Recursively scans and registers directories for events.
+     * 
+     * @param string $dir Directory to scan.
+     * @param bool $top_dir Top level directory.
+     * @return void
+     */
     public static function scanAndRegisterDirs($dir, $top_dir = true)
     {
         if (!is_dir($dir)) {

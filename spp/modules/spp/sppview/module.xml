@@ -15,11 +15,14 @@
     <modgroup>SPP_Optional</modgroup>
     <pubdesc>Handles HTML in SPP.</pubdesc>
     <includes>
-        <include>class.sppviewtag.php</include>
-        <include>class.sppform.php</include>
+        <include>class.viewtag.php</include>
         <include>class.sppformelement.php</include>
-        <include>class.sppviewpage.php</include>
-        <include>classes.formelements.php</include>
+        <include>class.sppformelement.php</include>
+        <include>class.viewpage.php</include>
+        <include>class.ajax.php</include>
+        <include>class.pages.php</include>
+        <include>ajaxexceptions.php</include>
+        <include>formelements/classes.formelements.php</include>
     </includes>
     <deps>
         <depends>sppdb</depends>

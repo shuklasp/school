@@ -5,19 +5,19 @@
 \SPP\SPPBase::useModule('SPPSession');
 \SPP\SPPBase::useModule('SPP_Wizard');*/
 SPP_HTML_Page::readXMLFile(SPP_DEV_DIR.SPP_US.'controls.devsetup.xml');
-/*$appname=new SPP_Form_Input('appname');
+/*$appname=new SPPViewForm_Input('appname');
 $appname->setAttribute('maxlength', '40');
 $appname->setAttribute('size', '40');
-$dbname=new SPP_Form_Input('dbname');*/
-//$dbtype=new SPP_Form_Select('dbtype');
+$dbname=new SPPViewForm_Input('dbname');*/
+//$dbtype=new SPPViewForm_Select('dbtype');
 //$dbtype->setAttribute('size', '40');
 //$dbtype->addOption('MySQL', 'mysql');
 //$dbtype->addOption('Oracle', 'oracle');
-/*$dbuname=new SPP_Form_Input('dbuname');
-$dbpasswd=new SPP_Form_Input_Password('dbpasswd');
-$formsubmit=new SPP_Form_Input_Submit('formsubmit');
+/*$dbuname=new SPPViewForm_Input('dbuname');
+$dbpasswd=new SPPViewForm_Input_Password('dbpasswd');
+$formsubmit=new SPPViewForm_Input_Submit('formsubmit');
 $formsubmit->setAttribute('value', 'Submit');
-//$installform=new SPP_Form('installform', \SPP\SPPBase::sppLink('devsetup.php'), 'post');
+//$installform=new SPPViewForm('installform', \SPP\SPPBase::sppLink('devsetup.php'), 'post');
 //$installform->addElement($appname);
 /*$installform->addElement($dbname);
 $installform->addElement($dbtype);

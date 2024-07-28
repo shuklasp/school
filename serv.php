@@ -5,12 +5,12 @@ require_once('global.php');
 //require_once('vendor/autoload.php');
 //global $services, $pages;
 //require_once('src/server/'.$services[$_REQUEST['service']]);
-if(SPP_Ajax::isServiceRequest()){
-SPP_Ajax::callService();
-SPP_Ajax::callRoutine();
+if(Ajax::isServiceRequest()){
+Ajax::callService();
+Ajax::callRoutine();
 }
-else if(SPP_Ajax::isComponentRequest()){
-    SPP_Ajax::loadPageComponent();
+else if(Ajax::isComponentRequest()){
+    Ajax::loadPageComponent();
 }
 else{
     throw new \SPP\SPPException('Unknown request!');

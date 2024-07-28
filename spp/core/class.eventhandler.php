@@ -31,6 +31,36 @@ abstract class EventHandler
         }
     }
 
+    public function getParams()
+    {
+        $events = \SPP\Registry::get('__events');
+        //print_r($events);
+        $params = array();
+        if (isset($events[$this->event_name])) {
+            $params = $events[$this->event_name]['params'];
+            //print_r($params);
+        } else {
+            return null;
+        }
+        return $params;
+    }
+
+    public function setParams($params)
+    {
+        $events = \SPP\Registry::get('__events');
+        if (isset($events[$this->event_name])) { 
+            $events[$this->event_name]['params'] = $params;
+            //print_r($events);
+            \SPP\Registry::register('__events', $events);
+            //print_r(\SPP\Registry::get('__events'));
+            return true;
+        } else {
+            return null;
+        }
+    }
+
+
+
 
     public function __destruct()
     {

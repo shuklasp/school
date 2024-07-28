@@ -1,47 +1,59 @@
 <?php
-clearstatcache() ;
-//$obj=new \SPP\Settings();
-//$src=($obj->getSetting('src'));
-//print_r($_SESSION);
-\SPP\SPPError::destroyErrors();
-            require_once('server/class.person.php');
-            $p = new \School\Person();
-            //var_dump($p);
-//var_dump($src);
-//echo '<img src="'.$src[0]->dir.'/img/name-plate.jpeg" />';
+
+use SPP\SPPGlobal;
+use SPPMod\SPPView\ViewPage;
+
+//ViewPage::render();
+//echo '<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js" type="text/javascript"></script>';
+//print "<h1>Hello World</h1>";
+
+//print_r(SPPGlobal::get('page'));
 ?>
 <html>
-    <head>
-        <title>Virtual Shiksha Community</title>
-        <link href="lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-        <link href="lib/MDB5/css/mdb.min.css" rel="stylesheet">
-    </head>
-    <body>
-        <div id="menu-area">
-            <?php require('comp/navbar.php'); ?>
-        </div>
-            <div class="container-fluid">
-                <div class="row">
-                <div class="col-3" id="smenu-area"></div>
-                    <div class="col" id=main-region>
-                        <div class="container">
-                    <div class="row" id="msg-area">
-                        <div class="alert alert-warning alert-dismissible" role="alert" id="disp-msg">This is an alert
-                            <span style="size: 50px;" align="right"><a name="" id="" data-bs-dismiss="alert" class="btn btn-primary" href="#" role="button">Dismiss</a></span>
-                        </div>
-                        <div class="row" id="working-area">
-            <?php //require('comp/login-form.php'); ?>
-</div>
-                    </div>
-                        </div>
-                </div>
+
+<head>
+    <title>Home | Vidyalaya</title>
+    <link rel="stylesheet" href="res/css/home.css">
+</head>
+
+<body>
+    <div class="wrapper">
+        <div class="header">
+            <div class="logo"><img src="res/img/vslogo.png" alt="Logo"></div>
+            <div class="user-info">
+                <div class="user-name">Hello User Name!</div>
+                <div class="button">Login</div>
+                <div class="button">Register</div>
+                <div class="button">Logout</div>
+            </div>
+            <div class="menu">
+                <ul>
+                    <li class="selected"><a href="#">Home</a></li>
+                    <li><a href="#">Student</a></li>
+                    <li><a href="#">Staff</a></li>
+                    <li><a href="#">Finance</a></li>
+                    <li><a href="#">Management</a></li>
+                </ul>
             </div>
         </div>
-<script src="lib/jquery-3.6.0.min.js"></script>
-<script src="https://unpkg.com/@popperjs/core@2"></script>
-<script src="lib/bootstrap/js/bootstrap.bundle.min.js"></script>
-<script src="lib/MDB5/js/mdb.min.js"></script>
-<script src="js/home.js"></script>
-<script>//loadmain('src/comp/home-welcome.php');</script>
+        <div class="left-panel">
+            <div class="submenu1">
+                <div class="menu-title">Topic</div>
+                <ul>
+                    <li><a href="#">Home</a></li>
+                    <li><a href="#">Student</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="main-area">
+            <div class="wrapper">
+                <div class="title">
+                    Vidyalaya
+                </div>
+                <h1>About page</h1>
+            </div>
+        </div>
+    </div>
 </body>
+
 </html>

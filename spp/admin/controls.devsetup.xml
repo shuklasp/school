@@ -16,7 +16,7 @@
             <controls>
                 <control>
                     <name>appname</name>
-                    <type>SPP_Form_Input</type>
+                    <type>SPPViewForm_Input</type>
                     <attributes>
                         <attribute>
                             <name>maxlength</name>
@@ -30,19 +30,19 @@
                 </control>
                 <control>
                     <name>dbname</name>
-                    <type>SPP_Form_Input</type>
+                    <type>SPPViewForm_Input</type>
                 </control>
                 <control>
                     <name>dbuname</name>
-                    <type>SPP_Form_Input</type>
+                    <type>SPPViewForm_Input</type>
                 </control>
                 <control>
                     <name>dbpasswd</name>
-                    <type>SPP_Form_Input_Password</type>
+                    <type>SPPViewForm_Input_Password</type>
                 </control>
                 <control>
                     <name>formsubmit</name>
-                    <type>SPP_Form_Input_Submit</type>
+                    <type>SPPViewForm_Input_Submit</type>
                     <attributes>
                         <attribute>
                             <name>value</name>
@@ -52,7 +52,7 @@
                 </control>
                 <control>
                     <name>dbtype</name>
-                    <type>SPP_Form_Select</type>
+                    <type>SPPViewForm_Select</type>
                     <options>
                         <option>
                             <text>MySQL</text>

@@ -52,6 +52,29 @@ final class SPPGlobal extends \SPP\SPPObject {
         }
     }
 
+
+    /**
+     * function __get()
+     * Gets a global property.
+     *
+     * @param mixed $prop
+     * @return mixed
+     */
+    public function __get($prop){
+        return self::get($prop);
+    }
+
+    /**
+     * function __set()
+     * Sets a global property.
+     *
+     * @param mixed $prop
+     * @param mixed $val
+     */
+    public function __set($prop,$val){
+        self::set($prop,$val);
+    }
+
     /**
      * function is_set()
      * Returns true if property is set.

@@ -20,7 +20,7 @@ if(!defined('SPP_VER'))
     $str=substr(SPP_BASE_DIR, $rstrlen);
     $str=str_replace('\\', '/', $str);
     define('SPP_CORE_DIR',SPP_BASE_DIR.SPP_DS.'core');
-    define('SPP_RES_URI',$str.SPP_US.'resources');
+    define('SPP_RES_URI',$str.SPP_US.'res');
     define('SPP_JS_URI',SPP_RES_URI.SPP_US.'js');
     define('SPP_DOJO_URI',SPP_JS_URI.SPP_US.'dojotoolkit');
     define('SPP_DEV_DIR',SPP_BASE_DIR.SPP_DS.'dev');
@@ -29,6 +29,7 @@ if(!defined('SPP_VER'))
     define('SPP_MODULES_DIR', SPP_BASE_DIR.SPP_DS.'modules');
     define('SPP_ETC_DIR',SPP_BASE_DIR.SPP_DS.'etc');
     define('SPP_APP_DIR', SPP_BASE_DIR . SPP_DS . '..');
+    define('APP_ETC_DIR', SPP_APP_DIR . SPP_DS . 'etc');
     //echo SPP_APP_DIR;
     //$dirs=scandir(SPP_APP_DIR);
     //var_dump($dirs);

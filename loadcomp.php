@@ -5,6 +5,6 @@ require_once('global.php');
 //require_once('vendor/autoload.php');
 //global $services, $pages;
 //require_once('src/server/'.$services[$_REQUEST['service']]);
-SPP_Ajax::callService();
-SPP_Ajax::callRoutine();
+Ajax::callService();
+Ajax::callRoutine();
 ?>

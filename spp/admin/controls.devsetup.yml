@@ -3,25 +3,25 @@ forms:
     action: devsetup.php
     controls:
       - name: appname
-        type: SPP_Form_Input
+        type: SPPViewForm_Input
         attributes:
           - name: maxlength
             value: 40
           - name: size
             value: 40
       - name: dbname
-        type: SPP_Form_Input
+        type: SPPViewForm_Input
       - name: dbuname
-        type: SPP_Form_Input
+        type: SPPViewForm_Input
       - name: dbpasswd
-        type: SPP_Form_Input_Password
+        type: SPPViewForm_Input_Password
       - name: formsubmit
-        type: SPP_Form_Input_Submit
+        type: SPPViewForm_Input_Submit
         attributes:
           - name: value
             value: Submit
       - name: dbtype
-        type: SPP_Form_Select
+        type: SPPViewForm_Select
         options:
           - text: MySQL
             value: MySQL

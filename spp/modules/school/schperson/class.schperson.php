@@ -2,7 +2,7 @@
 require_once('entityexceptions.php');
 
 /**
- * class SPP_Ajax
+ * class Ajax
  * extends \SPP\SPPObject
  * Deals with ajax calls
  */

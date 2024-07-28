@@ -1,0 +1,21 @@
+specials:
+  - name: service
+    method: getService
+  - name: res
+    method: getResource
+defaults:
+  home: home
+  pagesrc: yaml, db
+  servdir: /services
+  resdir: /resources
+pages:
+  - name: home
+    url: /src/home.php
+  - name: login
+    url: /src/login.php
+  - name: about
+    url: /src/about.php
+  - name: contact
+    url: /contact
+  - name: services
+    url: /services

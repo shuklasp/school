@@ -14,7 +14,7 @@
     <modgroup>SPP_Optional</modgroup>
     <pubdesc>Handles SPP Ajax calls.</pubdesc>
     <includes>
-        <include>class.sppajax.php</include>
+        <include>class.ajax.php</include>
         <include>ajaxexceptions.php</include>
     </includes>
     <deps>

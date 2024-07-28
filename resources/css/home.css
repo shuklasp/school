@@ -1,0 +1,234 @@
+.wrapper {
+    display: grid;
+    height: calc(100vh - 10px);
+    width: 100%;
+    grid-template-columns: '1fr 6fr';
+    grid-template-rows: '1fr 10fr';
+    background: #f2f2f2;
+}
+
+.logo{
+    height: auto;
+    width: auto;
+    max-width: 10px;
+    max-height: 10px;
+    transform: scale(0.3, 0.3);
+    -ms-transform: scale(0.3, 0.3);
+    -webkit-transform: scale(0.3, 0.3);
+    padding-left: 50px;
+}
+
+
+.logo.resize {
+    width: 540px;
+    height: auto;
+}
+
+.header {
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    font-size: 20px;
+    font-weight: 600;
+    width: 100%;
+    height: 150px;
+    font-size: 35px;
+    grid-column-start: 1;
+    grid-column-end: 5;
+    font-weight: 600;
+    text-align: center;
+    color: #fff;
+    user-select: none;
+    border-radius: 10px 10px 0 0;
+    opacity: 1;
+    background: linear-gradient(-135deg,
+            #ffffd0, #ff7e20);
+}
+
+.main-area {
+    grid-column-start: 2;
+    grid-column-end: 5;
+    height: 100%;
+    float: left;
+    width: 100%;
+    place-items: center;
+    background: #ed8080;
+
+    /* background: linear-gradient(-135deg, #c850c0, #4158d0); */
+}
+
+
+.mid-area {
+    display: grid;
+    grid-template-areas: 'left-sidebar main main main';
+    height: 100%;
+    ;
+}
+
+.menu {
+    font-size: 20px;
+    font-weight:50;
+    height: 50px;
+    text-align: right;
+    grid-column-start: 2;
+    grid-column-end: 5;
+    padding-right: 40px;
+}
+
+.menu ul{
+    list-style-type: none;
+}
+
+.menu ul li.selected{
+    display: inline;
+    background-color: rgb(214, 123, 104);
+    padding-left: 30px;
+    padding-right:30px;
+    padding-top: 10px;
+    padding-bottom: 5px;
+    height: 40px;
+    width: 100px;
+    margin: 1px;
+}
+
+.menu ul li.selected:hover {
+    display: inline;
+    background-color: #ad7633;
+    padding-left: 30px;
+    padding-right: 30px;
+    padding-top: 10px;
+    padding-bottom: 5px;
+    height: 40px;
+    width: 100px;
+    margin: 1px;
+}
+.menu ul li {
+    display: inline;
+    background-color: cadetblue;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    height: 40px;
+    width: 100px;
+    margin: 1px;
+}
+.menu ul li:hover {
+    display: inline;
+    background-color: #ad7633;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 10px;
+    padding-bottom: 5px;
+    height: 40px;
+    width: 100px;
+    margin: 1px;
+}
+.menu ul li a {
+    text-decoration: none;
+    line-height: 70px;
+    color:#f2f2f2;
+    height: inherit;
+    width: inherit;
+}
+
+.menu ul li a:hover {
+    text-decoration: none;
+    color:antiquewhite;
+    height: inherit;
+    width: inherit;
+}
+
+.user-info{
+    display: flex;
+    justify-content: right;
+    grid-column-start: 4;
+    grid-column-end: 5;
+    padding-right: 40px;
+    font-size: large;
+    color:rgb(235, 74, 5);
+    font-weight: 600;
+    width:auto;
+    height: 50px;
+}
+
+.user-info .user-name{
+    display: inline;
+    padding-left: 10px;
+    padding-top: 10px;
+}
+
+
+.button{
+    display: inline;
+    background-color: cadetblue;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 5px;
+    padding-bottom: 0px;
+    border-radius: 20px;
+    margin-left: 10px;
+    font-size: medium;
+    color: #f2f2f2;
+    border-style: outset;
+    border-color: #f2f2f2;
+    border-box: #f2f2f2;
+}
+
+.button:hover {
+    display: inline;
+    background-color: rgb(58, 126, 129);
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    margin-left: 10px;
+    font-size: medium;
+    color: #f2f2f2;
+}
+
+.button:active {
+    display: inline;
+    background-color: rgb(60, 150, 155);
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    margin-left: 10px;
+    font-size: medium;
+    color: #f2f2f2;
+    border-style: outset;
+    border-color: #e8dfdf;
+}
+
+.left-panel {
+    grid-column-start: 1;
+    grid-column-end: 2;
+    height: 100%;
+    float: left;
+    width: 100%;
+    height: 100%;
+    border-color: red;
+    text-align: center;
+    display: grid;
+    justify-content: center;
+    background: linear-gradient(-135deg, #ff7e20, #ff7e20);
+}
+
+.submenu1{
+    border-color: #f2f2f2;
+    display: block;
+    width: 200px;
+    border-radius: 15px;
+    border-style: outset;
+    margin-top: 20px;
+}
+
+.submenu1 .menu-title{
+    background-color: cadetblue;
+    width: 100%;
+    height: 40px;
+    text-align: center;
+    font-size: large;
+    font-weight: 60;
+}
