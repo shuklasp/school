@@ -1,0 +1,13 @@
+table: students
+id_field: id
+sequence: student_seq
+attributes:
+  first_name: varchar(150)
+  last_name: varchar(150)
+  enrollment_date: date
+relations:
+  -
+    parent_entity: SchoolClass
+    parent_entity_field: id
+    child_entity_field: enrolled_class_id
+    relation_type: OneToMany

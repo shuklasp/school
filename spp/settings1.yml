@@ -1,0 +1,27 @@
+formats:
+    - yaml
+    - xml
+    - db
+    - json
+modes:
+    -
+        name: sys
+        format: yaml
+        ref: /etc/sys
+    -
+        name: mod
+        format: xml
+        ref: /etc/mod
+    -
+        name: app
+        format: db
+        ref: /etc/app
+    -
+        name: umod
+        format: json
+        ref: /etc/umod
+settings:
+    site_name: Vidyalaya
+    Key2:
+        skey1: 'new value'
+    Key3: Val3

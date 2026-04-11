@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<forms>
+    <form name="test_form" action="?q=test_form" id="test_form">
+        <controls>
+            <control name="test_name" type="\SPPMod\SPPView\SPPViewForm_Input_Text">
+                <placeholder>Enter your name</placeholder>
+                <id>test_name_id</id>
+            </control>
+            <control name="submit_btn" type="\SPPMod\SPPView\SPPViewForm_Input_Submit">
+                <value>Submit Test</value>
+                <id>submit_btn_id</id>
+            </control>
+        </controls>
+    </form>
+</forms>

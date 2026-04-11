@@ -1,6 +1,7 @@
 <?php
 
 namespace SPPMod\SPPView;;
+use SPPMod\SPPView\ViewValidator;
 //require_once 'class.spphtmlelement.php';
 
 /**
@@ -16,7 +17,7 @@ class SPPViewForm_Element extends \SPPMod\SPPView\ViewTag{
     /**
      * @param string $ename
      */
-    public function  __construct($ename, SPPValidator $validator=null) {
+    public function  __construct($ename, ViewValidator $validator=null) {
         parent::__construct($tagname='input', $ename);
         $this->eventattrlist[]='onselect';
         $this->eventattrlist[]='onchange';
@@ -29,7 +30,7 @@ class SPPViewForm_Element extends \SPPMod\SPPView\ViewTag{
         }
     }
 
-    public function addValidator(SPPValidator $validator){
+    public function addValidator(ViewValidator $validator){
         $this->validators[] = $validator;
     }
 

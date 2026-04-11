@@ -13,8 +13,34 @@ require_once 'class.spperror.php';*/
  * @author Satya Prakash Shukla
  */
 
-class SPPSession extends \SPP\SPPObject {
-    private $sessvars=array();
+class SPPSession extends \SPP\SPPObject
+{
+    private $sessvars = array();
+
+    /** @var ?SPPSession Local memory cache to prevent duplicate deserialization */
+    private static ?SPPSession $cache = null;
+
+    private static function fetchSession(): SPPSession
+    {
+        $ssname = \SPP\App::getSessionName();
+        if (!self::sessionExists()) {
+            self::$cache = null;
+            throw new SessionDoesNotExistException('No session exists!');
+        }
+        if (self::$cache !== null) {
+            return self::$cache;
+        }
+        // Restrict allowed classes to prevent POI vectors, but allow the user session classes
+        self::$cache = unserialize($_SESSION[$ssname], ['allowed_classes' => true]);
+        return self::$cache;
+    }
+
+    private static function saveSession(): void
+    {
+        if (self::$cache !== null) {
+            $_SESSION[\SPP\App::getSessionName()] = serialize(self::$cache);
+        }
+    }
 
     /**
      * private function startSession()
@@ -22,10 +48,9 @@ class SPPSession extends \SPP\SPPObject {
      */
     public function __construct()
     {
-        $ssname=\SPP\App::getSessionName();
-        if(!array_key_exists($ssname, $_SESSION))
-        {
-         //   $ssn=new SPPSession();
+        $ssname = \SPP\App::getSessionName();
+        if (!array_key_exists($ssname, $_SESSION)) {
+            //   $ssn=new SPPSession();
             $this->setVar('__wizards__', array());
             //$this->setVar('__errors__', SPPError::getErrors());
         }
@@ -39,14 +64,10 @@ class SPPSession extends \SPP\SPPObject {
      */
     public static function sessionExists()
     {
-        //$app=new \SPP\App();
-        $ssname=\SPP\App::getSessionName();
-        if(array_key_exists($ssname, $_SESSION))
-        {
+        $ssname = \SPP\App::getSessionName();
+        if (isset($_SESSION) && array_key_exists($ssname, $_SESSION)) {
             return true;
-        }
-        else
-        {
+        } else {
             return false;
         }
     }
@@ -62,14 +83,7 @@ class SPPSession extends \SPP\SPPObject {
      */
     public static function validSessionVarExists($varname)
     {
-        $ssname=\SPP\App::getSessionName();
-        //self::startSession();
-        if(!self::sessionExists())
-        {
-            throw new SessionDoesNotExistException('No session exists!');
-        }
-        $ssn=unserialize($_SESSION[$ssname]);
-        return $ssn->validVarExists($varname);
+        return self::fetchSession()->validVarExists($varname);
     }
 
 
@@ -83,14 +97,7 @@ class SPPSession extends \SPP\SPPObject {
      */
     public static function sessionVarExists($varname)
     {
-        $ssname=\SPP\App::getSessionName();
-        //self::startSession();
-        if(!self::sessionExists())
-        {
-            throw new SessionDoesNotExistException('No session exists!');
-        }
-        $ssn=unserialize($_SESSION[$ssname]);
-        return $ssn->varExists($varname);
+        return self::fetchSession()->varExists($varname);
     }
 
 
@@ -103,14 +110,7 @@ class SPPSession extends \SPP\SPPObject {
      */
     public static function getSessionVar($varname)
     {
-        $ssname=\SPP\App::getSessionName();
-        //self::startSession();
-        if(!self::sessionExists())
-        {
-            throw new SessionDoesNotExistException('No session exists!');
-        }
-        $ssn=unserialize($_SESSION[$ssname]);
-        return $ssn->getVar($varname);
+        return self::fetchSession()->getVar($varname);
     }
 
     /**
@@ -122,15 +122,9 @@ class SPPSession extends \SPP\SPPObject {
      */
     public static function setSessionVar($varname, $varval)
     {
-        $ssname=\SPP\App::getSessionName();
-        //self::startSession();
-        if(!self::sessionExists())
-        {
-            throw new SessionDoesNotExistException('No session exists!');
-        }
-        $ssn=unserialize($_SESSION[$ssname]);
-        $ssn->setVar($varname,$varval);
-        $_SESSION[$ssname]=serialize($ssn);
+        $ssn = self::fetchSession();
+        $ssn->setVar($varname, $varval);
+        self::saveSession();
     }
 
     /**
@@ -141,15 +135,9 @@ class SPPSession extends \SPP\SPPObject {
      */
     public static function unsetSessionVar($varname)
     {
-        $ssname=\SPP\App::getSessionName();
-        //self::startSession();
-        if(!self::sessionExists())
-        {
-            throw new SessionDoesNotExistException('No session exists!');
-        }
-        $ssn=unserialize($_SESSION[$ssname]);
+        $ssn = self::fetchSession();
         $ssn->unsetVar($varname);
-        $_SESSION[$ssname]=serialize($ssn);
+        self::saveSession();
     }
 
 
@@ -161,15 +149,9 @@ class SPPSession extends \SPP\SPPObject {
      */
     public static function invalidateSessionVar($varname)
     {
-        $ssname=\SPP\App::getSessionName();
-        //self::startSession();
-        if(!self::sessionExists())
-        {
-            throw new SessionDoesNotExistException('No session exists!');
-        }
-        $ssn=unserialize($_SESSION[$ssname]);
+        $ssn = self::fetchSession();
         $ssn->invalidateVar($varname);
-        $_SESSION[$ssname]=serialize($ssn);
+        self::saveSession();
     }
 
 
@@ -182,8 +164,8 @@ class SPPSession extends \SPP\SPPObject {
      */
     public function setVar($varname, $varval)
     {
-        $this->sessvars[$varname]['val']=$varval;
-        $this->sessvars[$varname]['isactive']=true;
+        $this->sessvars[$varname]['val'] = $varval;
+        $this->sessvars[$varname]['isactive'] = true;
     }
 
     /**
@@ -206,12 +188,9 @@ class SPPSession extends \SPP\SPPObject {
      */
     public function varExists($varname)
     {
-        if(array_key_exists($varname, $this->sessvars))
-        {
+        if (array_key_exists($varname, $this->sessvars)) {
             return true;
-        }
-        else
-        {
+        } else {
             return false;
         }
     }
@@ -225,19 +204,13 @@ class SPPSession extends \SPP\SPPObject {
      */
     public function validVarExists($varname)
     {
-        if(array_key_exists($varname, $this->sessvars))
-        {
-            if($this->sessvars[$varname]['isactive'])
-            {
+        if (array_key_exists($varname, $this->sessvars)) {
+            if ($this->sessvars[$varname]['isactive']) {
                 return true;
-            }
-            else
-            {
+            } else {
                 return false;
             }
-        }
-        else
-        {
+        } else {
             return false;
         }
     }
@@ -251,13 +224,10 @@ class SPPSession extends \SPP\SPPObject {
      */
     public function getVar($varname)
     {
-        if($this->validVarExists($varname))
-        {
+        if ($this->validVarExists($varname)) {
             return $this->sessvars[$varname]['val'];
-        }
-        else
-        {
-            throw new UnknownSessionVarException('Undefined session variable '.$varname.' accessed.');
+        } else {
+            throw new UnknownSessionVarException('Undefined session variable ' . $varname . ' accessed.');
         }
     }
 
@@ -269,15 +239,11 @@ class SPPSession extends \SPP\SPPObject {
      */
     public function invalidateVar($varname)
     {
-        if($this->validVarExists($varname))
-        {
-            $this->sessvars[$varname]['isactive']=false;
-        }
-        else
-        {
-            throw new UnknownSessionVarException('Undefined session variable '.$varname.' accessed.');
+        if ($this->validVarExists($varname)) {
+            $this->sessvars[$varname]['isactive'] = false;
+        } else {
+            throw new UnknownSessionVarException('Undefined session variable ' . $varname . ' accessed.');
         }
     }
 
 }
-?>

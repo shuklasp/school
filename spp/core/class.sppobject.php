@@ -1,93 +1,98 @@
 <?php
+
 namespace SPP;
+
 /**
  * class \SPP\SPPObject
  *
- * Top level class for all the spp classes.
+ * Top-level abstract class for all SPP classes.
+ * Provides dynamic property access and safe attribute management.
  *
- * @author Satya Prakash Shukla
+ * Fully backward-compatible modernization.
+ *
+ * @author
+ *     Satya Prakash Shukla
+ * @version
+ *     2.1 compatible with legacy SPP 1.x
  */
+
 use SPP\Exceptions\UnknownPropertyException;
-abstract class SPPObject {
-    protected $_attributes=array();
-    protected $_getprops=array(),$_setprops=array();
+
+abstract class SPPObject
+{
+    /** @var array<string,mixed> */
+    protected array $_attributes = [];
+
+    /** @var array<string> */
+    protected array $_getprops = [];
+
+    /** @var array<string> */
+    protected array $_setprops = [];
 
     /**
-     * function __unset()
-     * Magic function function to unset an attribute.
+     * Magic unsetter — removes an attribute if it exists.
      *
      * @param string $attr
      */
-    public function __unset($attr)
+    public function __unset(string $attr)
     {
-        if($this->__isset($attr))
-        {
+        if (in_array($attr, $this->_setprops, true) && $this->__isset($attr)) {
             unset($this->_attributes[$attr]);
         }
     }
 
     /**
-     * function __isset()
-     * Magic function to check for existence of an attribute.
+     * Magic isset — checks if an attribute exists.
      *
      * @param string $attr
      * @return bool
      */
-    public function __isset($attr)
+    public function __isset(string $attr)
     {
-        if(array_key_exists($attr, $this->_attributes))
-        {
-            return true;
-        }
-        {
-            return false;
-        }
+        return in_array($attr, $this->_getprops, true) && array_key_exists($attr, $this->_attributes);
     }
 
-
     /**
-     * function get()
+     * Magic getter — retrieves value of readable property.
      *
-     * Gets the value of property.
-     *
-     * @param mixed $propname
-     * @return <type>
+     * @param string $propname
+     * @return mixed
+     * @throws UnknownPropertyException
      */
-    public function __get($propname)
+    public function __get(string $propname)
     {
-        if(in_array($propname, $this->_getprops))
-        {
-            return $this->_attributes[$propname];
+        if (in_array($propname, $this->_getprops, true)) {
+            return $this->_attributes[$propname] ?? null;
         }
-        else
-        {
-            throw new UnknownPropertyException('Unknown property '.$propname);
-        }
+
+        throw new UnknownPropertyException('Unknown property: ' . $propname);
     }
 
     /**
-     * function set()
-     * Sets a property value.
+     * Magic setter — sets value of writable property.
      *
      * @param string $propname
      * @param mixed $propval
-     * @return mixed
+     * @return void
+     * @throws UnknownPropertyException
      */
-    public function __set($propname,$propval)
+    public function __set(string $propname, mixed $propval)
     {
-        if(in_array($propname, $this->_setprops))
-        {
-            return $this->_attributes[$propname]=$propval;
+        if (in_array($propname, $this->_setprops, true)) {
+            $this->_attributes[$propname] = $propval;
+            return;
         }
-        else
-        {
-            throw new \UnknownPropertyException('Unknown property '.$propname);
-        }
+
+        throw new UnknownPropertyException('Unknown property: ' . $propname);
     }
 
+    /**
+     * Converts object attributes to a string (for debugging).
+     *
+     * @return string
+     */
     public function __toString()
     {
-        return var_export($this->_attributes,true);
+        return var_export($this->_attributes, true);
     }
 }
-?>

@@ -11,17 +11,17 @@ class test_event extends \SPP\EventHandler
         $this->addOverrideHandler('override_test1');
     }
 
-    public function after_test1()
+    public function after_test1(array &$params = [])
     {
         echo 'default after_test1';
     }
 
-    public function before_test1()
+    public function before_test1(array &$params = [])
     {
         echo 'default before_test1';
     }
 
-    public function override_test1()
+    public function override_test1(array &$params = [])
     {
         echo 'default override_test1';
     }

@@ -1,12 +1,32 @@
 <?php
-
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+//print_r($_GET);
 use SPP\SPPGlobal;
 use \SPPMod\SPPView\Pages;
 use function Symfony\Component\String\u;
-require_once('spp/sppinit.php');
+
 require_once('vendor/autoload.php');
+require_once('spp/sppinit.php');
 require_once('global.php');
-\SPPMod\SPPView\ViewPage::seekPage();
+\SPPMod\SPPView\ViewPage::addCssIncludeFile('res/spp/css/spp.css');
+\SPPMod\SPPView\ViewPage::addJsIncludeFile('res/spp/js/spp.js');
+\SPPMod\SPPView\ViewPage::addJsIncludeFile('res/spp/js/spp-router.js');
+
+if (\SPP\Module::isEnabled('sppapi') && class_exists('\SPPMod\SPPAPI\SPPAPI') && \SPPMod\SPPAPI\SPPAPI::isApiRequest()) {
+    \SPPMod\SPPAPI\SPPAPI::handle();
+    exit;
+}
+
+// SPA dispatch: handle AJAX fragment/service requests before full HTML render
+if (\SPP\Module::isEnabled('sppajax') && \SPPMod\SPPAjax\SPPAjax::isAjaxRequest()) {
+    \SPPMod\SPPAjax\SPPAjax::handle();
+    exit;
+}
+
+\SPPMod\SPPView\ViewPage::processForms();
+\SPPMod\SPPView\ViewPage::showPage();
 // $q = $_GET['q'];
 // $page=array();
 // if ($q == null) {

@@ -4,20 +4,21 @@
     Document   : sppajax.module.xml
     Author     : Satya Prakash Shukla
     Description:
-        Descriptor for sppajax module.
+        SPA (Single Page Application) engine for SPP.
+        Handles page fragment loading and service dispatch.
 -->
 
 <module>
     <name>sppajax</name>
-    <version>0.5</version>
-    <pubname>SPP Ajax</pubname>
-    <modgroup>SPP_Optional</modgroup>
-    <pubdesc>Handles SPP Ajax calls.</pubdesc>
+    <version>1.0</version>
+    <pubname>SPP Ajax / SPA Router</pubname>
+    <modgroup>SPP_Core</modgroup>
+    <pubdesc>Single Page Application engine. Handles page fragment and service dispatch via AJAX.</pubdesc>
     <includes>
-        <include>class.ajax.php</include>
-        <include>ajaxexceptions.php</include>
+        <include>class.sppajax.php</include>
     </includes>
     <deps>
         <depends>sppconfig</depends>
+        <depends>sppview</depends>
     </deps>
 </module>

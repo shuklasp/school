@@ -1,0 +1,108 @@
+{#
+/**
+ * @file
+ * Theme implementation for the general news landing page.
+ * Exact structural match to the vshiksha.com archive.
+ */
+#}
+{% include '@vshiksha/page.html.twig' ignore missing %}
+
+<div class="layout-container section-news">
+  <header class="site-header" role="banner">
+    <div class="container header-inner">
+      <div class="site-logo">
+        <a href="{{ front_page }}" title="{{ 'Home'|t }}" rel="home" class="site-name">
+          {{ site_name|default('Virtual Shiksha') }}
+        </a>
+      </div>
+      
+      {% if page.primary_menu %}
+        <nav class="main-navigation" role="navigation">
+          {{ page.primary_menu }}
+        </nav>
+      {% endif %}
+    </div>
+  </header>
+
+  <main role="main">
+    <div class="container">
+      
+      <h1 class="page-title" style="margin-top: 30px; font-size: 38px; color: var(--color-primary); border-bottom: 2px solid var(--color-border); padding-bottom: 15px;">Education News</h1>
+
+      <div class="main-layout">
+        
+        <aside class="region-sidebar" role="complementary">
+          {% if page.sidebar_first %}
+            {{ page.sidebar_first }}
+          {% else %}
+            <div class="sidebar-block">
+              <h2 class="block-title">News Categories</h2>
+              <div class="block-content">
+                <ul class="sidebar-menu">
+                  <li><a href="#">Policy Changes</a></li>
+                  <li><a href="#">School Board Results</a></li>
+                  <li><a href="#">University Announcements</a></li>
+                  <li><a href="#">Exam Updates</a></li>
+                </ul>
+              </div>
+            </div>
+          {% endif %}
+        </aside>
+
+        <div class="region-content">
+          {{ page.content }}
+          
+          {% if not page.content|render|trim %}
+            <article class="node-teaser">
+              <h2 class="node-title"><a href="#">New National Education Policy Updates</a></h2>
+              <div class="node-meta">
+                <span><i class="fa fa-calendar"></i> November 25, 2025</span>
+                <span><i class="fa fa-user"></i> Editorial Team</span>
+              </div>
+              <div class="node-content">
+                <p>Discover the recent changes announced by the Ministry of Education regarding curriculum structures and teacher training norms for the upcoming academic year.</p>
+              </div>
+              <a href="#" class="read-more-link">Read More</a>
+              <div style="clear: both;"></div>
+            </article>
+
+            <article class="node-teaser">
+              <h2 class="node-title"><a href="#">Top 10 Innovative Schools in 2026</a></h2>
+              <div class="node-meta">
+                <span><i class="fa fa-calendar"></i> November 23, 2025</span>
+                <span><i class="fa fa-user"></i> Research Desk</span>
+              </div>
+              <div class="node-content">
+                <p>We review the schools that are setting new standards in interactive, digital, and practical learning environments across the country.</p>
+              </div>
+              <a href="#" class="read-more-link">Read More</a>
+              <div style="clear: both;"></div>
+            </article>
+
+            <article class="node-teaser">
+              <h2 class="node-title"><a href="#">Global Summit on EdTech Highlights</a></h2>
+              <div class="node-meta">
+                <span><i class="fa fa-calendar"></i> November 22, 2025</span>
+                <span><i class="fa fa-user"></i> Tech Reporter</span>
+              </div>
+              <div class="node-content">
+                <p>Key takeaways from the international conference on the future of educational technology, emphasizing AI integration in personalized learning paths.</p>
+              </div>
+              <a href="#" class="read-more-link">Read More</a>
+              <div style="clear: both;"></div>
+            </article>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; {{ "now"|date("Y") }} Virtual Shiksha. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+</div>

@@ -1,0 +1,192 @@
+/* Reset default margins and padding */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+}
+
+
+/* Header Styles */
+header {
+    background: linear-gradient(to right, #ff8c00, #ffad33);
+    padding: 20px;
+    color: white;
+}
+
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+
+.logo {
+    height: 100px; /* Adjust based on your logo size */
+}
+
+.user-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.user-actions span {
+    color: #ff4500; /* Orange text for "Hello User Name!" */
+}
+
+.user-actions button {
+    background-color: #66b3ff;
+    border: none;
+    padding: 5px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    color: white;
+}
+
+.user-actions button:hover {
+    background-color: #4d94ff;
+}
+
+/* Navigation Styles */
+nav {
+    background-color: #e6e6e6;
+    padding: 10px 0;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: #333;
+    padding: 5px 15px;
+    border-radius: 5px;
+}
+
+nav ul li a.active {
+    background-color: #ff8c00;
+    color: white;
+}
+
+nav ul li a:hover {
+    background-color: #ddd;
+}
+
+/* Container Styles */
+.container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+}
+
+/* Main Content Styles */
+main {
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 5px;
+}
+
+main h1 {
+    text-align: center;
+    color: #ff8c00;
+    margin-bottom: 30px;
+    font-size: 28px;
+}
+
+/* Icon Grid Styles */
+.icon-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 20px;
+    padding: 20px;
+}
+
+.icon-box {
+    text-align: center;
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.icon-box:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.icon {
+    width: 80px; /* Large icons */
+    height: 80px;
+    margin-bottom: 10px;
+    transition: opacity 0.3s;
+}
+
+.icon-box:hover .icon {
+    opacity: 0.8;
+}
+
+.icon-box span {
+    display: block;
+    color: #333;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .icon-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .icon-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .icon {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+@media (max-width: 600px) {
+    .icon-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .user-actions {
+        margin-top: 10px;
+    }
+
+    nav ul {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .icon {
+        width: 50px;
+        height: 50px;
+    }
+}

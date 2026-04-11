@@ -1,64 +1,161 @@
 <?php
-/*
- * File index.php
- * Home page for administration of SPP
+/**
+ * SPP Admin SPA Entry Point
+ * 
+ * This file serves the main Single Page Application for framework management.
+ * Access is strictly restricted to development environments.
+ * 
+ * Route: /sppadmin/ -> spp/admin/index.php
  */
 
+if (!defined('SPP_BASE_DIR')) {
+    define('SPP_BASE_DIR', dirname(__DIR__));
+}
+
+require_once SPP_BASE_DIR . '/sppinit.php';
+
+/**
+ * checkDevMode function
+ * Redirects or blocks access if the system profile is not 'dev'.
+ */
+function checkDevMode()
+{
+    $settingsPath = SPP_BASE_DIR . '/etc/settings.xml';
+    if (!file_exists($settingsPath))
+        return false;
+    $xml = simplexml_load_file($settingsPath);
+    return strtolower((string) $xml->profile) === 'dev';
+}
+
+if (!checkDevMode()) {
+    http_response_code(403);
+    die("Access Forbidden: SPP Administration Workbench is disabled in the current profile.");
+}
 ?>
-<?php
-require_once '../sppinit.php';
-require_once 'controls.devsetup.php';
-?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>Developer Environment Setup | Satya Portal Pack</title>
-        <?php SPP_HTML_Page::includeJSFiles(); SPP_HTML_Page::includeCSSFiles() ?>
-    </head>
-    <body>
-        <img src="<?php echo SPP_IMG_URI.SPP_US.'spp-logo.jpg'; ?>" alt="Satya Portal Pack Logo" height="125px" width="250px">
-        <br /><hr />
-        <div align="center" name="errordiv" id="errordiv" style="background-color:gray;border-color:red;color:blue;border-left-width:30;border-right-width:30">
-        <?php
-        //echo $hello;
-        echo SPPError::getOlErrors('!errno! - !errmsg! - !filename! - !linenum!.');
-// echo SPPError::getOlErrors();
- SPPError::destroyErrors();
- ?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPP Admin | Developer Workbench</title>
+    <meta name="description"
+        content="SPP Framework Administration Portal — Manage modules, entities, forms and groups.">
+    <meta name="robots" content="noindex, nofollow">
+    <!-- Modern Typography -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <!-- Premium Stylesheet -->
+    <link rel="stylesheet" href="css/admin.css">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="images/spp-logo.jpg">
+</head>
+
+<body class="dark-mode">
+
+    <!-- Framework Message Center (SPPError Display) -->
+    <div id="toast-container"></div>
+
+    <!-- UI Logic Screens -->
+
+    <!-- 1. Authentication Layer -->
+    <div id="login-layer" class="active glass-overlay">
+        <div class="glass-panel login-card">
+            <header>
+                <img src="images/spp-logo.jpg" alt="SPP Logo" class="brand-logo" onerror="this.style.display='none'">
+                <h1>Workbench Login</h1>
+                <p>System Administration Access</p>
+            </header>
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" placeholder="Enter username..." required autocomplete="username">
+                </div>
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter password..." required
+                        autocomplete="current-password">
+                </div>
+                <div class="input-group">
+                    <button type="submit" class="btn primary-btn pulse"
+                        style="width:100%;justify-content:center;">Authenticate</button>
+                </div>
+            </form>
+            <footer>
+                <p>Powered by Satya Portal Pack &copy; <?php echo date('Y'); ?></p>
+            </footer>
         </div>
-        <br /><br />
-        <div id="mainmenu"><a href="modmain.php">Modules Configuration</a></div>
-        <br /><br />
-        <div align="center" name="setupformdiv" id="setupformdiv">
-            <?php
-                //print_r(SPP_HTML_Page::getElementsList());
-                $frm=SPP_HTML_Page::getElement('installform')->startForm();
-                //$frm->startForm();
-            ?>
-            <table>
-                <tr><td>Application Name</td><td><?php echo SPP_HTML_Page::getElement('appname'); ?></td></tr>
-                <tr><td></td><td><span id="appnameerror" style="color:red;background-color:grey"></span></td></tr>
-                <tr><td>Database Type</td><td><?php echo SPP_HTML_Page::getElement('dbtype'); ?></td></tr>
-                <tr><td></td><td><span id="dbtypeerror" style="color:red;background-color:grey"></span></td></tr>
-                <tr><td>Database Name</td><td><?php echo SPP_HTML_Page::getElement('dbname'); ?></td></tr>
-                <tr><td></td><td><span id="dbnameerror" style="color:red;background-color:grey"></span></td></tr>
-                <tr><td>User Name</td><td><?php echo SPP_HTML_Page::getElement('dbuname'); ?></td></tr>
-                <tr><td></td><td><span id="dbunameerror" style="color:red;background-color:grey"></span></td></tr>
-                <tr><td>Password</td><td><?php echo SPP_HTML_Page::getElement('dbpasswd'); ?></td></tr>
-                <tr><td></td><td><span id="dbpasswderror" style="color:red;background-color:grey"></span></td></tr>
-                <tr><td>JLT</td><td><?php echo $dgt; ?></td></tr>
-                <tr><td align="center" colspan="2"><?php echo SPP_HTML_Page::getElement('formsubmit'); ?></td></tr>
-            </table>
-            <?php
-                SPP_HTML_Page::getElement('installform')->endForm();
-            ?>
-        <?php
-        // put your code here
-        ?>
+    </div>
+
+    <!-- 2. Management Workspace Layer -->
+    <div id="workspace-layer">
+
+        <!-- Navigation Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <span class="logo-text">SPP <span>Admin</span></span>
+                <span class="mode-badge">Dev Mode</span>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#modules" class="nav-item active" data-view="modules">
+                            <span class="icon">📦</span> Modules
+                        </a></li>
+                    <li><a href="#entities" class="nav-item" data-view="entities">
+                            <span class="icon">🏗️</span> Entities
+                        </a></li>
+                    <li><a href="#forms" class="nav-item" data-view="forms">
+                            <span class="icon">📝</span> Forms
+                        </a></li>
+                    <li><a href="#groups" class="nav-item" data-view="groups">
+                            <span class="icon">👥</span> Groups
+                        </a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="user-avatar">A</div>
+                    <div>
+                        <div class="user-name" id="user-display-name">Admin</div>
+                        <div class="user-role">Developer</div>
+                    </div>
+                </div>
+                <button id="logout-btn" class="btn ghost-btn" style="width:100%;justify-content:center;">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="content-header">
+                <h2 id="view-title"><span class="view-icon">📦</span> System Modules</h2>
+                <div class="header-actions" id="header-actions">
+                    <!-- Contextual buttons injected here -->
+                </div>
+            </header>
+
+            <section class="content-body">
+                <!-- Data injection point -->
+                <div id="view-container"></div>
+            </section>
+        </main>
+
+    </div>
+
+    <!-- 3. Global Modal System (Glassmorphism) -->
+    <div id="modal-container" class="glass-overlay">
+        <div class="glass-panel modal-box">
+            <h3 id="modal-title">Editor</h3>
+            <div id="modal-body"></div>
+            <div class="modal-footer">
+                <button class="btn secondary-btn" id="modal-close">Cancel</button>
+                <button class="btn primary-btn" id="modal-save">Save Changes</button>
+            </div>
         </div>
-        <br /> <br />
-        <hr>
-        <div align="center">Powered by <a href="http://spp.vshiksha.com" title="Satya Portal Pack Website" target="_blank">Satya Portal Pack</a>.</div>
-    </body>
+    </div>
+
+    <!-- Application Script -->
+    <script src="js/admin.js"></script>
+</body>
+
 </html>

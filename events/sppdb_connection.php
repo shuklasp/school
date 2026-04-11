@@ -10,24 +10,24 @@ class sppdb_connection extends \SPP\EventHandler{
 //        $this->addOverrideHandler('o_hand1');
     }
 
-    public function o_hand1(){
+    public function o_hand1(array &$params = []){
         echo('override handler 1');
     }
 
-    public function b_hand1(){
+    public function b_hand1(array &$params = []){
         echo 'before handler 1';
     }
 
-    public function a_hand1(){
+    public function a_hand1(array &$params = []){
         echo 'after handler 1';
     }
 
-    public function b_hand2()
+    public function b_hand2(array &$params = [])
     {
         echo 'before handler 2';
     }
 
-    public function a_hand2()
+    public function a_hand2(array &$params = [])
     {
         echo 'after handler 2';
     }

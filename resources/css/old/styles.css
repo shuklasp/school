@@ -1,0 +1,343 @@
+/* Reset default margins and padding */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+}
+
+/* ----------------------------------------- */
+/* Header Styles (Shared for All Pages) */
+header {
+    background: linear-gradient(to right, #ff8c00, #ffad33);
+    padding: 20px;
+    color: white;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.logo {
+    height: 100px; /* Adjust based on your logo size for About page */
+}
+
+.user-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.user-actions span {
+    color: #ff4500; /* Orange text for "Hello User Name!" */
+}
+
+.user-actions button {
+    background-color: #66b3ff;
+    border: none;
+    padding: 5px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    color: white;
+}
+
+.user-actions button:hover {
+    background-color: #4d94ff;
+}
+
+/* Navigation Styles (For About Page) */
+nav {
+    background-color: #e6e6e6;
+    padding: 10px 0;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: #333;
+    padding: 5px 15px;
+    border-radius: 5px;
+}
+
+nav ul li a.active {
+    background-color: #ff8c00;
+    color: white;
+}
+
+nav ul li a:hover {
+    background-color: #ddd;
+}
+
+/* Container Styles (For About Page) */
+.container {
+    display: flex;
+    max-width: 1200px;
+    margin: 20px auto;
+    gap: 20px;
+}
+
+/* Sidebar Styles (For About Page) */
+aside {
+    width: 250px;
+    background-color: #ff8c00;
+    padding: 20px;
+    border-radius: 5px;
+    color: white;
+}
+
+aside h2 {
+    margin-bottom: 15px;
+}
+
+aside ul {
+    list-style: none;
+}
+
+aside ul li {
+    margin-bottom: 5px;
+}
+
+.sidebar-link {
+    display: block;
+    padding: 10px;
+    background-color: #ffad33;
+    text-decoration: none;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.sidebar-link:hover {
+    background-color: #ff7f00;
+}
+
+.submenu {
+    display: none;
+    padding-left: 20px;
+    background-color: #ffad33;
+    border-radius: 5px;
+}
+
+.submenu a {
+    display: block;
+    padding: 8px;
+    color: white;
+    text-decoration: none;
+}
+
+.submenu a:hover {
+    background-color: #ff7f00;
+}
+
+/* Main Content Styles (For About Page) */
+main {
+    flex: 1;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+}
+
+main h1 {
+    margin-bottom: 20px;
+}
+
+/* ----------------------------------------- */
+/* Sign-in Page Styles */
+body.signin-body {
+    background-color: #f9f9f9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.signin-container {
+    width: 100%;
+    max-width: 1200px;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.signin-box {
+    background-color: white;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.signin-box .logo {
+    height: 150px; /* Adjust based on your logo size for Sign-in page */
+    margin-bottom: 20px;
+}
+
+.signin-box h1 {
+    color: #ff8c00;
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+/* Form Styles (Shared for Sign-in and Register) */
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #ff8c00;
+    box-shadow: 0 0 5px rgba(255, 140, 0, 0.5);
+}
+
+/* Submit Button Styles (Shared for Sign-in and Register) */
+.submit-btn {
+    background-color: #66b3ff;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    color: white;
+    width: 100%;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+.submit-btn:hover {
+    background-color: #4d94ff;
+}
+
+/* Link Styles (Shared for Sign-in and Register) */
+.signin-box p, .register-box p {
+    margin-top: 20px;
+    color: #333;
+}
+
+.signin-box a, .register-box a {
+    color: #ff8c00;
+    text-decoration: none;
+}
+
+.signin-box a:hover, .register-box a:hover {
+    text-decoration: underline;
+}
+
+/* ----------------------------------------- */
+/* Register Page Styles */
+body.register-body {
+    background-color: #f9f9f9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.register-container {
+    width: 100%;
+    max-width: 1200px;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.register-box {
+    background-color: white;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.register-box .logo {
+    height: 150px; /* Adjust based on your logo size for Register page */
+    margin-bottom: 20px;
+}
+
+.register-box h1 {
+    color: #ff8c00;
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+/* ----------------------------------------- */
+/* Responsive Design (Shared for All Pages) */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+
+    aside {
+        width: 100%;
+    }
+
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .user-actions {
+        margin-top: 10px;
+    }
+
+    nav ul {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .signin-box, .register-box {
+        padding: 20px;
+        width: 90%;
+    }
+
+    .signin-box .logo, .register-box .logo {
+        height: 50px;
+    }
+
+    .signin-box h1, .register-box h1 {
+        font-size: 20px;
+    }
+
+    .signin-container, .register-container {
+        padding: 10px;
+    }
+}

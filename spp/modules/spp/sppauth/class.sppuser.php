@@ -1,355 +1,306 @@
 <?php
 namespace SPPMod\SPPAuth;
+
 use SPP\Exceptions\UserNotFoundException;
 use SPP\Exceptions\UnknownPropertyException;
-/*require_once 'class.spprole.php';
-require_once 'class.sppbase.php';*/
+use SPPMod\SPPDB\SPP_DB;
+use SPP\SPPBase;
+
 /**
- * Description of User
- *
- * @author Administrator
+ * Class SPPUser
+ * 
+ * Manages user entities within the SPP framework. Handles authentication,
+ * profile retrieval, and role management using the modernized database schema.
+ * 
+ * Database Schema Mapping:
+ * - id            => Primary Identity
+ * - username      => Unique login handle
+ * - password_hash => Securely hashed password (via password_hash)
+ * - role_id       => Reference to the associated role in the 'roles' table
+ * - status        => Administrative status ('active', 'inactive', 'banned')
+ * 
+ * @package SPPMod\SPPAuth
  */
-class SPPUser extends \SPP\SPPObject {
-    private $uname,$uid,$enabled,$rights;
+class SPPUser extends \SPP\SPPObject
+{
+    /** @var string|null $username The unique username of the user */
+    private $username;
+    
+    /** @var int|null $id The unique numeric identifier of the user */
+    private $id;
+    
+    /** @var string $status The current status of the user */
+    private $status;
+    
+    /** @var array $rights Cached permissions/rights for the user's role */
+    private $rights = [];
+    
+    /** @var int|null $roleId The role ID associated with this user */
+    private $roleId;
 
     /**
-     * Constructor
-     *
-     * @param string $unm
-     */
-	public function __construct($unm)
-	{
-		$db=new \SPPMod\SPPDB\SPP_DB();
-		$res=array();
-		$qry='select uid, enabled from '. \SPP\SPPBase::sppTable('users').' where uname=?';
- 		$res=$db->execute_query($qry,array($unm));
-		if(sizeof($res)>0)
-		{
-        	$this->uid=$res[0]['uid'];
-            $this->enabled=$res[0]['enabled'];
-			$this->uname=$unm;
-			$qry='select rightname from '. \SPP\SPPBase::sppTable('rights').' rt, '. \SPP\SPPBase::sppTable('roleright').' rr, '. \SPP\SPPBase::sppTable('userroles').' ur where ur.uid=? and ur.roleid=rr.roleid and rt.rightid=rr.rightid';
-			$res=$db->execute_query($qry,array($this->uid));
-			foreach($res as $row)
-			{
-				$this->rights[]=$row['rightname'];
-			}
-		}
-		else
-		{
-            throw new UserNotFoundException('User '.$unm.' not found.');
-		}
-	}
-
-    /**
-     * function get()
-     * gets various properties of user.
-     * Properties are:
-     *          UserName
-     *          UserId
-     *          Enabled
+     * SPPUser Constructor.
      * 
-     * @param <type> $propname
-     * @return <type>
+     * Loads user data and permissions from the database based on the provided username.
+     *
+     * @param string $unm The username to load.
+     * @throws UserNotFoundException if the username does not exist in the database.
+     */
+    public function __construct($unm)
+    {
+        $db = new SPP_DB();
+        $this->rights = [];
+        
+        // Fetch user basic info
+        $qry = 'SELECT id, status, role_id FROM ' . SPPBase::sppTable('users') . ' WHERE username=?';
+        $res = $db->execute_query($qry, array($unm));
+        
+        if (count($res) > 0) {
+            $this->id = $res[0]['id'];
+            $this->status = $res[0]['status'];
+            $this->roleId = $res[0]['role_id'];
+            $this->username = $unm;
+            
+            // Fetch rights associated with the user's role
+            // Modernized for 1-to-many role relationship
+            if ($this->roleId) {
+                // Assuming 'role_rights' exists or rights are tied to role. 
+                // For now, mirroring old logic but adapted to role_id in users table.
+                // We'll assume a schema where roles are tied to rights via a link table if exists.
+                // If the system is strictly 'role' based, we might just use role names.
+                // But following original pattern:
+                // Updated for actual schema: rights table uses 'id' and 'name'
+                $qry = 'SELECT rt.name as rightname FROM ' . SPPBase::sppTable('rights') . ' rt, ' . 
+                       SPPBase::sppTable('roleright') . ' rr WHERE rr.roleid=? AND rt.id=rr.rightid';
+                $rightRes = $db->execute_query($qry, array($this->roleId));
+                foreach ($rightRes as $row) {
+                    $this->rights[] = $row['rightname'];
+                }
+            }
+        } else {
+            throw new UserNotFoundException("User '{$unm}' not found.");
+        }
+    }
+
+    /**
+     * Retrieve user properties by name.
+     * 
+     * Supported properties:
+     * - UserName: The login handle
+     * - UserId: The numeric ID
+     * - Enabled: Boolean status flag
+     * - Status: Raw status string
+     *
+     * @param string $propname The property to retrieve.
+     * @return mixed The value of the property.
+     * @throws UnknownPropertyException if an invalid property is requested.
      */
     public function get($propname)
     {
-        switch($propname)
-        {
+        switch ($propname) {
             case 'UserName':
-                return $this->uname;
-                break;
+                return $this->username;
             case 'UserId':
-                return $this->uid;
-                break;
+                return $this->id;
             case 'Enabled':
-                return $this->enabled;
+                return $this->isEnabled();
+            case 'Status':
+                return $this->status;
             default:
-                throw new UnknownPropertyException('Unknown property '.$propname.' accessed in User.');
-                break;
+                throw new UnknownPropertyException("Unknown property '{$propname}' accessed in SPPUser.");
         }
     }
 
     /**
-     * function isEnabled()
-     * Returns true if user is enabled. Else returns false.
+     * Check if the user is currently active.
      * 
-     * @return <type>
+     * @return bool True if status is 'active', false otherwise.
      */
     public function isEnabled()
     {
-        if($this->enabled=='Y')
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        return strtolower($this->status) === 'active' || $this->status === 'Y';
     }
 
     /**
-     * function verifyPassword()
-     * Verifies password of current user.
-     * 
-     * @param string $passwd
-     * @return bool
+     * Securely verify a plaintext password against the stored hash.
+     *
+     * @param string $passwd The plaintext password to verify.
+     * @return bool True if the password is correct.
      */
     public function verifyPassword($passwd)
     {
-   		$db=new \SPPMod\SPPDB\SPP_DB();
-		$res=array();
-		$qry='select uid, aes_decrypt(passwd,?) pswd, enabled from '. \SPP\SPPBase::sppTable('users').' where uname=?';
- 		$res=$db->execute_query($qry,array($passwd,$this->uname));
-		if(sizeof($res)>0)
-		{
-			if($res[0]['pswd']==$passwd)
-			{
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+        $db = new SPP_DB();
+        $qry = 'SELECT password_hash FROM ' . SPPBase::sppTable('users') . ' WHERE username=?';
+        $res = $db->execute_query($qry, array($this->username));
+        
+        if (count($res) > 0) {
+            return password_verify($passwd, $res[0]['password_hash']);
         }
-        else
-        {
-            return false;
-        }
-
+        return false;
     }
 
     /**
-     * static function userExists()
-     * Returns true if user exists. Else false.
-     * 
-     * @param string $uname
-     * @return bool
+     * Static check to see if a user exists in the system.
+     *
+     * @param string $uname The username to check.
+     * @return bool True if existence is confirmed.
      */
     public static function userExists($uname)
     {
-   		$db=new \SPPMod\SPPDB\SPP_DB();
-		$res=array();
-		$qry='select uid, enabled from '.\SPP\SPPBase::sppTable('users').' where uname=?';
- 		$res=$db->execute_query($qry,array($uname));
-		if(sizeof($res)>0)
-		{
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        $db = new SPP_DB();
+        $qry = 'SELECT id FROM ' . SPPBase::sppTable('users') . ' WHERE username=?';
+        $res = $db->execute_query($qry, array($uname));
+        return count($res) > 0;
     }
 
     /**
-     * static function verifyUserPassowrd()
-     * Verified password for a supplied user name.
-     * 
+     * Static shorthand to verify a user's password without instantiating an object.
+     *
      * @param string $uname
      * @param string $passwd
      * @return bool
      */
-    public static function verifyUserPassword($uname,$passwd)
+    public static function verifyUserPassword($uname, $passwd)
     {
-   		$db=new \SPPMod\SPPDB\SPP_DB();
-		$res=array();
-		$qry='select uid, aes_decrypt(passwd,?) pswd, enabled from '. \SPP\SPPBase::sppTable('users').' where uname=?';
- 		$res=$db->execute_query($qry,array($passwd,$uname));
-		if(sizeof($res)>0)
-		{
-			if($res[0]['pswd']==$passwd)
-			{
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+        $db = new SPP_DB();
+        $qry = 'SELECT password_hash FROM ' . SPPBase::sppTable('users') . ' WHERE username=?';
+        $res = $db->execute_query($qry, array($uname));
+        if (count($res) > 0) {
+            return password_verify($passwd, $res[0]['password_hash']);
         }
-        else
-        {
-            return false;
-        }
-
+        return false;
     }
 
     /**
-     * function hasRight()
-     * Returns true if user has a particular right. Else returns false.
-     * @param string $rt
-     * @return bool
+     * Check if the user possesses a specific privilege/right.
+     * 
+     * @param string $rt The right name to check.
+     * @return bool True if the user has the right.
      */
     public function hasRight($rt)
-	{
-		$flag=false;
-                foreach($this->rights as $rght)
-		{
-			if($rght==$rt)
-			{
-				$flag=true;
-				break;
-			}
-		}
-		return $flag;
-	}
-
-    /**
-     * static function createUser()
-     * Creates a user and sets password for it.
-     * 
-     * @param string $uname
-     * @param string $passwd
-     * @return bool
-     */
-    public static function createUser($uname,$passwd)
     {
-        $db=new \SPPMod\SPPDB\SPP_DB();
-        if(self::userExists($uname))
-        {
-            return false;
-        }
-        else
-        {
-            $sql='insert into '. \SPP\SPPBase::sppTable('users').'(uid,uname,passwd,enabled) values(?,?,aes_encrypt(?,?),?)';
-            $values=array(\SPPMod\SPPDB\SPP_Sequence::next('sppuid'),$uname,$passwd,$passwd,'Y');
-            $db->execute_query($sql, $values);
-            return true;
-        }
+        return in_array($rt, $this->rights);
     }
 
     /**
-     * static function dropUser()
-     * Drops a user from system.
-     * 
+     * Create a new user in the system.
+     *
+     * @param string $uname The username for the new account.
+     * @param string $passwd The plaintext password (will be hashed).
+     * @param string $status Initial account status (default: 'active').
+     * @return bool True on success, false if user already exists.
+     */
+    public static function createUser($uname, $passwd, $status = 'active')
+    {
+        $db = new SPP_DB();
+        if (self::userExists($uname)) {
+            return false;
+        }
+        
+        $hashed = password_hash($passwd, PASSWORD_DEFAULT);
+        $sql = 'INSERT INTO ' . SPPBase::sppTable('users') . ' (username, password_hash, status, created_at) VALUES (?, ?, ?, NOW())';
+        $db->execute_query($sql, array($uname, $hashed, $status));
+        return true;
+    }
+
+    /**
+     * Permanently remove a user from the system.
+     *
      * @param string $uname
      * @return bool
      */
     public static function dropUser($uname)
     {
-        $db=new \SPPMod\SPPDB\SPP_DB();
-        if(self::userExists($uname)==false)
-        {
+        $db = new SPP_DB();
+        if (!self::userExists($uname)) {
             return false;
         }
-        else
-        {
-            $sql='delete from '. \SPP\SPPBase::sppTable('users').' where uname=?';
-            $values=array($uname);
-            $db->execute_query($sql, $values);
-            return true;
-        }
+        $sql = 'DELETE FROM ' . SPPBase::sppTable('users') . ' WHERE username=?';
+        $db->execute_query($sql, array($uname));
+        return true;
     }
 
     /**
-     * function setPassword()
-     * Sets password for the user.
-     * 
-     * @param <type> $passwd
+     * Update the password for an existing user.
+     *
+     * @param string $passwd The new plaintext password.
      */
     public function setPassword($passwd)
     {
-        $db=new \SPPMod\SPPDB\SPP_DB();
-        $sql='update '. \SPP\SPPBase::sppTable('users').' set passwd=aes_encrypt(?,?) where uid=?';
-        $values=array($passwd,$passwd,$this->uid);
-        $db->execute_query($sql, $values);
+        $hashed = password_hash($passwd, PASSWORD_DEFAULT);
+        $db = new SPP_DB();
+        $sql = 'UPDATE ' . SPPBase::sppTable('users') . ' SET password_hash=? WHERE id=?';
+        $db->execute_query($sql, array($hashed, $this->id));
     }
 
-
     /**
-     * function enable()
-     * Enables the user.
+     * Set user status to 'active'.
      */
     public function enable()
     {
-        $db=new \SPPMod\SPPDB\SPP_DB();
-        $sql='update '. \SPP\SPPBase::sppTable('users').' set enabled=? where uid=?';
-        $values=array('Y',$this->uid);
-        $db->execute_query($sql, $values);
+        $db = new SPP_DB();
+        $sql = 'UPDATE ' . SPPBase::sppTable('users') . ' SET status=? WHERE id=?';
+        $db->execute_query($sql, array('active', $this->id));
     }
 
-
     /**
-     * function disable()
-     * Disables the user.
+     * Set user status to 'inactive'.
      */
     public function disable()
     {
-        $db=new \SPPMod\SPPDB\SPP_DB();
-        $sql='update '. \SPP\SPPBase::sppTable('users').' set enabled=? where uid=?';
-        $values=array('N',$this->uid);
-        $db->execute_query($sql, $values);
+        $db = new SPP_DB();
+        $sql = 'UPDATE ' . SPPBase::sppTable('users') . ' SET status=? WHERE id=?';
+        $db->execute_query($sql, array('inactive', $this->id));
     }
 
     /**
-     * function hasRole()
-     * Finds whether user has a particular role or not.
-     * 
+     * Check if the user is assigned a specific role by name.
+     *
      * @param string $rolename
      * @return bool
      */
     public function hasRole($rolename)
     {
-        $db=new \SPPMod\SPPDB\SPP_DB();
-        $sql='select * from '. \SPP\SPPBase::sppTable('userroles').' where uid=? and roleid=?';
-        $values=array($this->uid,SPPRole::getRoleId($rolename));
-        $result=$db->execute_query($sql, $values);
-        if(sizeof($result)>0)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        $db = new SPP_DB();
+        $sql = 'SELECT ur.id FROM ' . SPPBase::sppTable('users') . ' ur, ' . 
+               SPPBase::sppTable('roles') . ' r WHERE ur.id=? AND ur.role_id=r.id AND r.role_name=?';
+        $result = $db->execute_query($sql, array($this->id, $rolename));
+        return count($result) > 0;
     }
 
     /**
-     * function assignRole()
-     * Assigns a particular role to the user.
+     * Assign a specific role to the user by role name.
      * 
-     * @param <type> $rolename
-     * @return <type>
+     * @param string $rolename
+     * @return bool True if role was assigned or already possessed.
      */
     public function assignRole($rolename)
     {
-        $db=new \SPPMod\SPPDB\SPP_DB();
-        if($this->hasRole($rolename))
-        {
-            return false;
-        }
-        else
-        {
-            $sql='insert into '. \SPP\SPPBase::sppTable('userroles').' values(?,?)';
-            $values=array($this->uid,SPPRole::getRoleId($rolename));
-            $db->execute_query($sql, $values);
-            return true;
-        }
+        $db = new SPP_DB();
+        // Get role identifier
+        $sql = 'SELECT id FROM ' . SPPBase::sppTable('roles') . ' WHERE role_name=?';
+        $res = $db->execute_query($sql, array($rolename));
+        
+        if (count($res) === 0) return false;
+        
+        $roleId = $res[0]['id'];
+        $sql = 'UPDATE ' . SPPBase::sppTable('users') . ' SET role_id=? WHERE id=?';
+        $db->execute_query($sql, array($roleId, $this->id));
+        $this->roleId = $roleId;
+        return true;
     }
-
 
     /**
-     * function removeRole()
-     * Removes a particular role from the user.
+     * Unset the user's role assignment.
      *
-     * @param <type> $rolename
-     * @return <type>
+     * @return bool
      */
-    public function removeRole($rolename)
+    public function removeRole()
     {
-        $db=new \SPPMod\SPPDB\SPP_DB();
-        if($this->hasRole($rolename))
-        {
-            $sql='delete from '. \SPP\SPPBase::sppTable('userroles').' where uid=? and roleid=?';
-            $values=array($this->uid,SPPRole::getRoleId($rolename));
-            $db->execute_query($sql, $values);
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        $db = new SPP_DB();
+        $sql = 'UPDATE ' . SPPBase::sppTable('users') . ' SET role_id=NULL WHERE id=?';
+        $db->execute_query($sql, array($this->id));
+        $this->roleId = null;
+        return true;
     }
-
 }
-?>

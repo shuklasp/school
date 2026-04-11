@@ -94,13 +94,22 @@
         </dependencies>
     </module>
     <module>
-        <modname>spphtml</modname>
-        <modpath>spp/spphtml</modpath>
+        <modname>sppview</modname>
+        <modpath>spp/sppview</modpath>
         <status>active</status>
         <dependencies>
             <dependency>sppcore</dependency>
             <dependency>sppdb</dependency>
             <dependency>sppsession</dependency>
+        </dependencies>
+    </module>
+    <module>
+        <modname>sppajax</modname>
+        <modpath>spp/sppajax</modpath>
+        <status>active</status>
+        <dependencies>
+            <dependency>sppcore</dependency>
+            <dependency>sppview</dependency>
         </dependencies>
     </module>
 </modules>

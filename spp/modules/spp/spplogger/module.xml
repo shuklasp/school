@@ -14,6 +14,7 @@
     <pubname>SPP Logger</pubname>
     <modgroup>SPP_Optional</modgroup>
     <pubdesc>Handles logging in SPP.</pubdesc>
+    <config>config/config.yml</config>
     <includes>
         <include>class.spplogger.php</include>
     </includes>

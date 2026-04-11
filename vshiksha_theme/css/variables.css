@@ -1,0 +1,40 @@
+/* Exact CSS Variables extracted from vshiksha.com */
+:root {
+  /* Primary Accent Color - The defining orange of Vshiksha */
+  --color-primary: #D35400;
+  --color-primary-hover: #b34700;
+
+  /* Backgrounds */
+  --color-bg-page: #F9F9F9;
+  --color-bg-surface: #FFFFFF;
+  --color-bg-header: #FFFFFF;
+
+  /* Text Colors */
+  --color-text-main: #333333;
+  --color-text-muted: #777777;
+  --color-heading: #333333;
+  --color-meta: #999999;
+
+  /* Borders and Dividers */
+  --color-border: #EEEEEE;
+  --color-border-light: #F1F1F1;
+
+  /* Typography Scale */
+  --font-heading: 'Montserrat', 'Inter', system-ui, sans-serif;
+  --font-body: 'Poppins', 'Inter', system-ui, sans-serif;
+
+  /* Spacing */
+  --space-xs: 8px;
+  --space-sm: 15px;
+  --space-md: 20px;
+  --space-lg: 30px;
+  --space-xl: 50px;
+
+  /* Layout */
+  --container-width: 1200px;
+  --sidebar-width: 300px;
+
+  /* Effects */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+}

@@ -1,0 +1,477 @@
+/* Reset default margins and padding */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    background-color: #f5f5f5;
+    /* Light gray background as in screenshot */
+}
+
+/* Header Styles */
+header {
+    background: linear-gradient(to right, #ff8c00, #ffad33);
+    /* Orange gradient */
+    padding: 15px 20px;
+    /* Adjusted padding to match screenshot */
+    color: white;
+    border-bottom: 2px solid #ff7f00;
+    /* Subtle border for definition */
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.logo {
+    height: 50px;
+    /* Matches logo size in screenshot */
+    margin-right: 20px;
+    /* Spacing as seen */
+}
+
+.user-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.user-actions span {
+    color: #ff4500;
+    /* Bright orange for "Hello User Name!" */
+    font-weight: bold;
+}
+
+.profile-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.profile-icon {
+    width: 30px;
+    /* Size for profile icon */
+    height: 30px;
+    cursor: pointer;
+    border-radius: 50%;
+    /* Circular icon */
+    background-color: #fff;
+    /* White background for icon */
+    border: 2px solid #ff8c00;
+    /* Orange border */
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background-color: #fff;
+    min-width: 160px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    z-index: 1;
+}
+
+.dropdown-content a {
+    color: #333;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.dropdown-content a:hover {
+    background-color: #ffad33;
+    /* Lighter orange on hover */
+    color: white;
+}
+
+.menu-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+}
+
+.user-actions button {
+    background-color: #66b3ff;
+    /* Teal for buttons */
+    border: none;
+    padding: 5px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    color: white;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.user-actions button:hover {
+    background-color: #4d94ff;
+    /* Darker teal on hover */
+}
+
+/* Navigation Styles */
+nav {
+    background-color: #e6e6e6;
+    /* Light gray as in screenshot */
+    padding: 10px 0;
+    border-bottom: 1px solid #ccc;
+    /* Subtle border */
+    position: relative;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: #333;
+    padding: 5px 15px;
+    border-radius: 5px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+nav ul li a.active {
+    background-color: #ff8c00;
+    /* Orange for active tab */
+    color: white;
+}
+
+nav ul li a:hover {
+    background-color: #ddd;
+    /* Lighter gray on hover */
+    color: #000;
+}
+
+.nav-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+}
+
+.toggle-sidebar-btn {
+    background-color: #ff8c00;
+    /* Orange to match theme */
+    border: none;
+    padding: 5px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    color: white;
+    font-size: 14px;
+    margin-left: 20px;
+    transition: background-color 0.3s;
+    display: none;
+    /* Initially hidden for "Home" */
+}
+
+.toggle-sidebar-btn:hover {
+    background-color: #ff7f00;
+    /* Darker orange on hover */
+}
+
+/* Container Styles */
+.container {
+    display: flex;
+    max-width: 1200px;
+    margin: 20px auto;
+    gap: 20px;
+}
+
+.container.no-sidebar {
+    display: block;
+    /* Remove flex for no sidebar on "Home" */
+}
+
+.container.no-sidebar main {
+    margin: 0 auto;
+    /* Center main content when no sidebar */
+    width: 100%;
+    max-width: 800px;
+    /* Match screenshot width */
+    text-align: center;
+    /* Center-align text on "Home" */
+}
+
+/* Login Page Container */
+.login-container {
+    display: block;
+}
+
+.login-container main {
+    margin: 40px auto;
+    width: 100%;
+    max-width: 400px;
+    /* Narrower form for login */
+    text-align: left;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    width: 250px;
+    background-color: #ff8c00;
+    /* Solid orange */
+    padding: 15px;
+    border-radius: 5px;
+    color: white;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    /* Slight shadow for depth */
+    transition: transform 0.3s, opacity 0.3s;
+}
+
+.sidebar.hidden {
+    transform: translateX(-100%);
+    opacity: 0;
+    visibility: hidden;
+}
+
+.sidebar h2 {
+    margin-bottom: 15px;
+    font-size: 18px;
+    border-bottom: 1px solid #ffad33;
+    /* Orange line under heading */
+    padding-bottom: 5px;
+}
+
+.sidebar ul {
+    list-style: none;
+}
+
+.sidebar ul li {
+    margin-bottom: 5px;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: #ffad33;
+    /* Lighter orange for menu items */
+    text-decoration: none;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+.sidebar-link:hover {
+    background-color: #ff7f00;
+    /* Darker orange on hover */
+}
+
+.submenu {
+    display: none;
+    padding-left: 20px;
+    background-color: #ffad33;
+    border-radius: 5px;
+    margin-top: 5px;
+}
+
+.submenu a {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    color: white;
+    text-decoration: none;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.submenu a:hover {
+    background-color: #ff7f00;
+    /* Darker orange on hover */
+}
+
+.submenu-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+}
+
+/* Main Content Styles */
+main {
+    flex: 1;
+    padding: 20px;
+    background-color: #fff;
+    /* White background for main content */
+    border-radius: 5px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    /* Slight shadow */
+}
+
+main h1 {
+    margin-bottom: 20px;
+    color: #000;
+    /* Black text for heading */
+    font-size: 24px;
+}
+
+main p {
+    color: #333;
+    font-size: 16px;
+    line-height: 1.8;
+}
+
+.loading {
+    text-align: center;
+    padding: 20px;
+    color: #ff8c00;
+    display: none;
+}
+
+.loading.active {
+    display: block;
+}
+
+/* Form Styles */
+.submission-form {
+    margin-top: 20px;
+    max-width: 500px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.form-group textarea {
+    height: 100px;
+    resize: vertical;
+}
+
+.submission-form button {
+    background-color: #66b3ff;
+    /* Teal for buttons */
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    color: white;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.submission-form button:hover {
+    background-color: #4d94ff;
+    /* Darker teal on hover */
+}
+
+.form-response {
+    margin-top: 20px;
+}
+
+.form-response .success {
+    color: #28a745;
+    /* Green for success */
+    font-weight: bold;
+}
+
+.form-response .error {
+    color: #dc3545;
+    /* Red for error */
+    font-weight: bold;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .user-actions {
+        margin-top: 10px;
+        flex-direction: column;
+        align-items: flex-end;
+    }
+
+    .profile-dropdown {
+        margin-top: 5px;
+    }
+
+    .user-actions span,
+    .profile-icon {
+        margin-right: 10px;
+    }
+
+    .user-actions button {
+        margin-top: 5px;
+    }
+
+    nav ul {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    nav ul li a {
+        padding: 5px 10px;
+    }
+
+    .toggle-sidebar-btn {
+        margin-left: 0;
+        margin-top: 10px;
+    }
+
+    .container.no-sidebar {
+        display: block;
+    }
+
+    .container.no-sidebar main {
+        margin: 0;
+        width: 100%;
+    }
+
+    .sidebar.hidden {
+        transform: translateX(0);
+        opacity: 1;
+        visibility: visible;
+        display: none;
+    }
+
+    .login-container main {
+        margin: 20px auto;
+        width: 90%;
+    }
+}

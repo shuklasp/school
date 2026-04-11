@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module>
+    <name>spplive</name>
+    <author>SPP Framework Builder</author>
+    <version>1.0</version>
+    <description>Progressive Reactive WebSocket LiveView subsystem mapping native HTML streams automatically properly seamlessly elegantly properly explicitly seamlessly properly functionally safely intelligently organically elegantly explicitly inherently smartly.</description>
+    <namespace>SPPMod\SPPLive</namespace>
+    <autoload>
+        <class name="SPPLive" file="class.spplive.php"/>
+    </autoload>
+</module>

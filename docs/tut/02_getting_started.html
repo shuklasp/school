@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>02. Getting Started | SPP Framework Tutorial</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <aside class="sidebar">
+        <h2>SPP Framework</h2>
+        <nav>
+            <ul>
+                <li><a href="index.html">Welcome</a></li>
+                <li><a href="01_introduction.html">01. Introduction</a></li>
+                <li><a href="02_getting_started.html" class="active">02. Getting Started</a></li>
+                <li><a href="03_modules.html">03. Modules Architecture</a></li>
+                <li><a href="04_data_models.html">04. Data Modeling</a></li>
+                <li><a href="05_routing_and_views.html">05. Routing & Views</a></li>
+                <li><a href="06_forms_and_validation.html">06. Forms & Validation</a></li>
+                <li><a href="07_events.html">07. The Event System</a></li>
+                <li><a href="08_advanced.html">08. Advanced Features</a></li>
+                <li><a href="09_project_twitter.html">09. Project: SPP-Twitter</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <article class="content-container">
+            <h1>02. Getting Started with SPP</h1>
+            <p>In this section, we'll cover the SPP project structure, key constants, and how to use the framework's CLI tool for quick development.</p>
+            
+            <hr>
+
+            <h2>Directory Structure</h2>
+            <p>A standard SPP project is organized as follows:</p>
+            <ul>
+                <li><strong>spp/</strong>: The core framework directory.
+                    <ul>
+                        <li><strong>core/</strong>: Internal framework classes and core logic.</li>
+                        <li><strong>modules/</strong>: Standard and custom modules.</li>
+                        <li><strong>res/</strong>: Core framework JS/CSS resources.</li>
+                    </ul>
+                </li>
+                <li><strong>etc/</strong>: Application-level configuration files.
+                    <ul>
+                        <li><strong>entities/</strong>: YAML files defining your data models.</li>
+                        <li><strong>pages.yml</strong>: The main routing configuration.</li>
+                    </ul>
+                </li>
+                <li><strong>src/</strong>: Your application-specific PHP/HTML source files.</li>
+                <li><strong>var/</strong>: Logs, caches, and temporary files.</li>
+                <li><strong>index.php</strong>: The primary entry point for all web requests.</li>
+            </ul>
+
+            <hr>
+
+            <h2>Core Initialization</h2>
+            <p>The framework is initialized via <span class="accent">spp/sppinit.php</span>. This file defines several critical constants you'll use throughout your development:</p>
+            <ul>
+                <li><strong>SPP_BASE_DIR</strong>: Absolute path to the `spp/` directory.</li>
+                <li><strong>SPP_CORE_DIR</strong>: Path to the core classes.</li>
+                <li><strong>SPP_MODULES_DIR</strong>: Path to the modules.</li>
+                <li><strong>SPP_ETC_DIR</strong>: Global configuration directory.</li>
+                <li><strong>APP_ETC_DIR</strong>: Application-specific config directory.</li>
+                <li><strong>SPP_APP_DIR</strong>: The root directory of your application.</li>
+            </ul>
+
+            <hr>
+
+            <h2>The SPP CLI Tool</h2>
+            <p>SPP comes with a powerful CLI tool, <span class="accent">spp.php</span>, located in the <span class="accent">spp/</span> directory. It helps you scaffold new components quickly.</p>
+
+            <h3>1. Generating a Data Entity</h3>
+            <p>To create a new data model (Entity), use the <span class="accent">make:entity</span> command:</p>
+            <pre><code>php spp/spp.php make:entity Student</code></pre>
+            <p>This will generate a <span class="accent">student.yml</span> file in <span class="accent">etc/entities/</span> with a basic schema.</p>
+
+            <h3>2. Creating a New Module</h3>
+            <p>To scaffold a new functional module:</p>
+            <pre><code>php spp/spp.php make:module Inventory</code></pre>
+            <p>This creates a new module directory in <span class="accent">spp/modules/spp/inventory/</span> containing a <span class="accent">module.xml</span> and a base class.</p>
+
+            <h3>3. Compiling the Edge Core</h3>
+            <p>For production environments, you can compile the core framework into a high-performance PHAR file:</p>
+            <pre><code>php spp/spp.php build:edge</code></pre>
+            <p>This generates <span class="accent">spp/build/spp_edge_core.phar</span>.</p>
+
+            <footer class="footer-nav">
+                <a href="01_introduction.html" class="nav-button">
+                    <span class="label">Previous</span>
+                    <span class="title">&larr; 01. Introduction</span>
+                </a>
+                <a href="03_modules.html" class="nav-button">
+                    <span class="label">Next</span>
+                    <span class="title">03. Modular Architecture &rarr;</span>
+                </a>
+            </footer>
+        </article>
+    </main>
+</body>
+</html>

@@ -1,251 +1,188 @@
 <?php
+
 namespace SPP;
+
 /**
  * class \SPP\Registry
- * Implements a registry system for Satya Portal Pack.
  *
- * @author Satya Prakash Shukla
+ * Implements a global registry system for Satya Portal Pack.
+ * Provides hierarchical storage for application-level entities,
+ * directories, classes, and functions.
+ *
+ * Backward-compatible modernization for PHP 8+.
+ *
+ * @author
+ *     Satya Prakash Shukla
+ * @version
+ *     2.1 compatible with legacy SPP 1.x
  */
-class Registry extends \SPP\SPPObject {
-    public static $reg=array();
-    public static $values=array();
-    private static $valkey=0;
+class Registry extends \SPP\SPPObject
+{
+    /** @var array<string,mixed> */
+    public static array $reg = [];
+
+    /** @var array<int,mixed> */
+    public static array $values = [];
+
+    /** @var int */
+    private static int $valkey = 0;
+
+    public function __construct()
+    {
+        // Reserved for future expansion; no initialization required.
+    }
 
     /**
-     * function __construct()
-     * Constructor for the \SPP\Registry class.
+     * Registers an entity and assigns a value.
      *
+     * @param string $entity
+     * @param mixed  $value
+     * @return void
      */
-    public function __construct() {
-        ;
+    public static function register(string $entity, mixed $value): void
+    {
+        if (\SPP\Scheduler::getContext() !== '') {
+            $entity = '__apps=>' . \SPP\Scheduler::getContext() . '=>' . $entity;
+        }
+
+        $key = self::getKey($entity);
+
+        if ($key !== false) {
+            self::$values[$key] = $value;
+            return;
+        }
+
+        // Create new hierarchical entry
+        $tokens = array_map('trim', explode('=>', $entity));
+
+        self::$values[self::$valkey] = $value;
+        $arr = [array_pop($tokens) => self::$valkey];
+        self::$valkey++;
+
+        while (!empty($tokens)) {
+            $val = array_pop($tokens);
+            $arr = [$val => $arr];
+        }
+
+        // Merge if existing entry
+        $rootKey = key($arr);
+        if (array_key_exists($rootKey, self::$reg)) {
+            $merged = array_merge_recursive(self::$reg[$rootKey], $arr[$rootKey]);
+        } else {
+            $merged = $arr[$rootKey];
+        }
+
+        self::$reg[$rootKey] = $merged;
     }
 
     /**
-     * function register()
-     * Registers a new entity and assigns a value to it.
-     *
-     * @param mixed $entity
-     * @param mixed $value
+     * Registers a directory for a given category.
      */
-    public static function register($entity,$value)
+    public static function registerDir(string $category, string|array $dir): void
     {
-        if(\SPP\Scheduler::getContext()!='')
-        {
-            $entity='__apps=>'.\SPP\Scheduler::getContext().'=>'.$entity;
-        }
-        $key='';
-        if(($key=self::getKey($entity))!==false)
-        {
-            self::$values[$key]=$value;
-        }
-        else
-        {
-            $ent=strtok($entity, '=>');
-            $oldent=$ent;
-            $arr=array();
-            $stk=new \SPP\Stack();
-            while($ent!==false)
-            {
-                $stk->push(trim($ent));
-                $ent=strtok('=>');
-            }
-            self::$values[self::$valkey]=$value;
-            $arr[$stk->pop()]=self::$valkey;
-            self::$valkey++;
-            $lastval='';
-            while(($val=$stk->pop())!==false)
-            {
-                $ar=array();
-                $ar[$val]=$arr;
-                $arr=$ar;
-                $lastval=$val;
-            }
-            $arr1=array();
-            if(array_key_exists($lastval, self::$reg))
-            {
-                $arr1=array_merge_recursive(self::$reg[$lastval], $arr[$lastval]);
-            }
-            else
-            {
-                $arr1=$arr[$lastval];
-            }
-            self::$reg[$lastval]=$arr1;
-            $key=self::$valkey-1;
-        }
+        $dir = str_replace('\\', '/', $dir);
+        $existing = self::get('__dirs=>' . $category);
+        $dirs = is_array($existing) ? $existing : [];
+        $dirs = array_merge($dirs, (array) $dir);
+
+        self::register('__dirs=>' . $category, $dirs);
     }
 
     /**
-     * function registerDir()
-     * Registers a directory for a category.
-     *
-     * @param mixed $category
-     * @param mixed $dir
+     * Registers a class for a given category.
      */
-    public static function registerDir($category, $dir)
+    public static function registerClass(string $category, string $class): void
     {
-        $dirs=self::get('__apps=>'.\SPP\Scheduler::getContext().'=>__dirs=>'.$category);
-        $dir=str_replace('\\', '/', $dir);
-        $dirs[]=$dir;
-        self::register('__apps=>'. \SPP\Scheduler::getContext() . '=>__dirs=>'.$category, $dirs);
+        $classes = self::get('__classes=>' . $category);
+        $classes = is_array($classes) ? $classes : [];
+        $classes[] = $class;
+
+        self::register('__classes=>' . $category, $classes);
     }
 
     /**
-     * function registerClass()
-     * Registers a class for a category.
-     *
-     * @param mixed $category
-     * @param mixed $class
+     * Registers a function for a given category.
      */
-    public static function registerClass($category, $class)
+    public static function registerFunction(string $category, string $function): void
     {
-        $classes=self::get('__apps=>'. \SPP\Scheduler::getContext() . '=>__classes=>'.$category);
-        $classes[]=$class;
-        self::register('__apps=>'. \SPP\Scheduler::getContext() . '=>__classes=>'.$category, $classes);
+        $functions = self::get('__functions=>' . $category);
+        $functions = is_array($functions) ? $functions : [];
+        $functions[] = $function;
+
+        self::register('__functions=>' . $category, $functions);
     }
 
     /**
-     * function registerFunction()
-     * Registers a function for a category.
-     *
-     * @param mixed $category
-     * @param mixed $function
+     * Retrieves directories for a category.
      */
-    public static function registerFunction($category, $function)
+    public static function getDirs(string $category): array|false
     {
-        $functions=self::get('__apps=>'. \SPP\Scheduler::getContext() . '=>__functions=>'.$category);
-        $functions[]=$function;
-        self::register('__apps=>'. \SPP\Scheduler::getContext() . '=>__functions=>'.$category, $functions);
+        return self::get('__dirs=>' . $category);
     }
 
     /**
-     * function getDirs()
-     * Gets the directories for a category.
-     *
-     * @param mixed $category
-     * @return mixed
+     * Retrieves value of a registered entity.
      */
-    public static function getDirs($category)
+    public static function getValue(string $entity): mixed
     {
-        return self::get('__apps=>'. \SPP\Scheduler::getContext() . '=>__dirs=>'.$category);
+        $key = self::getKey($entity);
+        return is_int($key) ? self::$values[$key] : false;
     }
 
     /**
-     * function getValue()
-     * Gets value of an entity.
-     *
-     * @param mixed $entity
-     * @return mixed
+     * Retrieves the value of a registered entity.
+     * Returns false if entity is not registered.
      */
-    public static function getValue($entity)
+    public static function get(string $entity): mixed
     {
-        if(($key=self::getKey($entity))!==false)
-        {
-            return self::$values[$key];
+        if (\SPP\Scheduler::getContext() !== '') {
+            $entity = '__apps=>' . \SPP\Scheduler::getContext() . '=>' . $entity;
         }
-        else
-        {
-            return false;
-        }
-    }
-        
 
-/*    public static function del($entity)
-    {
-        $ent=strtok($entity,'=>');
-        $arr=&self::$reg;
-        while($ent!==false)
-        {
-            $arr=&$arr[$ent];
-            $ent=strtok('=>');
-        }
-        unset($arr);
-    }*/
-
-    /**
-     * function get()
-     * Gets the value of a registered entity.
-     * Returns boolean false if entity is not registered.
-     * 
-     * @param mixed $entity
-     * @return mixed
-     */
-    public static function get($entity)
-    {
-        if(\SPP\Scheduler::getContext()!='')
-        {
-            $entity='__apps=>'.\SPP\Scheduler::getContext().'=>'.$entity;
-        }
-        $key=self::getKey($entity);
-        if($key===false)
-        {
-            return false;
-        }
-        else
-        {
-            return self::$values[$key];
-        }
+        $key = self::getKey($entity);
+        return is_int($key) ? self::$values[$key] : false;
     }
 
-    
     /**
-     * function isRegistered()
      * Checks if an entity is registered.
-     * 
-     * @param mixed $entity
-     * @return boolean
      */
-    public static function isRegistered($entity)
+    public static function isRegistered(string $entity): bool
     {
-        if(\SPP\Scheduler::getContext()!='')
-        {
-            $entity='__apps=>'.\SPP\Scheduler::getContext().'=>'.$entity;
+        if (\SPP\Scheduler::getContext() !== '') {
+            $entity = '__apps=>' . \SPP\Scheduler::getContext() . '=>' . $entity;
         }
-        $ent=strtok($entity,'=>');
-        $arr=self::$reg;
-        while($ent!==false)
-        {
-            if(array_key_exists($ent, $arr))
-            {
-                $arr=$arr[$ent];
-                $ent=strtok('=>');
-            }
-            else
-            {
+
+        $tokens = array_map('trim', explode('=>', $entity));
+        $arr = self::$reg;
+
+        foreach ($tokens as $token) {
+            if (!is_array($arr) || !array_key_exists($token, $arr)) {
                 return false;
             }
+            $arr = $arr[$token];
         }
+
         return true;
     }
 
-    //***************************************************************
-    //Private functions
-    //***************************************************************
-    private static function getKey($entity)
+    /**
+     * Gets the registry key (internal helper).
+     *
+     * @param string $entity
+     * @return array|int|false
+     */
+    private static function getKey(string $entity): array|int|false
     {
-        $ent=strtok($entity,'=>');
-        $arr=self::$reg;
-        while($ent!==false)
-        {
-            if(array_key_exists($ent, $arr))
-            {
-                $arr=$arr[$ent];
-                $ent=strtok('=>');
-            }
-            else
-            {
+        $tokens = array_map('trim', explode('=>', $entity));
+        $arr = self::$reg;
+
+        foreach ($tokens as $token) {
+            if (!is_array($arr) || !array_key_exists($token, $arr)) {
                 return false;
             }
+            $arr = $arr[$token];
         }
+
         return $arr;
     }
-
-
-/*    public static function callHandler(\SPP\SPPEvent $event) {
-        self::$events[$event]();
-    }
-
-    public static function registerObject(\SPP\SPPObject $ojb) {
-        self::$objects[]=$obj;
-    }*/
 }
-?>

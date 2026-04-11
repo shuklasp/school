@@ -1,0 +1,5 @@
+settings:
+    site_name: Vidyalaya
+    Key2:
+        skey1: 'new value'
+    Key3: Val3

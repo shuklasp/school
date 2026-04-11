@@ -1,0 +1,87 @@
+{#
+/**
+ * @file
+ * Default theme implementation to display a single page.
+ * Exact structural match to the vshiksha.com archive.
+ */
+#}
+<div class="layout-container">
+  <header class="site-header" role="banner">
+    <div class="container header-inner">
+      <div class="site-logo">
+        <a href="{{ front_page }}" title="{{ 'Home'|t }}" rel="home" class="site-name">
+          {{ site_name|default('Virtual Shiksha') }}
+        </a>
+      </div>
+      
+      {% if page.primary_menu %}
+        <nav class="main-navigation" role="navigation">
+          {{ page.primary_menu }}
+        </nav>
+      {% endif %}
+    </div>
+  </header>
+
+  <main role="main">
+    <div class="container">
+      {% if title %}
+        <h1 class="page-title" style="margin-top: 30px;">{{ title }}</h1>
+      {% endif %}
+
+      {{ page.help }}
+
+      <div class="main-layout">
+        {# Vshiksha 300px Sidebar Architecture #}
+        {% if page.sidebar_first %}
+          <aside class="region-sidebar" role="complementary">
+            {{ page.sidebar_first }}
+          </aside>
+        {% endif %}
+
+        <div class="region-content">
+          <a id="main-content" tabindex="-1"></a>
+          {{ page.content }}
+        </div>
+
+        {% if page.sidebar_second %}
+          <aside class="region-sidebar" role="complementary">
+            {{ page.sidebar_second }}
+          </aside>
+        {% endif %}
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="container">
+      <div class="footer-inner">
+        {% if page.footer %}
+          {{ page.footer }}
+        {% else %}
+          <div class="footer-section">
+            <h4>Virtual Shiksha</h4>
+            <p>Your portal to comprehensive education news, competitive job listings, and rich educational resources.</p>
+          </div>
+          <div class="footer-section">
+            <h4>Quick Links</h4>
+            <ul class="footer-menu">
+              <li><a href="/news">Education News</a></li>
+              <li><a href="/jobs">Jobs Search</a></li>
+              <li><a href="/higher-education">Higher Ed</a></li>
+            </ul>
+          </div>
+          <div class="footer-section">
+            <h4>Contact Info</h4>
+            <ul class="footer-menu">
+              <li>info@vshiksha.com</li>
+              <li>New Delhi, India</li>
+            </ul>
+          </div>
+        {% endif %}
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; {{ "now"|date("Y") }} Virtual Shiksha. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+</div>

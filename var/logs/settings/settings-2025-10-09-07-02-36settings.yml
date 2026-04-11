@@ -1,0 +1,29 @@
+# settings.yml
+# Definition of settings.
+
+formats:
+  - yaml
+  - xml
+  - db
+  - json
+
+modes:
+  - name: sys
+    format: yaml
+    ref: /etc/sys
+  - name: mod
+    format: xml
+    ref: /etc/settings/modules
+  - name: app
+    format: yaml
+    ref: /etc/settings/app
+  - name: umod
+    format: json
+    ref: /etc/umod
+
+settings:
+  site_name: Vidyalaya
+  Key2:
+    skey1: Val1
+    skey2: Val2
+  Key3: Val3

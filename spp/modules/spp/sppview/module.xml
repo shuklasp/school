@@ -17,12 +17,18 @@
     <includes>
         <include>class.viewtag.php</include>
         <include>class.sppformelement.php</include>
-        <include>class.sppformelement.php</include>
+        <include>class.viewvalidator.php</include>
         <include>class.viewpage.php</include>
+        <include>class.viewform.php</include>
         <include>class.ajax.php</include>
         <include>class.pages.php</include>
         <include>ajaxexceptions.php</include>
         <include>formelements/classes.formelements.php</include>
+        <include>sppvalidator/class.sppsinglevalidator.php</include>
+        <include>sppvalidator/class.sppmultiplevalidator.php</include>
+        <include>sppvalidator/classes.sppvalidators.php</include>
+        <include>class.viewformbuilder.php</include>
+        <include>class.formaugmentor.php</include>
     </includes>
     <deps>
         <depends>sppdb</depends>

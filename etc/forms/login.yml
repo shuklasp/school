@@ -1,0 +1,32 @@
+form:
+    name: login_form
+    method: post
+    service: login_user
+    on_response:
+        ok:       navigate:dashboard
+        error:    stay
+        redirect: follow
+
+fields:
+    - name: username
+      type: input
+      label: Username
+      placeholder: Enter your username
+      validations:
+          - type: required
+            message: Username is mandatory!
+            errorholder: username_err
+            event: onblur
+
+    - name: password
+      type: input
+      inputtype: password
+      label: Password
+      validations:
+          - type: required
+            message: Password is required!
+
+    - name: submit
+      type: input
+      inputtype: submit
+      value: Login

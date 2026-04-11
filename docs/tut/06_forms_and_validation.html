@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>06. Forms & Validation | SPP Framework Tutorial</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <aside class="sidebar">
+        <h2>SPP Framework</h2>
+        <nav>
+            <ul>
+                <li><a href="index.html">Welcome</a></li>
+                <li><a href="01_introduction.html">01. Introduction</a></li>
+                <li><a href="02_getting_started.html">02. Getting Started</a></li>
+                <li><a href="03_modules.html">03. Modules Architecture</a></li>
+                <li><a href="04_data_models.html">04. Data Modeling</a></li>
+                <li><a href="05_routing_and_views.html">05. Routing & Views</a></li>
+                <li><a href="06_forms_and_validation.html" class="active">06. Forms & Validation</a></li>
+                <li><a href="07_events.html">07. The Event System</a></li>
+                <li><a href="08_advanced.html">08. Advanced Features</a></li>
+                <li><a href="09_project_twitter.html">09. Project: SPP-Twitter</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <article class="content-container">
+            <h1>06. Forms & Validation</h1>
+            <p>SPP provides a powerful XML/YAML-based form system that automatically handles server-side processing and client-side validation.</p>
+            
+            <hr>
+
+            <h2>Defining a Form</h2>
+            <p>A typical form is defined in an XML file, specifying the controls, their types, and any linked validation rules.</p>
+            <pre><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;forms&gt;
+    &lt;form name="login_form" action="/login.php"&gt;
+        &lt;controls&gt;
+            &lt;control name="username" type="ViewInputText"&gt;
+                &lt;placeholder&gt;Enter Username&lt;/placeholder&gt;
+                &lt;id&gt;username_id&lt;/id&gt;
+            &lt;/control&gt;
+            &lt;control name="password" type="ViewInputPassword"&gt;
+                &lt;placeholder&gt;Enter Password&lt;/placeholder&gt;
+                &lt;id&gt;password_id&lt;/id&gt;
+            &lt;/control&gt;
+            &lt;control name="login_btn" type="ViewInputSubmit"&gt;
+                &lt;value&gt;Login&lt;/value&gt;
+                &lt;id&gt;login_btn_id&lt;/id&gt;
+            &lt;/control&gt;
+        &lt;/controls&gt;
+        &lt;validations&gt;
+            &lt;validation type="ViewValidatorRequired" message="Username is required"&gt;
+                &lt;attach element="username_id" event="onblur" errorholder="error_username"/&gt;
+            &lt;/validation&gt;
+            &lt;validation type="ViewValidatorRequired" message="Password is required"&gt;
+                &lt;attach element="password_id" event="onblur" errorholder="error_password"/&gt;
+            &lt;/validation&gt;
+        &lt;/validations&gt;
+    &lt;/form&gt;
+&lt;/forms&gt;</code></pre>
+
+            <hr>
+
+            <h2>Automatic Form Augmentation</h2>
+            <p>When the <span class="accent">FormAugmentor</span> is active, it detects your XML-defined forms and:</p>
+            <ol>
+                <li><strong>Injects</strong> necessary JavaScript for client-side validation.</li>
+                <li><strong>Wraps</strong> the form in an AJAX-compatible container.</li>
+                <li><strong>Applies</strong> CSS classes for error states and success messages.</li>
+            </ol>
+            <p>This allows you to add complex validation to any page with minimal extra code.</p>
+
+            <hr>
+
+            <h2>Server-side Processing</h2>
+            <p>To handle a form submission in your PHP controller:</p>
+            <pre><code>if (\SPPMod\SPPView\ViewPage::processForms()) {
+    // This is called automatically when a form is submitted
+}
+
+function login_form_submitted() {
+    $username = $_POST['username'];
+    $password = $_POST['password'];
+    // ... authentication logic
+}</code></pre>
+
+            <hr>
+
+            <h2>Manual Form Generation</h2>
+            <p>If you prefer building forms manually, you can still use SPP's <span class="accent">ViewTag</span> classes for consistent rendering:</p>
+            <pre><code>$form = new \SPPMod\SPPView\ViewForm('my_form', '/submit.php');
+$uname = new \SPPMod\SPPView\ViewInputText('username');
+$uname->setAttribute('placeholder', 'Enter Username');
+$form->addElement($uname);
+echo $form->render();</code></pre>
+
+            <footer class="footer-nav">
+                <a href="05_routing_and_views.html" class="nav-button">
+                    <span class="label">Previous</span>
+                    <span class="title">&larr; 05. Routing & Views</span>
+                </a>
+                <a href="07_events.html" class="nav-button">
+                    <span class="label">Next</span>
+                    <span class="title">07. The Event System &rarr;</span>
+                </a>
+            </footer>
+        </article>
+    </main>
+</body>
+</html>

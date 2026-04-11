@@ -1,0 +1,274 @@
+/* Reset default margins and padding */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+}
+
+/* Header Styles */
+header {
+    background: linear-gradient(to right, #ff8c00, #ffad33);
+    padding: 20px;
+    color: white;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.logo {
+    height: 50px; /* Adjust based on your logo size */
+}
+
+.user-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.user-actions span {
+    color: #ff4500; /* Orange text for "Hello User Name!" */
+}
+
+.user-actions button {
+    background-color: #66b3ff;
+    border: none;
+    padding: 5px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    color: white;
+}
+
+.user-actions button:hover {
+    background-color: #4d94ff;
+}
+
+/* Navigation Styles */
+nav {
+    background-color: #e6e6e6;
+    padding: 10px 0;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: #333;
+    padding: 5px 15px;
+    border-radius: 5px;
+}
+
+nav ul li a.active {
+    background-color: #ff8c00;
+    color: white;
+}
+
+nav ul li a:hover {
+    background-color: #ddd;
+}
+
+/* Container Styles */
+.container {
+    display: flex;
+    max-width: 1200px;
+    margin: 20px auto;
+    gap: 20px;
+}
+
+/* Sidebar Styles */
+aside {
+    width: 250px;
+    background-color: #ff8c00;
+    padding: 20px;
+    border-radius: 5px;
+    color: white;
+}
+
+aside h2 {
+    margin-bottom: 15px;
+}
+
+aside ul {
+    list-style: none;
+}
+
+aside ul li {
+    margin-bottom: 5px;
+}
+
+.sidebar-link {
+    display: block;
+    padding: 10px;
+    background-color: #ffad33;
+    text-decoration: none;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.sidebar-link:hover {
+    background-color: #ff7f00;
+}
+
+.submenu {
+    display: none;
+    padding-left: 20px;
+    background-color: #ffad33;
+    border-radius: 5px;
+}
+
+.submenu a {
+    display: block;
+    padding: 8px;
+    color: white;
+    text-decoration: none;
+}
+
+.submenu a:hover {
+    background-color: #ff7f00;
+}
+
+/* Main Content Styles (Shared for About and Dashboard) */
+main {
+    flex: 1;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+}
+
+main h1 {
+    margin-bottom: 20px;
+    color: #ff8c00;
+}
+
+main p {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+main h2 {
+    margin-top: 30px;
+    margin-bottom: 20px;
+    color: #ff8c00;
+}
+
+/* Icon Grid Styles (For Dashboard and Home) */
+.icon-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 20px;
+    padding: 20px;
+}
+
+.icon-box {
+    text-align: center;
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.icon-box:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.icon {
+    width: 80px; /* Large icons */
+    height: 80px;
+    margin-bottom: 10px;
+    transition: opacity 0.3s;
+    filter: brightness(0.9); /* Slightly darken for theme consistency */
+}
+
+.icon-box:hover .icon {
+    opacity: 0.8;
+    filter: hue-rotate(10deg) brightness(1.1); /* Slight teal/orange shift on hover */
+}
+
+.icon-box span {
+    display: block;
+    color: #333;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* Loading State for Async Content */
+.loading {
+    text-align: center;
+    padding: 20px;
+    color: #ff8c00;
+    display: none;
+}
+
+.loading.active {
+    display: block;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+
+    aside {
+        width: 100%;
+    }
+
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .user-actions {
+        margin-top: 10px;
+    }
+
+    nav ul {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .icon-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .icon-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .icon {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+@media (max-width: 480px) {
+    .icon-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .icon {
+        width: 50px;
+        height: 50px;
+    }
+}

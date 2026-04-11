@@ -1,0 +1,6 @@
+variables:
+  dbtype: mysql
+  dbuser: school
+  dbpasswd: hello123
+  dbhost: localhost
+  dbname: school

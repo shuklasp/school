@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>04. Data Modeling | SPP Framework Tutorial</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <aside class="sidebar">
+        <h2>SPP Framework</h2>
+        <nav>
+            <ul>
+                <li><a href="index.html">Welcome</a></li>
+                <li><a href="01_introduction.html">01. Introduction</a></li>
+                <li><a href="02_getting_started.html">02. Getting Started</a></li>
+                <li><a href="03_modules.html">03. Modules Architecture</a></li>
+                <li><a href="04_data_models.html" class="active">04. Data Modeling</a></li>
+                <li><a href="05_routing_and_views.html">05. Routing & Views</a></li>
+                <li><a href="06_forms_and_validation.html">06. Forms & Validation</a></li>
+                <li><a href="07_events.html">07. The Event System</a></li>
+                <li><a href="08_advanced.html">08. Advanced Features</a></li>
+                <li><a href="09_project_twitter.html">09. Project: SPP-Twitter</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <article class="content-container">
+            <h1>04. Data Modeling with YAML Entities</h1>
+            <p>Databases in SPP are handled using a declarative ORM-like system. Instead of writing SQL for table creation and management, you describe your models in **YAML** files.</p>
+            
+            <hr>
+
+            <h2>Designing Entities in YAML</h2>
+            <p>Entities are stored in <span class="accent">etc/entities/</span>. Let's look at a sample mapping:</p>
+            <pre><code>table: students
+id_field: id
+sequence: students_seq
+login_enabled: false
+attributes:
+  name: varchar(200)
+  roll_no: int
+  email: varchar(150)
+  created_at: timestamp
+relations:
+  - parent_entity: Department
+    parent_entity_field: dept_id
+    child_entity_field: id
+    relation_type: ManyToOne</code></pre>
+
+            <h3>Key Fields:</h3>
+            <ul>
+                <li><strong>table</strong>: The MySQL/PostgreSQL table name.</li>
+                <li><strong>id_field</strong>: The primary key field (defaults to `id`).</li>
+                <li><strong>sequence</strong>: The sequence used for ID generation.</li>
+                <li><strong>attributes</strong>: Name-datatype pairs for table columns.</li>
+                <li><strong>relations</strong>: Defines relationships (OneToOne, OneToMany, ManyToOne).</li>
+            </ul>
+
+            <hr>
+
+            <h2>Using SPPEntity for ORM</h2>
+            <p>Once defined, you can interact with your data using the <span class="accent">\SPPMod\SPPEntity\SPPEntity</span> base class.</p>
+
+            <h3>1. Create a New Record</h3>
+            <pre><code>$student = new \SPPMod\SPPEntity\SPPEntity();
+$student->set('name', 'John Doe');
+$student->set('roll_no', 101);
+$student->save();</code></pre>
+
+            <h3>2. Load an Existing Record</h3>
+            <pre><code>$student = new \SPPMod\SPPEntity\SPPEntity(1); // Load by ID
+echo $student->get('name');</code></pre>
+
+            <hr>
+
+            <h2>Automated Schema Management</h2>
+            <p>One of SPP's most powerful features is **Automated Installation**. When you instantiate an SPPEntity, the framework automatically:</p>
+            <ol>
+                <li>Checks if the table exists in the database.</li>
+                <li>Creates the table if missing.</li>
+                <li>Adds any missing columns defined in the YAML.</li>
+            </ol>
+            <p>This means you can sync your database schema across environments simply by updating your YAML files.</p>
+
+            <footer class="footer-nav">
+                <a href="03_modules.html" class="nav-button">
+                    <span class="label">Previous</span>
+                    <span class="title">&larr; 03. Modules Architecture</span>
+                </a>
+                <a href="05_routing_and_views.html" class="nav-button">
+                    <span class="label">Next</span>
+                    <span class="title">05. Routing & Views &rarr;</span>
+                </a>
+            </footer>
+        </article>
+    </main>
+</body>
+</html>

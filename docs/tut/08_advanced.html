@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>08. Advanced Features | SPP Framework Tutorial</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <aside class="sidebar">
+        <h2>SPP Framework</h2>
+        <nav>
+            <ul>
+                <li><a href="index.html">Welcome</a></li>
+                <li><a href="01_introduction.html">01. Introduction</a></li>
+                <li><a href="02_getting_started.html">02. Getting Started</a></li>
+                <li><a href="03_modules.html">03. Modules Architecture</a></li>
+                <li><a href="04_data_models.html">04. Data Modeling</a></li>
+                <li><a href="05_routing_and_views.html">05. Routing & Views</a></li>
+                <li><a href="06_forms_and_validation.html">06. Forms & Validation</a></li>
+                <li><a href="07_events.html">07. The Event System</a></li>
+                <li><a href="08_advanced.html" class="active">08. Advanced Features</a></li>
+                <li><a href="09_project_twitter.html">09. Project: SPP-Twitter</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <article class="content-container">
+            <h1>08. Advanced Features</h1>
+            <p>SPP comes with several powerful modules that extend its core capabilities for enterprise usage, AI integration, and real-time communication.</p>
+            
+            <hr>
+
+            <h2>SPPAuth: Authentication & Roles</h2>
+            <p>The <span class="accent">sppauth</span> module provides a comprehensive security layer for your application. It supports User Management, Roles & Rights, and Session Security.</p>
+
+            <h3>Example Login</h3>
+            <pre><code>if (\SPPMod\SPPAuth\SPPAuth::login($username, $password)) {
+    // User is authenticated
+}</code></pre>
+
+            <h3>Checking Permissions</h3>
+            <pre><code>if (\SPPMod\SPPAuth\SPPAuth::hasRight('admin_access')) {
+    // Only admins can see this
+}</code></pre>
+
+            <hr>
+
+            <h2>SPPLogger: Flexible Logging</h2>
+            <p>The <span class="accent">spplogger</span> module provides advanced logging capabilities, including Database and/or File Logging, Log Rotation, and Log Priority.</p>
+            <pre><code>\SPPMod\SPPLogger\SPP_Logger::error("Database connection failed!");
+\SPPMod\SPPLogger\SPP_Logger::info("User {uname} logged in.", ['uname' => 'John']);</code></pre>
+
+            <hr>
+
+            <h2>SPPAI: Vector ORM Integration</h2>
+            <p>SPP integrates with vector models to provide AI-driven search and embedding capabilities.</p>
+            <pre><code>$results = \SPPMod\SPPAI\SPPAI::searchNatural("Who are my students from Department A?");
+foreach ($results as $r) {
+    echo $r['name'];
+}</code></pre>
+            <p>When an entity is saved, <span class="accent">SPPAI</span> can automatically generate and store embeddings for its attributes, enabling powerful semantic search within your application.</p>
+
+            <hr>
+
+            <h2>SPPLive: Real-time WebSockets</h2>
+            <p>The <span class="accent">spplive</span> module integrates a WebSocket engine to enable real-time features such as Live Notifications, Real-time Collaboration, and Dashboard Updates.</p>
+
+            <hr>
+
+            <h2>SPPNexus: Edge Compiler</h2>
+            <p>For maximum performance, the <span class="accent">SPPNexus</span> compiler can bundle your application core and modules into a single, optimized "Edge Node."</p>
+            <pre><code>php spp/spp.php build:edge</code></pre>
+
+            <footer class="footer-nav">
+                <a href="07_events.html" class="nav-button">
+                    <span class="label">Previous</span>
+                    <span class="title">&larr; 07. The Event System</span>
+                </a>
+                <a href="09_project_twitter.html" class="nav-button">
+                    <span class="label">Next Project</span>
+                    <span class="title">09. Building SPP-Twitter &rarr;</span>
+                </a>
+            </footer>
+        </article>
+    </main>
+</body>
+</html>

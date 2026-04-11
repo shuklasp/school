@@ -12,7 +12,8 @@ require_once 'sppfuncs.php';*/
  *
  * @author Satya Prakash Shukla
  */
-class SPPAuth extends \SPP\SPPObject{
+class SPPAuth extends \SPP\SPPObject
+{
     /**
      * static function login()
      * Authenticates a userid/password and creates session.
@@ -20,9 +21,9 @@ class SPPAuth extends \SPP\SPPObject{
      * @param string $uname
      * @param string $passwd
      */
-    public static function login($uname,$passwd)
+    public static function login($uname, $passwd)
     {
-        $ssn=new SPPUserSession($uname,$passwd);
+        $ssn = new SPPUserSession($uname, $passwd);
         \SPP\SPPSession::setSessionVar('__sppauth__', $ssn);
         return $ssn;
         /*$ev=new LoginEvent();
@@ -37,10 +38,12 @@ class SPPAuth extends \SPP\SPPObject{
     {
         /*$ev=new LogoutEvent();
         $ev->handle();*/
-        if(self::authSessionExists())
-        {
-            $ssn=\SPP\SPPSession::getSessionVar('__sppauth__');
+        if (self::authSessionExists()) {
+            $ssn = \SPP\SPPSession::getSessionVar('__sppauth__');
             $ssn->kill();
+            if (isset($_SESSION['__sppauth__'])) {
+                unset($_SESSION['__sppauth__']);
+            }
             session_destroy();
         }
     }
@@ -51,23 +54,16 @@ class SPPAuth extends \SPP\SPPObject{
      *
      * @return bool
      */
-    public static function authSessionExists($consider_timeout=false)
+    public static function authSessionExists($consider_timeout = false)
     {
-        if(\SPP\SPPSession::sessionVarExists('__sppauth__'))
-        {
-            //echo 'sessvar';
-            /*$ssn=SPPSession::getSessionVar('__sppauth__');
-            if($ssn->isValid($consider_timeout))
-            {*/
+        if (\SPP\SPPSession::sessionVarExists('__sppauth__')) {
+            $ssn = \SPP\SPPSession::getSessionVar('__sppauth__');
+            if ($ssn->isValid($consider_timeout)) {
                 return true;
-            /*}
-            else
-            {
+            } else {
                 return false;
-            }*/
-        }
-        else
-        {
+            }
+        } else {
             //echo 'no sess var';
             return false;
         }
@@ -86,11 +82,9 @@ class SPPAuth extends \SPP\SPPObject{
      */
     public static function get($propname)
     {
-        if(self::authSessionExists())
-        {
-            $ssn= \SPP\SPPSession::getSessionVar('__sppauth__');
-            switch($propname)
-            {
+        if (self::authSessionExists()) {
+            $ssn = \SPP\SPPSession::getSessionVar('__sppauth__');
+            switch ($propname) {
                 case 'UserName':
                     return $ssn->get('UserName');
                     break;
@@ -98,12 +92,10 @@ class SPPAuth extends \SPP\SPPObject{
                     return $ssn->get('UserId');
                     break;
                 default:
-                    throw new UnknownPropertyException('Unknown property '.$propname.' accessed in SPPAuth.');
+                    throw new UnknownPropertyException('Unknown property ' . $propname . ' accessed in SPPAuth.');
                     break;
             }
-        }
-        else
-        {
+        } else {
             throw new NoAuthSessionException('No Authenticated SPPSession Exists!');
         }
     }
@@ -118,13 +110,10 @@ class SPPAuth extends \SPP\SPPObject{
      */
     public static function validVarExists($varname)
     {
-        if(self::authSessionExists())
-        {
-            $ssn= \SPP\SPPSession::getSessionVar('__sppauth__');
+        if (self::authSessionExists()) {
+            $ssn = \SPP\SPPSession::getSessionVar('__sppauth__');
             return $ssn->validVarExists($varname);
-        }
-        else
-        {
+        } else {
             throw new NoAuthSessionException('No Authenticated SPPSession Exists!');
         }
     }
@@ -138,13 +127,10 @@ class SPPAuth extends \SPP\SPPObject{
      */
     public static function getVar($varname)
     {
-        if(self::authSessionExists())
-        {
-            $ssn= \SPP\SPPSession::getSessionVar('__sppauth__');;
+        if (self::authSessionExists()) {
+            $ssn = \SPP\SPPSession::getSessionVar('__sppauth__');
             return $ssn->getVar($varname);
-        }
-        else
-        {
+        } else {
             throw new NoAuthSessionException('No Authenticated SPPSession Exists!');
         }
     }
@@ -157,17 +143,14 @@ class SPPAuth extends \SPP\SPPObject{
      * @return bool
      */
     public static function hasRight($rt)
-	{
-        if(self::authSessionExists())
-        {
-            $ssn= \SPP\SPPSession::getSessionVar('__sppauth__');;
+    {
+        if (self::authSessionExists()) {
+            $ssn = \SPP\SPPSession::getSessionVar('__sppauth__');
             return $ssn->hasRight($rt);
-        }
-        else
-        {
+        } else {
             throw new NoAuthSessionException('No Authenticated SPPSession Exists!');
         }
-	}
+    }
 
 }
 ?>

@@ -1,0 +1,26 @@
+validations:
+  - name: alpha
+    routine: isalpha
+    errorholder: nameerror
+  - name: alphanumeric
+    routine: isalphanumeric
+    errorholder: nameerror
+  - name: numeric
+    routine: isnumeric
+    errorholder: nameerror
+  - name: maxlength
+    routine: ismaxlength
+    errorholder: nameerror
+  - name: minlength
+    routine: isminlength
+    errorholder: nameerror
+  - name: required
+    routine: isrequired
+    errorholder: nameerror
+    errorevent: onblur, onfocus
+  - name: uppercase
+    routine: isuppercase
+    errorholder: nameerror
+  - name: lowercase
+    routine: islowercase
+    errorholder: nameerror

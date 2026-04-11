@@ -9,16 +9,16 @@ namespace SPPMod\SPPView;
  */
 // require_once 'class.sppvalidator.php';
 
-abstract class SPPMultipleValidator extends SPPValidator {
+abstract class SPP_Multiple_Validator extends ViewValidator {
     protected $elements=array();
 
-    public function __construct(array $elems)
+    public function __construct(array $elems, $errorholder = 'nameerror', $msg = 'Validation error', $jsfunc = 'undefined')
     {
-        parent::__construct();
+        parent::__construct(null, $errorholder, $msg, $jsfunc);
         $this->elements=$elems;
     }
 
-    public function getJsFunction()
+    public function getJsFunction(): string
     {
         $jsarr='[';
         foreach($this->elements as $elem)
@@ -30,7 +30,6 @@ abstract class SPPMultipleValidator extends SPPValidator {
             $jsarr.='\''.$elem->getAttribute('id').'\'';
         }
         $jsarr.=']';
-//        $fn=$this->jsfunc.'('.$this->errorholder.','.$this->msg.','.$this->tagid.')';
         $fn=$this->jsfunc.'(\''.$this->errorholder.'\',\''.$this->msg.'\','.$jsarr.')';
         return $fn;
     }

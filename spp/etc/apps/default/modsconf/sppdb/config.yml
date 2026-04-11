@@ -1,6 +1,9 @@
+# SPPDB Module Configuration
+# Restored from config.xml
+
 variables:
-  dbtype: mysql
-  dbuser: school
-  dbpasswd: hello123
-  dbhost: localhost
-  dbname: school
+    dbtype: mysql
+    dbuser: root
+    dbpasswd: hello123
+    dbhost: localhost
+    dbname: school

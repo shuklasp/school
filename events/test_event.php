@@ -9,25 +9,22 @@ class test_event extends \SPP\EventHandler{
         $this->addOverrideHandler('override_test1');
     }
 
-    public function after_test1()
+    public function after_test1(array &$params = [])
     {
-        $params=$this->getParams();
         print_r($params);
         echo 'after_test1';
     }
 
-    public function before_test1()
+    public function before_test1(array &$params = [])
     {
-        $params = $this->getParams();
         $params['var1'] = 'new_value1';
         $params['var2'] = 'new_value2';
-        $this->setParams($params);
         //print_r(\SPP\Registry::get('__events'));
         //print_r($params);
         echo 'before_test1';
     }
 
-    public function override_test1()
+    public function override_test1(array &$params = [])
     {
         echo 'override_test1';
     }

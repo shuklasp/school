@@ -1,56 +1,85 @@
 <?php
+
 namespace SPP;
-//require_once 'class.sppobject.php';
+
 /**
- * Class Stack
- * Handles stacks in system.
+ * class \SPP\Stack
  *
- * @author Satya Prakash Shukla
+ * Simple stack implementation for internal use.
+ * Compatible with old SPP builds, but fully PHP 8+ compliant.
+ *
+ * @author
+ *     Satya Prakash Shukla
+ * @version
+ *     2.1 compatible with legacy SPP 1.x
  */
-class Stack extends \SPP\SPPObject{
-    private $values;
-    private $curkey;
-    
-    public function  __construct() {
-        $this->curkey=-1;
+class Stack extends \SPP\SPPObject
+{
+    /** @var array<mixed> */
+    private array $stack = [];
+
+    /** @var int */
+    private int $top = -1;
+
+    /**
+     * Push an element to the stack.
+     *
+     * @param mixed $value
+     * @return void
+     */
+    public function push(mixed $value): void
+    {
+        $this->stack[++$this->top] = $value;
     }
 
-    public function push($val)
+    /**
+     * Pop and return the top element from the stack.
+     *
+     * @return mixed|false Returns false if stack is empty.
+     */
+    public function pop(): mixed
     {
-        $this->values[++$this->curkey]=$val;
-    }
-
-    public function pop()
-    {
-        if($this->curkey<0)
-        {
+        if ($this->top < 0) {
             return false;
         }
-        else
-        {
-            $val=$this->values[$this->curkey];
-            unset($this->values[$this->curkey]);
-            $this->curkey--;
-            return $val;
-        }
+
+        $value = $this->stack[$this->top];
+        unset($this->stack[$this->top--]);
+        return $value;
     }
 
-    public function getTop()
+    /**
+     * Peek at the top element without removing it.
+     *
+     * @return mixed|false
+     */
+    public function peek(): mixed
     {
-        if($this->curkey<0)
-        {
-            return false;
-        }
-        else
-        {
-            return $this->values[$this->curkey];
-        }
+        return $this->top >= 0 ? $this->stack[$this->top] : false;
     }
 
-    public function __toString()
+    /**
+     * Check if the stack is empty.
+     */
+    public function isEmpty(): bool
     {
-        $var=implode('|', $this->values);
-        return $var;
+        return $this->top < 0;
+    }
+
+    /**
+     * Get number of items in the stack.
+     */
+    public function size(): int
+    {
+        return $this->top + 1;
+    }
+
+    /**
+     * Reset stack contents.
+     */
+    public function clear(): void
+    {
+        $this->stack = [];
+        $this->top = -1;
     }
 }
-?>

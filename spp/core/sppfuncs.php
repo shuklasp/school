@@ -1,56 +1,31 @@
 <?php
 function tsToD($ts)
 {
-	$dt=getdate($ts);
-	return $dt['mday'].'/'.$dt['mon'].'/'.$dt['year'];
+    $dt = getdate($ts);
+    return $dt['mday'] . '/' . $dt['mon'] . '/' . $dt['year'];
 }
 
 function tsToHHMM($ts)
 {
-	return date('G:i',$ts);
+    return date('G:i', $ts);
 }
 
 
 function getVisitorIP()
 {
-    //GLOBALS OFF WORK ROUND
-    if (!ini_get('register_globals')) {
-        $reg_globals = array($_POST, $_GET, $_FILES, $_ENV, $_SERVER, $_COOKIE);
-        if (isset($_SESSION)) {
-            array_unshift($reg_globals, $_SESSION);
-        }
-        foreach ($reg_globals as $reg_global) {
-            extract($reg_global, EXTR_SKIP);
-        }
+    // Trust the socket connection implicitly to prevent IP-Spoofing via arbitrary HTTP headers.
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+
+    // Properly validate via PHP's native filtering pipeline
+    if (filter_var($ip, FILTER_VALIDATE_IP)) {
+        return $ip;
     }
 
-    //FIND THE VISITORS IP
-     if (getenv("HTTP_CLIENT_IP") && strcasecmp(getenv("HTTP_CLIENT_IP"), "unknown"))
-     {
-        $rip = getenv("HTTP_CLIENT_IP");
-     }
-     else if (getenv("HTTP_X_FORWARDED_FOR") && strcasecmp(getenv("HTTP_X_FORWARDED_FOR"), "unknown"))
-     {
-        $rip = getenv("HTTP_X_FORWARDED_FOR");
-     }
-     else if (getenv("REMOTE_ADDR") && strcasecmp(getenv("REMOTE_ADDR"), "unknown"))
-     {
-        $rip = getenv("REMOTE_ADDR");
-     }
-     else if (isset($_SERVER['REMOTE_ADDR']) && $_SERVER['REMOTE_ADDR'] && strcasecmp($_SERVER['REMOTE_ADDR'], "unknown"))
-     {
-        $rip = $_SERVER['REMOTE_ADDR'];
-     }
-     else
-     {
-        $rip = "unknown";
-     }
-
-//RETURN THE VISITORS IP
-    return $rip;
+    return 'unknown';
 }
 
-function datediff($interval, $datefrom, $dateto, $using_timestamps = false) {
+function datediff($interval, $datefrom, $dateto, $using_timestamps = false)
+{
     /*
     # $interval can be:
     # yyyy - Number of full years
@@ -70,14 +45,14 @@ function datediff($interval, $datefrom, $dateto, $using_timestamps = false) {
         $dateto = strtotime($dateto, 0);
     }
     $difference = $dateto - $datefrom; // Difference in seconds
-    switch($interval) {
+    switch ($interval) {
         case 'yyyy': // Number of full years
 
             $years_difference = floor($difference / 31536000);
-            if (mktime(date("H", $datefrom), date("i", $datefrom), date("s", $datefrom), date("n", $datefrom), date("j", $datefrom), date("Y", $datefrom)+$years_difference) > $dateto) {
+            if (mktime(date("H", $datefrom), date("i", $datefrom), date("s", $datefrom), date("n", $datefrom), date("j", $datefrom), date("Y", $datefrom) + $years_difference) > $dateto) {
                 $years_difference--;
             }
-            if (mktime(date("H", $dateto), date("i", $dateto), date("s", $dateto), date("n", $dateto), date("j", $dateto), date("Y", $dateto)-($years_difference+1)) > $datefrom) {
+            if (mktime(date("H", $dateto), date("i", $dateto), date("s", $dateto), date("n", $dateto), date("j", $dateto), date("Y", $dateto) - ($years_difference + 1)) > $datefrom) {
                 $years_difference++;
             }
             $datediff = $years_difference;
@@ -86,7 +61,7 @@ function datediff($interval, $datefrom, $dateto, $using_timestamps = false) {
         case "q": // Number of full quarters
 
             $quarters_difference = floor($difference / 8035200);
-            while (mktime(date("H", $datefrom), date("i", $datefrom), date("s", $datefrom), date("n", $datefrom)+($quarters_difference*3), date("j", $dateto), date("Y", $datefrom)) < $dateto) {
+            while (mktime(date("H", $datefrom), date("i", $datefrom), date("s", $datefrom), date("n", $datefrom) + ($quarters_difference * 3), date("j", $dateto), date("Y", $datefrom)) < $dateto) {
                 $months_difference++;
             }
             $quarters_difference--;
@@ -96,7 +71,7 @@ function datediff($interval, $datefrom, $dateto, $using_timestamps = false) {
         case "m": // Number of full months
 
             $months_difference = floor($difference / 2678400);
-            while (mktime(date("H", $datefrom), date("i", $datefrom), date("s", $datefrom), date("n", $datefrom)+($months_difference), date("j", $dateto), date("Y", $datefrom)) < $dateto) {
+            while (mktime(date("H", $datefrom), date("i", $datefrom), date("s", $datefrom), date("n", $datefrom) + ($months_difference), date("j", $dateto), date("Y", $datefrom)) < $dateto) {
                 $months_difference++;
             }
             $months_difference--;
@@ -154,87 +129,23 @@ function datediff($interval, $datefrom, $dateto, $using_timestamps = false) {
 
 }
 
-/*function showValidPayTypeDropDown($memid,$cname='paytype',$onchange='',$disabled=false)
-{
-    $mem=new Member($memid);
-    if($disabled==true)
-    {
-        $html='<select id="'.$cname.'" name="'.$cname.'" onchange="'.$onchange.'" disabled="true">';
-    }
-    else
-    {
-        $html='<select id="'.$cname.'" name="'.$cname.'" onchange="'.$onchange.'">';
-    }
-    $html.='<option value="0">Select</option>';
-    if($mem->get('PolicyPaymentEligible'))
-    {
-        $html.='<option value="1">Policy Fee</option>';
-    }
-    if($mem->get('MembershipPaymentEligible'))
-    {
-        $html.='<option value="2">Membership Fee</option>';
-    }
-    $html.='</select> ';
-    return $html;
-}*/
+
 
 function sql_date_shift($date, $shift)
 {
-    return date("Y-m-d H:i:s" , strtotime($shift, strtotime($date)));
+    $base = strtotime($date);
+    if ($base === false)
+        return null;
+    $shifted = strtotime($shift, $base);
+    return $shifted !== false ? date("Y-m-d H:i:s", $shifted) : null;
 }
 
 function date_shift($date, $shift)
 {
-    return date("Y-m-d" , strtotime($shift, strtotime($date)));
+    $base = strtotime($date);
+    if ($base === false)
+        return null;
+    $shifted = strtotime($shift, $base);
+    return $shifted !== false ? date("Y-m-d", $shifted) : null;
 }
 
-/*function exportChain($parid,$rowval,$colval)
-{
-    $db=new Database();
-    $sql='select memberid, mname from member_master where memberid<>\'1000M0000000000\' and introcode=?';
-    $result=$db->execute_query($sql, Array($parid));
-    $db=0;
-    if(sizeof($result)<=0)
-    {
-        return ++$rowval;
-    }
-    else
-    {
-        foreach($result as $res)
-        {
-            xlsWriteLabel($rowval++,$colval,$res['memberid'].'('.$res['mname'].')');
-            $rowval=exportChain($res['memberid'], $rowval, $colval+1);
-            //$rowval++;
-        }
-    }
-}*/
-
-/*function exportChain($parid,$col,$color)
-{
-    $db=new Database();
-    $sql='select memberid, mname from member_master where memberid<>\'1000M0000000000\' and introcode=?';
-    $result=$db->execute_query($sql, Array($parid));
-    $db=0;
-    if(sizeof($result)<=0)
-    {
-        return ++$col;
-    }
-    else
-    {
-        foreach($result as $res)
-        {
-            echo '<tr bgcolor="'.$color.'">';
-            for($i=0;$i<$col;$i++)
-            {
-                echo '<td></td>';
-            }
-            echo '<td bgcolor="'.($col/2==ceil($col/2)?'red':'green').'">'.$res['memberid'].'('.$res['mname'].')'.'</td>';
-            echo '</tr>';
-            //xlsWriteLabel($rowval++,$colval,$res['memberid'].'('.$res['mname'].')');
-            exportChain($res['memberid'], $col+1, $color);
-            //$rowval++;
-        }
-    }
-}*/
-
-?>

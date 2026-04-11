@@ -1,0 +1,24 @@
+# Application Service Registry
+# Maps service names to scripts in /src/serv/ and constrains allowed HTTP methods.
+# ONLY services listed here can be called from the client.
+#
+# Fields:
+#   name    - Service identifier used in client calls: SPPRouter.callService('name', data)
+#   script  - Script filename inside spa_service_dir (no path traversal allowed)
+#   method  - Allowed HTTP method: GET or POST
+
+services:
+  - name: auth_login
+    script: auth_login.php
+    method: POST
+
+# Example entries (uncomment and edit):
+#    - name: save_form
+#      script: save_form.php
+#      method: POST
+#    - name: get_student
+#      script: get_student.php
+#      method: GET
+#    - name: logout
+#      script: logout.php
+#      method: POST

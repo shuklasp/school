@@ -1,0 +1,15 @@
+/* SPP Validation Styles */
+.errorclass {
+    border: 1px solid #ff4d4d !important;
+    background-color: #fff2f2 !important;
+    box-shadow: 0 0 4px rgba(255, 77, 77, 0.4);
+}
+
+.errormsg {
+    color: #ff4d4d;
+    font-size: 0.85em;
+    margin-top: 4px;
+    display: block;
+    font-weight: 500;
+    min-height: 1.2em;
+}

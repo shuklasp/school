@@ -82,4 +82,21 @@
             <dependency>sppsession</dependency>
         </dependencies>
     </module>
+    <module>
+        <modname>sppajax</modname>
+        <modpath>spp/sppajax</modpath>
+        <status>active</status>
+        <dependencies>
+            <dependency>sppcore</dependency>
+            <dependency>sppview</dependency>
+        </dependencies>
+    </module>
+    <module>
+        <modname>sppgroup</modname>
+        <modpath>spp/sppgroup</modpath>
+        <status>active</status>
+        <dependencies>
+            <dependency>sppentity</dependency>
+        </dependencies>
+    </module>
 </modules>

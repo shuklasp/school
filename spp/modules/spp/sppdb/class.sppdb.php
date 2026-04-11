@@ -11,62 +11,104 @@ require_once 'class.sppobject.php';*/
  * @author Satya Prakash Shukla
  */
 
- class SPP_DB extends \PDO {
-    private $con,$numrows,$numcols,$insertedid;
+class SPP_DB
+{
+    /** @var array<\PDO> Shared connections pool indexed by connection hash */
+    private static array $sharedConnections = [];
+    
+    /** @var \PDO The internal PDO instance */
+    private \PDO $pdo;
+    
+    private $numrows;
+
     /**
      * public function __construct
      * 
-     * Creates a database connection
+     * Creates or reuses a database connection.
      *
-     * @param string $dburl
-     * @param string $dbuser
-     * @param string $dbpasswd
-     * @param [type] $options
+     * @param string|null $dburl
+     * @param string|null $dbuser
+     * @param string|null $dbpasswd
+     * @param array|null $options
+     * @param bool $shared Whether to use the shared connection pool (default: true)
      * @return void
      */
-    public function __construct($dburl=null,$dbuser=null,$dbpasswd=null,$options=null) {
-        $dbmapper=array();
+    public function __construct($dburl = null, $dbuser = null, $dbpasswd = null, $options = null, bool $shared = true)
+    {
         try {
-            $url=null;
-            $vars=array($url,$dbuser,$dbpasswd,$options);
-            //\SPP\SPPEvent::startEvent('sppdb_connection', $vars);
-            //\SPP\SPPEvent::fireEvent('sppdb_connection', $vars);
-            //echo 'Creating connection'.$url.$dbuser;
-            if($dburl==null)
-            {
-                $dbtype=\SPP\Module::getConfig('dbtype','sppdb');
-                $dbhost=\SPP\Module::getConfig('dbhost','sppdb');
-                $dbname=\SPP\Module::getConfig('dbname','sppdb');
-                $url = $dbtype.':host='.$dbhost.';dbname='.$dbname;
+            $url = null;
+            if ($dburl == null) {
+                $dbtype = \SPP\Module::getConfig('dbtype', 'sppdb');
+                $dbhost = \SPP\Module::getConfig('dbhost', 'sppdb');
+                $dbname = \SPP\Module::getConfig('dbname', 'sppdb');
+                $url = $dbtype . ':host=' . $dbhost . ';dbname=' . $dbname;
+            } else {
+                $url = $dburl;
             }
-            else
-            {
-                $url=$dburl;
-            }
-            $dbuser=($dbuser==null)?\SPP\Module::getConfig('dbuser','sppdb'):$dbuser;
-            $dbpasswd=($dbpasswd==null)?\SPP\Module::getConfig('dbpasswd','sppdb'):$dbpasswd;
-            if($dbuser==null&&$dbpasswd==null&&$options==null)
-            {
-                parent::__construct($url);
-            }
-            elseif($options==null)
-            {
-                parent::__construct($url,$dbuser,$dbpasswd);
-            }
-            else
-            {
-                parent::__construct($url,$dbuser,$dbpasswd,$options);
-            }
-            //$this->con = new PDO($url,$dbuser,$dbpasswd);
-            //\SPP\SPPEvent::endEvent('sppdb_connection', $vars);
-        }
-        catch(\PDOException $e)
-        {
-            print "Error!: " . $e->getMessage() . "<br/>";
-            die();
+            $dbuser = ($dbuser == null) ? \SPP\Module::getConfig('dbuser', 'sppdb') : $dbuser;
+            $dbpasswd = ($dbpasswd == null) ? \SPP\Module::getConfig('dbpasswd', 'sppdb') : $dbpasswd;
 
+            // Generate a unique key for the connection parameters if sharing is enabled
+            $key = null;
+            if ($shared) {
+                $key = md5(serialize([$url, $dbuser, $dbpasswd, $options]));
+                if (isset(self::$sharedConnections[$key])) {
+                    $this->pdo = self::$sharedConnections[$key];
+                    return;
+                }
+            }
+
+            // Create new connection if not found in pool or sharing is disabled
+            if ($dbuser == null && $dbpasswd == null && $options == null) {
+                $this->pdo = new \PDO($url);
+            } elseif ($options == null) {
+                $this->pdo = new \PDO($url, $dbuser, $dbpasswd);
+            } else {
+                $this->pdo = new \PDO($url, $dbuser, $dbpasswd, $options);
+            }
+
+            // Ensure PDO throws exceptions for consistency with existing error handling
+            $this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+
+            if ($shared && $key) {
+                self::$sharedConnections[$key] = $this->pdo;
+            }
+        } catch (\PDOException $e) {
+            error_log("Database Connection Error: " . $e->getMessage());
+            throw new \SPP\SPPException("Database Connection Error: " . $e->getMessage(), (int) $e->getCode(), $e);
         }
-        //\SPP\SPPEvent::endEvent('spp_db_connection');
+    }
+
+    /**
+     * Proxy unknown method calls to the underlying PDO instance.
+     */
+    public function __call($name, $arguments)
+    {
+        return call_user_func_array([$this->pdo, $name], $arguments);
+    }
+
+    /**
+     * Proxy prepare to internal PDO
+     */
+    public function prepare(string $query, array $options = [])
+    {
+        return $this->pdo->prepare($query, $options);
+    }
+
+    /**
+     * Proxy query to internal PDO
+     */
+    public function query(string $query, ?int $fetchMode = null, ...$fetchModeArgs)
+    {
+        return $this->pdo->query($query, $fetchMode, ...$fetchModeArgs);
+    }
+
+    /**
+     * Proxy exec to internal PDO
+     */
+    public function exec(string $statement)
+    {
+        return $this->pdo->exec($statement);
     }
 
     /**
@@ -78,14 +120,14 @@ require_once 'class.sppobject.php';*/
      * @param mixed $tabname
      * @return string
      */
-    private function build_query($sql,$tabname){
-        $result=$sql;
-        if(is_array($tabname)){
-            foreach($tabname as $tab){
-                $result=\SPP\SPPUtils::str_replace_count('%tab%', $tab, $result, 1);
+    private function build_query($sql, $tabname)
+    {
+        $result = $sql;
+        if (is_array($tabname)) {
+            foreach ($tabname as $tab) {
+                $result = \SPP\SPPUtils::str_replace_count('%tab%', $tab, $result, 1);
             }
-        }
-        else{
+        } else {
             $result = \SPP\SPPUtils::str_replace_count('%tab%', $tabname, $result, 1);
         }
         return $result;
@@ -100,12 +142,13 @@ require_once 'class.sppobject.php';*/
      * @param array $values
      * @return array
      */
-    public function exec_squery($sql, $tabname, $values=array()){
-        $qry=$this->build_query($sql, $tabname);
+    public function exec_squery($sql, $tabname, $values = array())
+    {
+        $qry = $this->build_query($sql, $tabname);
         return $this->execute_query($qry, $values);
     }
 
-    
+
     /**
      * public function execute_query
      * 
@@ -115,25 +158,22 @@ require_once 'class.sppobject.php';*/
      * @param array $values
      * @return array
      */
-    public function execute_query($sql, $values=array()) {
+    public function execute_query($sql, $values = array())
+    {
         $result = array();
         try {
-            if(sizeof($values) > 0) {
-                $stmt=$this->prepare($sql);
+            if (sizeof($values) > 0) {
+                $stmt = $this->prepare($sql);
                 $stmt->execute($values);
-                $result=$stmt->fetchAll(\PDO::FETCH_ASSOC);
+                $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            } else {
+                $stmt = $this->query($sql);
+                $result = $stmt ? $stmt->fetchAll(\PDO::FETCH_ASSOC) : array();
             }
-            else {
-                foreach($this->query($sql) as $row) {
-                    $result[]=$row;
-                }
-            }
-            $this->numrows=count($result);
-        }
-        catch(\PDOException $e)
-        {
-            print "Error!: " . $e->getMessage() . "<br/>";
-            die();
+            $this->numrows = count($result);
+        } catch (\PDOException $e) {
+            error_log("Database Error: " . $e->getMessage());
+            throw new \SPP\SPPException("Database Error: " . $e->getMessage(), (int) $e->getCode(), $e);
         }
         return $result;
     }
@@ -147,12 +187,13 @@ require_once 'class.sppobject.php';*/
      * @param array $cols
      * @return void
      */
-    public function add_columns($table ,$cols=array())
-    { 
-        foreach($cols as $col=>$type)
-        {
-            if(!$this->columnExists($table,$col)) {
-                $sql = 'alter table %tab% add '.$col.' '.$type;
+    public function add_columns($table, $cols = array())
+    {
+        foreach ($cols as $col => $type) {
+            $col = preg_replace('/[^a-zA-Z0-9_]/', '', $col);
+            $type = preg_replace('/[^a-zA-Z0-9_\(\)\s,]/', '', $type);
+            if (!$this->columnExists($table, $col)) {
+                $sql = 'alter table %tab% add ' . $col . ' ' . $type;
                 $this->exec_squery($sql, $table);
             }
         }
@@ -169,7 +210,8 @@ require_once 'class.sppobject.php';*/
     public function remove_columns($table, $cols = array())
     {
         foreach ($cols as $col) {
-            if (!$this->columnExists($table, $col)) {
+            $col = preg_replace('/[^a-zA-Z0-9_]/', '', $col);
+            if ($this->columnExists($table, $col)) {
                 $sql = 'alter table %tab% drop column ' . $col;
                 $this->exec_squery($sql, $table);
             }
@@ -179,24 +221,19 @@ require_once 'class.sppobject.php';*/
     /**
      * Check if a table exists in the current database.
      *
-     * @param PDO $pdo PDO instance connected to a database.
      * @param string $table Table to search for.
      * @return bool TRUE if table exists, FALSE if no table found.
      */
     public function tableExists($table)
     {
-
-        // Try a select statement against the table
-        // Run it in try-catch in case PDO is in ERRMODE_EXCEPTION.
         try {
-            $result = $this->query("SELECT 1 FROM {$table} LIMIT 1");
+            // Using parameterized string filtering since SHOW TABLES LIKE does not support standard binding
+            $safe_table = preg_replace('/[^a-zA-Z0-9_]/', '', $table);
+            $result = $this->query("SHOW TABLES LIKE '{$safe_table}'");
+            return $result && $result->rowCount() > 0;
         } catch (\Exception $e) {
-            // We got an exception (table not found)
             return FALSE;
         }
-
-        // Result is either boolean FALSE (no table found) or PDOStatement Object (table found)
-        return $result !== FALSE;
     }
 
     /**
@@ -210,17 +247,14 @@ require_once 'class.sppobject.php';*/
      */
     public function columnExists($table, $col)
     {
-        $query = "select ".$col." from {$table} limit 1";
-        if($this->tableExists($table))
-        {
-            try{
-            $result = $this->query($query);
-            }
-            catch (\Exception $e) {
+        $query = "select " . $col . " from {$table} limit 1";
+        if ($this->tableExists($table)) {
+            try {
+                $result = $this->query($query);
+            } catch (\Exception $e) {
                 return false;
             }
-        }
-        else{
+        } else {
             throw new \SPP\SPPException('Table not found');
         }
         return true;
@@ -235,26 +269,25 @@ require_once 'class.sppobject.php';*/
      * @param array $columns
      * @param array $values
      *  */
-    public function insertValues(string $table, array $columns, array $values=array())
+    public function insertValues(string $table, array $columns, array $values = array())
     {
-        $cols=array();
-        if(sizeof($values) == 0) {
-            foreach($columns as $key=>$value) {
-                $cols[]=$key;
-                $values[]=$value;
+        $cols = array();
+        if (sizeof($values) == 0) {
+            foreach ($columns as $key => $value) {
+                $cols[] = $key;
+                $values[] = $value;
+            }
+        } else {
+            $cols = $columns;
+        }
+        $sql = ') values (';
+        for ($i = 0; $i < sizeof($values); $i++) {
+            $sql .= '?';
+            if ($i < sizeof($values) - 1) {
+                $sql .= ',';
             }
         }
-        else {
-            $cols=$columns;
-        }
-        $sql= ') values (';
-        for($i=0;$i<sizeof($values);$i++) {
-            $sql.='?';
-            if($i<sizeof($values)-1) {
-                $sql.=',';
-            }
-        }
-        $sql.=')';
+        $sql .= ')';
         $sql = 'insert into %tab% (' . implode(', ', $cols) . $sql;
         $this->exec_squery($sql, $table, $values);
     }
@@ -269,63 +302,35 @@ require_once 'class.sppobject.php';*/
      * @param string $where
      * @param array $values
      */
-    public function updateValues(string $table, array $columns, string $where, array $values=array())
+    public function updateValues(string $table, array $columns, string $where, array $values = array())
     {
-        $sql= 'update %tab% set ';
-        $cols=array();
-
-        if (sizeof($values) == 0) {
-            $i=0;
-            foreach ($columns as $key => $value) {
-                if ($i !== 0) {
-                    $sql .=',';
-                }
-                $sql .= $key . '=? ';
-                $values[]= $value;
-                $i++;
+        $sql = 'update %tab% set ';
+        
+        // Properly identify if the provided columns array is an associative mapping
+        $is_assoc = array_keys($columns) !== range(0, count($columns) - 1);
+        
+        if ($is_assoc) {
+            $bind_values = [];
+            $sql_cols = [];
+            foreach ($columns as $col => $val) {
+                $sql_cols[] = $col . '=?';
+                $bind_values[] = $val;
             }
+            $sql .= implode(', ', $sql_cols);
+            // Append explicit WHERE bindings provided in the $values array fallback reliably
+            $values = array_merge($bind_values, $values);
         } else {
-            $i = 0;
+            // Standard indexed fallback expecting all bindings neatly passed inside $values
+            $sql_cols = [];
             foreach ($columns as $col) {
-                if ($i !== 0) {
-                    $sql .= ',';
-                }
-                $sql .= $col . '=? ';
-                $i++;
+                $sql_cols[] = $col . '=?';
             }
+            $sql .= implode(', ', $sql_cols);
         }
-        $sql.=' where '.$where;
+        
+        $sql .= ' where ' . $where;
         $this->exec_squery($sql, $table, $values);
     }
-
-
-
-
-    /*public function execute_manip_query($sql, $table, $idfield, array $values=array()) {
-        $result = array();
-        try {
-            $this->con->beginTransaction();
-            if(sizeof($values) > 0) {
-                $stmt=$this->con->prepare($sql);
-                $stmt->execute($values);
-            //				print_r($stmt);
-            //				print_r($values);
-            }
-            else {
-                $this->con->query($sql);
-            }
-            $this->numrows=count($result);
-            $st=$this->con->prepare('select max('.$idfield.') lst from '.$table);
-            $this->insertedid=$this->con->lastInsertId();
-            $this->con->commit();
-        }
-        catch(PDOException $e)
-        {
-            print "Error!: " . $e->getMessage() . "<br/>";
-            die();
-        }
-        return $result;
-    }*/
 }
 //\SPP\Module::endWS();
 ?>

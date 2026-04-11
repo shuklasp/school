@@ -1,0 +1,12 @@
+table: org_units
+id_field: id
+sequence: org_unit_seq
+attributes:
+  name: varchar(255)
+  unit_type: varchar(100) # Global, Region, District, School
+relations:
+  -
+    parent_entity: OrganizationUnit
+    parent_entity_field: id
+    child_entity_field: parent_unit_id
+    relation_type: Hierarchy

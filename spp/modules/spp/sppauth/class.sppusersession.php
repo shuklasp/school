@@ -1,178 +1,177 @@
 <?php
-
 namespace SPPMod\SPPAuth;
+
 use SPP\Exceptions\UserBannedException;
 use SPP\Exceptions\UserAuthenticationException;
 use SPP\Exceptions\InvalidUserSessionException;
 use SPP\Exceptions\UnknownPropertyException;
+use SPPMod\SPPDB\SPP_DB;
+use SPP\SPPBase;
+use SPP\SPPSession;
+use SPPMod\SPPConfig\SPPConfig;
 
-require_once('class.sppuser.php');
-/*require_once 'class.sppsession.php';
-require_once 'class.sppbase.php';*/
 /**
- * class SPPUserSession
- * Manages and stores all the session variable for an authenticated user.
- *
- * @author Satya Parakash Shukla
+ * Class SPPUserSession
+ * 
+ * Manages the lifecycle of an authenticated user session. Stores session metadata
+ * in the database to enable cross-request persistence and security checks.
+ * 
+ * Extends \SPP\SPPSession to provide user-specific context.
+ * 
+ * @package SPPMod\SPPAuth
  */
-class SPPUserSession extends \SPP\SPPSession
+class SPPUserSession extends SPPSession
 {
-    private $user, $sessid;
+    /** @var SPPUser $user The authenticated user entity */
+    private $user;
+    
+    /** @var string $sessid The physical PHP session identifier */
+    private $sessid;
 
     /**
-     * Construct
+     * SPPUserSession Constructor.
+     * 
+     * Attempts to authenticate a user by username and password. On success, 
+     * it initializes the session record in the database and rotates the session ID.
      *
-     * @param string $unm
-     * @param string $pswd
+     * @param string $unm The username.
+     * @param string $pswd The plaintext password.
+     * @throws UserBannedException if the user account is not active.
+     * @throws UserAuthenticationException if credentials fail validation.
      */
-	public function __construct($unm,$pswd)
-	{
-        $db=new \SPPMod\SPPDB\SPP_DB();
-        $this->user=new \SPPMod\SPPAuth\SPPUser($unm);
-        if($this->user->verifyPassword($pswd))
-        {
-            $db=new \SPPMod\SPPDB\SPP_DB();
-            $sql='select * from '.\SPP\SPPBase::sppTable('users').' where uname=?';
-            $values=array($unm);
-            $result=array();
-            $result=$db->execute_query($sql, $values);
-            if($result[0]['enabled']!='Y')
-            {
-                throw new UserBannedException('User '.$unm.' is banned from login.');
-            }
-            //session_regenerate_id();
-            $this->sessid=session_id();
-            $sql='select now() nowtime from '.\SPP\SPPBase::sppTable('users');
-            $result=$db->execute_query($sql);
-            $nowtime=$result[0]['nowtime'];
-            //echo $nowtime;
-            //$nowtime=date('Y-m-d G:i:s',time());
-            $sql='insert into '.\SPP\SPPBase::sppTable('loginrec').'(sessid,uid,logintime,ipaddr,lastaccess) values(?,?,?,?,?)';
-            $values=array($this->sessid,$this->user->get('UserId'),$nowtime,getVisitorIP(),$nowtime);
-            $db->execute_query($sql, $values);
-            //echo $sql;
-            //print_r($values);
-            //echo 'Value inserted';
-        }
-        else
-        {
-            throw new UserAuthenticationException('User name and passwords do not match for user '.$unm);
-        }
-	}
-
-
-
-    /**
-     * function isValid()
-     * Determines whether session is valid or not.
-     *
-     * @return bool
-     */
-    public function isValid($consider_timeout=true)
+    public function __construct($unm, $pswd)
     {
-        $db=new \SPPMod\SPPDB\SPP_DB();
-        $sql='select time_to_sec(timediff(now(),lastaccess)) elapsed_time, lastaccess, now() currtime from '.\SPP\SPPBase::sppTable('loginrec').' where sessid=?';
-        $values=array($this->sessid);
-        $result=$db->execute_query($sql, $values);
-        //echo $result[0]['lastaccess'].'::::::'.$result[0]['currtime'];
-        if(sizeof($result)>0)
-        {
-            //echo 'fetched result';
-            if($consider_timeout)
-            {
-                //echo 'considering timeout';
-                if($result[0]['elapsed_time']<=(\SPPMod\SPPConfig\SPPConfig::get('user_session_timeout')*60))
-                {
-                    $sql='update loginrec set lastaccess=? where sessid=?';
-                    $values=array($result[0]['currtime'],$this->sessid);
-                    $db->execute_query($sql, $values);
-                    return true;
-                }
-                else
-                {
-                    $this->kill();
-                    return false;
-                }
+        $db = new SPP_DB();
+        $this->user = new SPPUser($unm);
+        
+        if ($this->user->verifyPassword($pswd)) {
+            if (!$this->user->isEnabled()) {
+                throw new UserBannedException("User '{$unm}' is restricted from accessing the system.");
             }
-            else
-            {
-                //echo 'not considering timeout';
-                    $sql='update loginrec set lastaccess=? where sessid=?';
-                    $values=array($result[0]['currtime'],$this->sessid);
-                    $db->execute_query($sql, $values);
-                    return true;
+            
+            // Session Fixation Defense: Rotate the ID on privilege change
+            if (session_status() === PHP_SESSION_ACTIVE) {
+                session_regenerate_id(true);
             }
+            $this->sessid = session_id();
+            
+            // Record login event
+            $sql = 'INSERT INTO ' . SPPBase::sppTable('loginrec') . 
+                   '(sessid, uid, logintime, ipaddr, lastaccess) VALUES (?, ?, NOW(), ?, NOW())';
+            $values = array(
+                $this->sessid, 
+                $this->user->get('UserId'), 
+                $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1'
+            );
+            $db->execute_query($sql, $values);
+
+            // Optional: Periodic cleanup of expired sessions
+            if (mt_rand(1, 100) <= 5) {
+                $this->purgeExpiredSessions();
+            }
+        } else {
+            throw new UserAuthenticationException("Authentication failed for user '{$unm}'.");
         }
-        else
-        {
-            return false;
-        }
-        //return true;
     }
 
     /**
-     * function kill()
-     * Kills the user session
+     * Purge sessions that have exceeded the defined timeout period.
+     */
+    private function purgeExpiredSessions()
+    {
+        $db = new SPP_DB();
+        try {
+            $timeout = (int)SPPConfig::get('spp.user_session_timeout', 'yaml') * 60; // seconds
+        } catch (\Exception $e) {
+            $timeout = 60 * 60;
+        }
+        $sql = 'DELETE FROM ' . SPPBase::sppTable('loginrec') . 
+               ' WHERE TIMESTAMPDIFF(SECOND, lastaccess, NOW()) > ?';
+        $db->execute_query($sql, array($timeout));
+    }
+
+    /**
+     * Validate the current session status.
+     * 
+     * Checks if the session still exists in the database and has not timed out.
+     * Refreshes the 'lastaccess' timestamp on success.
+     *
+     * @param bool $consider_timeout Whether to enforce inactivity timeouts.
+     * @return bool True if the session is alive and valid.
+     */
+    public function isValid($consider_timeout = true)
+    {
+        $db = new SPP_DB();
+        $sql = 'SELECT TIMESTAMPDIFF(SECOND, lastaccess, NOW()) as elapsed_time, NOW() as curr_time 
+                FROM ' . SPPBase::sppTable('loginrec') . ' WHERE sessid=?';
+        $result = $db->execute_query($sql, array($this->sessid));
+        
+        if (count($result) > 0) {
+            $elapsed = (int)$result[0]['elapsed_time'];
+            
+            try {
+                $timeout = (int)SPPConfig::get('spp.user_session_timeout', 'yaml') * 60;
+            } catch (\Exception $e) {
+                $timeout = 60 * 60; // Default: 60 minutes
+            }
+            
+            if ($consider_timeout && $elapsed > $timeout) {
+                $this->kill();
+                return false;
+            }
+            
+            // Heartbeat: update activity time
+            $sql = 'UPDATE ' . SPPBase::sppTable('loginrec') . ' SET lastaccess=? WHERE sessid=?';
+            $db->execute_query($sql, array($result[0]['curr_time'], $this->sessid));
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Destroy the session both in the database and the PHP session superglobal.
      */
     public function kill()
     {
-        $db=new \SPPMod\SPPDB\SPP_DB();
-        $sql='delete from '.\SPP\SPPBase::sppTable('loginrec').' where sessid=?';
-        $values=array($this->sessid);
-        $result=$db->execute_query($sql, $values);
+        $db = new SPP_DB();
+        $sql = 'DELETE FROM ' . SPPBase::sppTable('loginrec') . ' WHERE sessid=?';
+        $db->execute_query($sql, array($this->sessid));
+
+        if (isset($_SESSION['__sppauth__'])) {
+            unset($_SESSION['__sppauth__']);
+        }
     }
 
     /**
-     * function hasRight()
-     * Checks whether session has particular right or not.
-     * 
-     * @param <type> $rt
-     * @return <type>
+     * Check if the authenticated user has a specific management right.
+     *
+     * @param string $rt The right identifier.
+     * @return bool
+     * @throws InvalidUserSessionException if called on an expired session.
      */
     public function hasRight($rt)
-	{
-        if($this->isValid())
-        {
+    {
+        if ($this->isValid()) {
             return $this->user->hasRight($rt);
         }
-        else
-        {
-            throw new InvalidUserSessionException('Invalid user session');
-        }
-	}
+        throw new InvalidUserSessionException("Action attempted on an invalid user session.");
+    }
 
     /**
-     * function get()
-     * Gets properties of session.
-     * Valid properties are:
-     *          UserName
-     *          UserId
+     * Retrieve user metadata associated with the session.
      * 
-     * @param string $propname
+     * @param string $propname Supports 'UserName' and 'UserId'.
      * @return mixed
+     * @throws InvalidUserSessionException if the session is no longer valid.
+     * @throws UnknownPropertyException if an invalid key is requested.
      */
     public function get($propname)
     {
-        if($this->isValid())
-        {
-            switch($propname)
-            {
-                case 'UserName':
-                    return $this->user->get('UserName');
-                    break;
-                case 'UserId':
-                    return $this->user->get('UserId');
-                    break;
-                default:
-                    throw new UnknownPropertyException('Unknown property '.$propname.' accessed in UserSession.');
-                    break;
-            }
+        if ($this->isValid()) {
+            return $this->user->get($propname);
         }
-        else
-        {
-            throw new InvalidUserSessionException('Invalid user session');
-        }
+        throw new InvalidUserSessionException("Data access attempted on an invalid user session.");
     }
-
 }
+
 ?>

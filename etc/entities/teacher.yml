@@ -1,0 +1,7 @@
+table: teachers
+id_field: id
+sequence: teachers_seq
+login_enabled: false
+attributes:
+  name: varchar(200)
+  created_at: timestamp

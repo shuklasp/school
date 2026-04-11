@@ -35,16 +35,18 @@ class SPPUtils extends \SPP\SPPObject {
         return $protocol."://".$_SERVER['SERVER_NAME'].$port.$_SERVER['REQUEST_URI'];
     }
 
-    public static function xml2phpArray($xml,$arr=array()) {
+    public static function xml2phpArray($xml, $arr = array()) {
+        foreach ($xml->attributes() as $attr => $val) {
+            $arr[$attr] = (string)$val;
+        }
+        
         $iter = 0;
-        foreach($xml->children() as $b) {
+        foreach ($xml->children() as $b) {
             $a = $b->getName();
-            if(!$b->children()) {
-                $arr[$a] = trim($b[0]);
-            }
-            else {
-                $arr[$a][$iter] = array();
-                $arr[$a][$iter] = self::xml2phpArray($b,$arr[$a][$iter]);
+            if (!$b->children()) {
+                $arr[$a] = trim((string)$b[0]);
+            } else {
+                $arr[$a][$iter] = self::xml2phpArray($b, array());
             }
             $iter++;
         }

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>03. Modular Architecture | SPP Framework Tutorial</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <aside class="sidebar">
+        <h2>SPP Framework</h2>
+        <nav>
+            <ul>
+                <li><a href="index.html">Welcome</a></li>
+                <li><a href="01_introduction.html">01. Introduction</a></li>
+                <li><a href="02_getting_started.html">02. Getting Started</a></li>
+                <li><a href="03_modules.html" class="active">03. Modules Architecture</a></li>
+                <li><a href="04_data_models.html">04. Data Modeling</a></li>
+                <li><a href="05_routing_and_views.html">05. Routing & Views</a></li>
+                <li><a href="06_forms_and_validation.html">06. Forms & Validation</a></li>
+                <li><a href="07_events.html">07. The Event System</a></li>
+                <li><a href="08_advanced.html">08. Advanced Features</a></li>
+                <li><a href="09_project_twitter.html">09. Project: SPP-Twitter</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <article class="content-container">
+            <h1>03. Modular Architecture</h1>
+            <p>SPP is built around a robust, flexible modular architecture. Every major feature in the framework — from database handling (<span class="accent">sppdb</span>) to authentication (<span class="accent">sppauth</span>) — is a self-contained **Module**.</p>
+            
+            <hr>
+
+            <h2>What is a Module?</h2>
+            <p>A module is a directory containing at least:</p>
+            <ol>
+                <li><strong>module.xml</strong>: Defines metadata, class autoloading, and configuration.</li>
+                <li><strong>class.modname.php</strong>: The main module class.</li>
+            </ol>
+            <p>Modules are typically located in the <span class="accent">spp/modules/spp/</span> directory.</p>
+
+            <hr>
+
+            <h2>Module Configuration (module.xml)</h2>
+            <p>Each module's behavior is controlled by its <span class="accent">module.xml</span> file. Here is a typical structure:</p>
+            <pre><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;module&gt;
+    &lt;name&gt;sppdb&lt;/name&gt;
+    &lt;author&gt;Satya Prakash Shukla&lt;/author&gt;
+    &lt;version&gt;1.2&lt;/version&gt;
+    &lt;description&gt;Core Database Handler Module&lt;/description&gt;
+    &lt;namespace&gt;SPPMod\SPPDB&lt;/namespace&gt;
+    &lt;autoload&gt;
+        &lt;class name="SPP_DB" file="class.sppdb.php"/&gt;
+        &lt;class name="SPP_Sequence" file="class.sppsequence.php"/&gt;
+    &lt;/autoload&gt;
+&lt;/module&gt;</code></pre>
+
+            <hr>
+
+            <h2>The Module Class</h2>
+            <p>A standard SPP module class should extend <span class="accent">\SPP\SPPObject</span>.</p>
+            <pre><code>namespace SPPMod\MyModule;
+
+class MyModule extends \SPP\SPPObject
+{
+    public function __construct() {
+        parent::__construct();
+    }
+}</code></pre>
+
+            <hr>
+
+            <h2>Consuming Modules</h2>
+            <p>The framework automatically registers and loads enabled modules during bootstrapping. You can interact with modules using the <span class="accent">\SPP\Module</span> core class.</p>
+
+            <h3>1. Check if a Module is Enabled</h3>
+            <pre><code>if (\SPP\Module::isEnabled('sppauth')) {
+    // Perform authentication logic
+}</code></pre>
+
+            <h3>2. Get Module Configuration</h3>
+            <p>Modules can have custom settings defined in YAML or XML. Use <span class="accent">getConfig</span> to retrieve them:</p>
+            <pre><code>$dbhost = \SPP\Module::getConfig('dbhost', 'sppdb');</code></pre>
+
+            <hr>
+
+            <h2>Creating a Custom Module</h2>
+            <p>While you can manually create the directory and files, it's recommended to use the CLI:</p>
+            <pre><code>php spp/spp.php make:module reports</code></pre>
+            <p>This scaffolds a basic <span class="accent">reports</span> module, including its namespace and base class.</p>
+
+            <footer class="footer-nav">
+                <a href="02_getting_started.html" class="nav-button">
+                    <span class="label">Previous</span>
+                    <span class="title">&larr; 02. Getting Started</span>
+                </a>
+                <a href="04_data_models.html" class="nav-button">
+                    <span class="label">Next</span>
+                    <span class="title">04. Data Modeling &rarr;</span>
+                </a>
+            </footer>
+        </article>
+    </main>
+</body>
+</html>

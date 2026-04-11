@@ -7,8 +7,8 @@ namespace SPP;
  * @author Satya Prakash Shukla
  */
 class SPPException extends \Exception {
-    public function __construct($message,$code=1000) {
-        parent::__construct($message,$code);
+    public function __construct($message, $code = 1000, ?\Throwable $previous = null) {
+        parent::__construct($message, $code, $previous);
     }
 
     public static function createException($eName)

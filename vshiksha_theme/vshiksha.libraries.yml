@@ -1,0 +1,15 @@
+global-styling:
+  version: 1.x
+  css:
+    theme:
+      css/variables.css: {}
+      css/style.css: {}
+
+global-scripts:
+  version: 1.x
+  js:
+    js/vshiksha.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/once

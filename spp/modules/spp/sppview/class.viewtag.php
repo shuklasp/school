@@ -6,7 +6,7 @@ namespace SPPMod\SPPView;
  * file class.sppviewtag.php
  * Defines the \SPPMod\SPPView\ViewTag class.
  */
- 
+
 /**
  * class \SPPMod\SPPView\ViewTag
  *
@@ -14,17 +14,35 @@ namespace SPPMod\SPPView;
  *
  * @author Satya Prakash Shukla
  */
-class ViewTag extends \SPP\SPPObject {
+class ViewTag extends \SPP\SPPObject
+{
     protected $tagname;
-    protected $isemptyflag=false;
+    protected $isemptyflag = false;
     protected $matter_text;
-    protected $children=array();
-    protected $attributes=array();
-    protected $attrlist=array('name', 'id');
-    protected $stdattrlist=array('name', 'id','title','dir','lang','xml:lang','accesskey','tabindex','coords','href','hreflang','rel','target','shape','type','usemap');
-    protected $emptytags=array('area','base','br','col','command','embed','hr','img','input','keygen','link','meta','param','source','track','wbr');
-    protected $eventattrlist=array('onclick', 'ondblclick', 'onmousedown', 'onmousemove', 'onmouseover', 'onmouseout', 'onmouseup', 'onkeydown', 'onkeypress', 'onkeyup', 'onfocus', 
-        'onblur', 'oncontextmenu', 'onresize', 'onscroll', 'onselect', 'onunload');
+    protected $children = array();
+    protected $attributes = array();
+    protected $attrlist = array('name', 'id');
+    protected $stdattrlist = array('name', 'id', 'title', 'dir', 'lang', 'xml:lang', 'accesskey', 'tabindex', 'coords', 'href', 'hreflang', 'rel', 'target', 'shape', 'type', 'usemap');
+    protected $emptytags = array('area', 'base', 'br', 'col', 'command', 'embed', 'hr', 'img', 'input', 'keygen', 'link', 'meta', 'param', 'source', 'track', 'wbr');
+    protected $eventattrlist = array(
+        'onclick',
+        'ondblclick',
+        'onmousedown',
+        'onmousemove',
+        'onmouseover',
+        'onmouseout',
+        'onmouseup',
+        'onkeydown',
+        'onkeypress',
+        'onkeyup',
+        'onfocus',
+        'onblur',
+        'oncontextmenu',
+        'onresize',
+        'onscroll',
+        'onselect',
+        'onunload'
+    );
     //public static mixed $started_tags='';
 
     /**
@@ -32,24 +50,21 @@ class ViewTag extends \SPP\SPPObject {
      *
      * @param string $ename
      */
-    public function  __construct($tagname, $ename, $add_default_class=true) {
-        if(in_array($tagname,$this->emptytags))
-        {
-            $this->isemptyflag=true;
+    public function __construct($tagname, $ename, $add_default_class = true)
+    {
+        if (in_array($tagname, $this->emptytags)) {
+            $this->isemptyflag = true;
+        } else {
+            $this->isemptyflag = false;
         }
-        else
-        {
-            $this->isemptyflag=false;
-        }
-        $this->tagname=$tagname;
-        $this->attributes['name']=$ename;
-        $this->attributes['id']=$ename;
+        $this->tagname = $tagname;
+        $this->attributes['name'] = $ename;
+        $this->attributes['id'] = $ename;
         //$this->stdattrlist=array('class','id','style','title','dir','lang','xml:lang','accesskey','tabindex');
         //$this->eventattrlist=array('onkeydown','onkeypress','onkeyup','onclick','ondblclick','onmousedown','onmousemove','onmouseover','onmouseout','onmouseup');
-        $this->matter_text='';
-        if($add_default_class)
-        {
-            $this->addClass('spp-element spp-'.$ename);
+        $this->matter_text = '';
+        if ($add_default_class) {
+            $this->addClass('spp-element spp-' . $ename);
         }
     }
 
@@ -59,12 +74,13 @@ class ViewTag extends \SPP\SPPObject {
      *
      * @param string $classname
      */
-    
-    public function addClass(string $classname){
-        if(isset($this->attributes['class'])){
-            $this->attributes['class'].=' '.$classname;
-        }else{
-            $this->attributes['class']=$classname;
+
+    public function addClass(string $classname)
+    {
+        if (isset($this->attributes['class'])) {
+            $this->attributes['class'] .= ' ' . $classname;
+        } else {
+            $this->attributes['class'] = $classname;
         }
     }
 
@@ -74,14 +90,15 @@ class ViewTag extends \SPP\SPPObject {
      *
      * @param \SPPMod\SPPView\ViewTag $tag
      */
-    public function wrapTag(\SPPMod\SPPView\ViewTag $tag){
-        if(!isset($this->children[$tag->id]))
-        {
-            $this->children[$tag->id]=$tag;
-        }
-        else
-        {
-            throw new \SPP\SPPException('Cannot have multiple elements with same id: '.$tag->id);
+    public function wrapTag(\SPPMod\SPPView\ViewTag $tag)
+    {
+        $tagId = $tag->id;
+        if (empty($tagId)) {
+            $this->children[] = $tag;
+        } elseif (!isset($this->children[$tagId])) {
+            $this->children[$tagId] = $tag;
+        } else {
+            throw new \SPP\SPPException('Cannot have multiple elements with same id: ' . $tagId);
         }
     }
 
@@ -94,8 +111,9 @@ class ViewTag extends \SPP\SPPObject {
      *
      * @return \SPPMod\SPPView\ViewTag
      */
-    public function wrapIntoTag(string $tagname, string $ename){
-        $tag= new \SPPMod\SPPView\ViewTag($tagname, $ename);
+    public function wrapIntoTag(string $tagname, string $ename)
+    {
+        $tag = new \SPPMod\SPPView\ViewTag($tagname, $ename);
         $tag->wrapTag($this);
         return $tag;
     }
@@ -108,25 +126,23 @@ class ViewTag extends \SPP\SPPObject {
      *
      * @return boolean
      */
-    public function addAttribute(string $aname, string $avalue=''){
-        if(!in_array($aname, $this->attrlist))
-        {
+    public function addAttribute(string $aname, string $avalue = '')
+    {
+        if (!in_array($aname, $this->attrlist)) {
             $this->attrlist[] = $aname;
-            if(!$avalue=='')
-            {
+            if (!$avalue == '') {
                 $this->attributes[$aname] = $avalue;
             }
             return true;
-        }
-        else
-        {
+        } else {
             return false;
         }
     }
 
 
-    public function setMatterText(string $text){
-        $this->matter_text=$text;
+    public function setMatterText(string $text)
+    {
+        $this->matter_text = $text;
     }
 
     /**
@@ -134,18 +150,18 @@ class ViewTag extends \SPP\SPPObject {
      * Removes a class from the element.
      *
      * @param string $classname
-    */
-    
-    public function removeClass(string $classname){
-        if(isset($this->attributes['class']))
-        {
-            $this->attributes['class']=str_replace($classname,'',$this->attributes['class']);
+     */
+
+    public function removeClass(string $classname)
+    {
+        if (isset($this->attributes['class'])) {
+            $classes = explode(' ', $this->attributes['class']);
+            $classes = array_diff($classes, [$classname]);
+            $this->attributes['class'] = trim(implode(' ', $classes));
             return true;
-        }
-        else
-        {
+        } else {
             return false;
-        }   
+        }
     }
 
     /**
@@ -156,14 +172,12 @@ class ViewTag extends \SPP\SPPObject {
      *
      * @return boolean
      */
-    public function removeAttribute($aname){
-        if(isset($this->attributes[$aname]))
-        {
+    public function removeAttribute($aname)
+    {
+        if (isset($this->attributes[$aname])) {
             unset($this->attributes[$aname]);
             return true;
-        }
-        else
-        {
+        } else {
             return false;
         }
     }
@@ -175,8 +189,9 @@ class ViewTag extends \SPP\SPPObject {
      * @param string $aname
      * @param string $avalue
      */
-    public function setAttribute($aname,$avalue){
-        $this->attributes[$aname]=$avalue;
+    public function setAttribute($aname, $avalue)
+    {
+        $this->attributes[$aname] = $avalue;
     }
 
     /**
@@ -202,20 +217,16 @@ class ViewTag extends \SPP\SPPObject {
      *
      * @param array $attributes
      */
-    public function setAttributes(array $attributes){
-        if(empty($attributes))
-        {
+    public function setAttributes(array $attributes)
+    {
+        if (empty($attributes)) {
             return;
         }
-        foreach($attributes as $key=>$val)
-        {
-            if(isset($this->attributes[$key]))
-            {
-                $this->attributes[$key]=$val;
-            }
-            else
-            {
-                $this->attributes[$key]=$val;
+        foreach ($attributes as $key => $val) {
+            if (isset($this->attributes[$key])) {
+                $this->attributes[$key] = $val;
+            } else {
+                $this->attributes[$key] = $val;
             }
         }
     }
@@ -232,7 +243,7 @@ class ViewTag extends \SPP\SPPObject {
     {
         return $this->tagname;
     }
-    
+
     /**
      * function getHTML()
      * Gets the HTML representation of the element.
@@ -241,27 +252,21 @@ class ViewTag extends \SPP\SPPObject {
      */
     public function getHTML()
     {
-        $pstr='<'.$this->tagname;
-        foreach($this->attributes as $key=>$val)
-        {
-            $pstr.=' '.$key.'="'.$val.'"';
+        $pstr = '<' . $this->tagname;
+        foreach ($this->attributes as $key => $val) {
+            $pstr .= ' ' . htmlspecialchars((string) $key, ENT_QUOTES, 'UTF-8') . '="' . htmlspecialchars((string) $val, ENT_QUOTES, 'UTF-8') . '"';
         }
-        if($this->isemptyflag)
-        {
-            $pstr.=' />';
-        }
-        else
-        {
-            $pstr.='>';
-            if(isset($this->matter_text))
-            {
-                $pstr.=$this->matter_text;
+        if ($this->isemptyflag) {
+            $pstr .= ' />';
+        } else {
+            $pstr .= '>';
+            if (isset($this->matter_text)) {
+                $pstr .= $this->matter_text;
             }
-            if(isset($this->children))
-            {
-                $pstr.=$this->getChildren();
+            if (isset($this->children)) {
+                $pstr .= $this->getChildren();
             }
-            $pstr.='</'.$this->tagname.'>';
+            $pstr .= '</' . $this->tagname . '>';
         }
         return $pstr;
     }
@@ -270,7 +275,8 @@ class ViewTag extends \SPP\SPPObject {
      * function show()
      * Shows the element.
      */
-    public function show(){
+    public function show()
+    {
         echo $this->getHTML();
     }
 
@@ -285,43 +291,39 @@ class ViewTag extends \SPP\SPPObject {
                 $pstr.=$this->getChildren();
             }
      */
-    public function getStart(){
-        $pstr= '<'.$this->tagname;
-        foreach($this->attributes as $key=>$val)
-        {
-            $pstr.=' '.$key.'="'.$val.'"';
+    public function getStart()
+    {
+        $pstr = '<' . $this->tagname;
+        foreach ($this->attributes as $key => $val) {
+            $pstr .= ' ' . htmlspecialchars((string) $key, ENT_QUOTES, 'UTF-8') . '="' . htmlspecialchars((string) $val, ENT_QUOTES, 'UTF-8') . '"';
         }
-        if($this->isemptyflag)
-        {
-            return $pstr.' />';
-        }
-        else
-        {
-            return $pstr.'>';
+        if ($this->isemptyflag) {
+            return $pstr . ' />';
+        } else {
+            return $pstr . '>';
         }
     }
 
-    
+
     /***
      * function getEnd()
      * Gets the end tag of the element.
      *
      * @return string
      */
-    public function getEnd(){
-        if($this->isemptyflag)
-        {
+    public function getEnd()
+    {
+        if ($this->isemptyflag) {
             return '';
-        }
-        else
-        {
-            return '</'.$this->tagname.'>';
+        } else {
+            return '</' . $this->tagname . '>';
         }
     }
 
 
-    
-    public function getAttributes(){
+
+    public function getAttributes()
+    {
         return $this->attributes;
     }
 
@@ -331,8 +333,9 @@ class ViewTag extends \SPP\SPPObject {
      *
      * @param \SPPMod\SPPView\ViewTag $child
      */
-    public function addChild(\SPPMod\SPPView\ViewTag $child){
-        $this->children[]=$child;
+    public function addChild(\SPPMod\SPPView\ViewTag $child)
+    {
+        $this->children[] = $child;
     }
 
     /**
@@ -341,7 +344,8 @@ class ViewTag extends \SPP\SPPObject {
      *
      * @return array
      */
-    public function getChildrenArray(){
+    public function getChildrenArray()
+    {
         return $this->children;
     }
 
@@ -351,11 +355,11 @@ class ViewTag extends \SPP\SPPObject {
      *
      * @return string
      */
-    public function getChildren(){
-        $pstr='';
-        foreach($this->children as $child)
-        {
-            $pstr.=$child->getHTML();
+    public function getChildren()
+    {
+        $pstr = '';
+        foreach ($this->children as $child) {
+            $pstr .= $child->getHTML();
         }
         return $pstr;
     }
@@ -365,20 +369,17 @@ class ViewTag extends \SPP\SPPObject {
      * function __set($propname,$propvalue)
      * Sets the value of a property.
      *
-     * @param string $propname
-     * @param mixed $propvalue
+     * @param string $attrname
+     * @param mixed $attrvalue
      */
 
-    public function __set($propname,$propvalue)
+    public function __set($attrname, $attrvalue)
     {
-        if(in_array($propname, $this->attrlist))
-        {
-            $this->attributes[$propname]=$propvalue;
+        if (in_array($attrname, $this->attrlist)) {
+            $this->attributes[$attrname] = $attrvalue;
             return true;
-        }
-        else
-        {
-            return false;
+        } else {
+            throw new \SPP\SPPException('Cannot set undefined attribute dynamically: ' . $attrname);
         }
     }
 
@@ -397,17 +398,14 @@ class ViewTag extends \SPP\SPPObject {
      * function __get($propname)
      * Gets the value of a property.
      *
-     * @param string $propname
+     * @param string $attrname
      * @return mixed
      */
-    public function __get($propname)
+    public function __get($attrname)
     {
-        if(isset($this->attributes[$propname]))
-        {
-            return $this->attributes[$propname];
-        }
-        else
-        {
+        if (isset($this->attributes[$attrname])) {
+            return $this->attributes[$attrname];
+        } else {
             return null;
         }
     }
@@ -421,8 +419,7 @@ class ViewTag extends \SPP\SPPObject {
      */
     public function __unset($propname)
     {
-        if(isset($this->attributes[$propname]))
-        {
+        if (isset($this->attributes[$propname])) {
             unset($this->attributes[$propname]);
         }
     }
@@ -445,7 +442,8 @@ class ViewTag extends \SPP\SPPObject {
      * Renders the element.
      */
 
-    public function render(){
+    public function render()
+    {
         echo $this->getHTML();
     }
 
@@ -454,44 +452,46 @@ class ViewTag extends \SPP\SPPObject {
      * function show()
      * Shows the element.
      */
-/*     public function show()
-    {
-        if(self::$started_tags=='')
+    /*     public function show()
         {
-            self::$started_tags=new \SPP\Stack();
+            if(self::$started_tags=='')
+            {
+                self::$started_tags=new \SPP\Stack();
+            }
+            $pstr='<'.$this->tagname;
+            foreach($this->attributes as $key=>$val)
+            {
+                $pstr.=' '.$key.'="'.$val.'"';
+            }
+            if($this->isemptyflag)
+            {
+                $pstr.=' />';
+            }
+            else
+            {
+                $pstr.='>';
+                self::$started_tags->push($this->tagname);
+            }
+            echo $pstr;
         }
-        $pstr='<'.$this->tagname;
-        foreach($this->attributes as $key=>$val)
-        {
-            $pstr.=' '.$key.'="'.$val.'"';
-        }
-        if($this->isemptyflag)
-        {
-            $pstr.=' />';
-        }
-        else
-        {
-            $pstr.='>';
-            self::$started_tags->push($this->tagname);
-        }
-        echo $pstr;
-    }
- */
+     */
 
-    public function renderAttributes(){
-        $pstr='';
+    public function renderAttributes()
+    {
+        $pstr = '';
         foreach ($this->attributes as $key => $val) {
-            $pstr .= ' ' . $key . '="' . $val . '"';
+            $pstr .= ' ' . htmlspecialchars((string) $key, ENT_QUOTES, 'UTF-8') . '="' . htmlspecialchars((string) $val, ENT_QUOTES, 'UTF-8') . '"';
         }
         return $pstr;
     }
 
-/*     public function removeAttribute($aname){
-        unset($this->attributes[$aname]);
-    }
- */
-    public function setMatter($matter){
-        $this->matter_text=$matter;
+    /*     public function removeAttribute($aname){
+            unset($this->attributes[$aname]);
+        }
+     */
+    public function setMatter($matter)
+    {
+        $this->matter_text = $matter;
     }
 
 
@@ -501,14 +501,12 @@ class ViewTag extends \SPP\SPPObject {
      *
      * @param string $matter
      */
-    public function appendMatter($matter){
-        if($this->matter_text=='')
-        {
-            $this->matter_text=$matter;
-        }
-        else
-        {
-            $this->matter_text.=$matter;
+    public function appendMatter($matter)
+    {
+        if ($this->matter_text == '') {
+            $this->matter_text = $matter;
+        } else {
+            $this->matter_text .= $matter;
         }
     }
 
@@ -519,7 +517,8 @@ class ViewTag extends \SPP\SPPObject {
      *
      * @return string
      */
-    public function getMatter(){
+    public function getMatter()
+    {
         return $this->matter_text;
     }
 
@@ -527,20 +526,20 @@ class ViewTag extends \SPP\SPPObject {
      * function clearMatter()
      * Clears the matter of the element.
      */
-    public function clearMatter(){
-        $this->matter_text='';
+    public function clearMatter()
+    {
+        $this->matter_text = '';
 
     }
 
-    
+
     /**
      * function showMatter()
      * Shows the matter of the element.
      */
-   public function showMatter()
+    public function showMatter()
     {
-        if($this->matter_text!='')
-        {
+        if ($this->matter_text != '') {
             echo $this->matter_text;
         }
     }
@@ -554,10 +553,10 @@ class ViewTag extends \SPP\SPPObject {
 
     public function writeToArray(array $arr)
     {
-        $arr['tagname']=$this->tagname;
-        $arr['attributes']=$this->attributes;
-        $arr['children']=$this->children;
-        $arr['matter']= $this->matter_text;
+        $arr['tagname'] = $this->tagname;
+        $arr['attributes'] = $this->attributes;
+        $arr['children'] = $this->children;
+        $arr['matter'] = $this->matter_text;
         return $arr;
     }
 
@@ -568,11 +567,12 @@ class ViewTag extends \SPP\SPPObject {
      *
      * @return string
      */
-    public function setTagname($tagname){
-        return $this->tagname=$tagname;
+    public function setTagname($tagname)
+    {
+        return $this->tagname = $tagname;
     }
 
-    
+
     /**
      * function readFromArray()
      * Reads the attributes of the element from an array.
@@ -581,15 +581,11 @@ class ViewTag extends \SPP\SPPObject {
      */
     public function readFromArray(array $arr)
     {
-        if(array_key_exists('attributes',$arr))
-        {
-            foreach($arr['attributes'] as $attributes)
-            {
-                if(array_key_exists('attribute', $attributes))
-                {
-                    foreach($attributes['attribute'] as $attribute)
-                    {
-                        $this->setAttribute($attribute['name'],$attribute['value']);
+        if (array_key_exists('attributes', $arr)) {
+            foreach ($arr['attributes'] as $attributes) {
+                if (array_key_exists('attribute', $attributes)) {
+                    foreach ($attributes['attribute'] as $attribute) {
+                        $this->setAttribute($attribute['name'], $attribute['value']);
                     }
                 }
             }
@@ -602,7 +598,7 @@ class ViewTag extends \SPP\SPPObject {
      */
     public function setNotEmpty()
     {
-        $this->isemptyflag=false;
+        $this->isemptyflag = false;
     }
 
     /**
@@ -611,7 +607,7 @@ class ViewTag extends \SPP\SPPObject {
      */
     public function setEmpty()
     {
-        $this->isemptyflag=true;
+        $this->isemptyflag = true;
     }
 
     /**
@@ -625,7 +621,7 @@ class ViewTag extends \SPP\SPPObject {
         return $this->isemptyflag;
     }
 
- 
+
     /**
      * function getAttribute()
      * Gets the value an attribute of the element.
@@ -635,12 +631,9 @@ class ViewTag extends \SPP\SPPObject {
      */
     public function getAttribute($aname)
     {
-        if(isset($this->attributes[$aname]))
-        {
+        if (isset($this->attributes[$aname])) {
             return $this->attributes[$aname];
-        }
-        else
-        {
+        } else {
             return null;
         }
     }

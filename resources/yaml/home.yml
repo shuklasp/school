@@ -1,0 +1,23 @@
+input:
+  - name: name
+    type: text
+    validations:
+      - name: required
+        routine: isrequired
+        errorholder: nameerror
+        errorevent: onblur, onfocus
+      - name: uppercase
+        routine: isuppercase
+        errorholder: nameerror
+      - name: lowercase
+        routine: islowercase
+        errorholder: nameerror
+  - name: email
+    type: email
+    validations:
+      - name: required
+        routine: isrequired
+        errorholder: emailerror
+      - name: email
+        routine: isemail
+        errorholder: emailerror

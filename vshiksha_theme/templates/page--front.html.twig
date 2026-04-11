@@ -1,0 +1,139 @@
+{#
+/**
+ * @file
+ * Implementation for the front page layout matching the exact vshiksha.com build.
+ */
+#}
+<div class="layout-container">
+  <header class="site-header" role="banner">
+    <div class="container header-inner">
+      <div class="site-logo">
+        <a href="{{ front_page }}" title="{{ 'Home'|t }}" rel="home" class="site-name">
+          {{ site_name|default('Virtual Shiksha') }}
+        </a>
+      </div>
+      
+      {% if page.primary_menu %}
+        <nav class="main-navigation" role="navigation">
+          {{ page.primary_menu }}
+        </nav>
+      {% endif %}
+    </div>
+  </header>
+
+  <main role="main">
+    <div class="container">
+      
+      <div class="main-layout">
+        
+        {# Sidebar with Exact Structure (25% / 300px) #}
+        <aside class="region-sidebar" role="complementary">
+          {% if page.sidebar_first %}
+            {{ page.sidebar_first }}
+          {% else %}
+            <div class="sidebar-block">
+              <h2 class="block-title">Exam Corner</h2>
+              <div class="block-content">
+                <ul class="sidebar-menu">
+                  <li><a href="#">Practice Questions for Science...</a></li>
+                  <li><a href="#">UPSC CSAT Syllabus Details...</a></li>
+                  <li><a href="#">SSC CGL Notification 2026...</a></li>
+                  <li><a href="#">State Board Exam Results...</a></li>
+                  <li><a href="#">CTET Preparatory Modules...</a></li>
+                </ul>
+              </div>
+            </div>
+            
+            <div class="sidebar-block">
+              <h2 class="block-title">Trending Topics</h2>
+              <div class="block-content">
+                <ul class="sidebar-menu">
+                  <li><a href="/news">NEP Implementation News</a></li>
+                  <li><a href="/jobs">Latest Government Jobs</a></li>
+                  <li><a href="/higher-education">Top 10 Engineering Colleges</a></li>
+                </ul>
+              </div>
+            </div>
+          {% endif %}
+        </aside>
+
+        {# Main Content with Exact Node Teaser Structure #}
+        <div class="region-content">
+          {% if page.content|render|trim %}
+            {{ page.content }}
+          {% else %}
+            
+            <article class="node-teaser">
+              <h2 class="node-title"><a href="#">New Education Policy Implementation Guidelines Released</a></h2>
+              <div class="node-meta">
+                <span><i class="fa fa-calendar"></i> November 25, 2025</span>
+                <span><i class="fa fa-user"></i> Admin</span>
+              </div>
+              <div class="node-content">
+                <p>The Ministry has released an extensive framework to fast-track the implementation phases across tier 1 and tier 2 cities, heavily focusing on digital literacy, standardized coding curriculums in middle school, and holistic assessment methodologies.</p>
+              </div>
+              <a href="#" class="read-more-link">Read More</a>
+              <div style="clear: both;"></div>
+            </article>
+
+            <article class="node-teaser">
+              <h2 class="node-title"><a href="#">Central University Entrance Test Notifications Out</a></h2>
+              <div class="node-meta">
+                <span><i class="fa fa-calendar"></i> November 24, 2025</span>
+                <span><i class="fa fa-user"></i> Editorial Desk</span>
+              </div>
+              <div class="node-content">
+                <p>Forms for the upcoming academic session are now available online. Aspirants can fill out the common application form covering over 45 central universities. The article details exam patterns, subject choices, and important deadlines.</p>
+              </div>
+              <a href="#" class="read-more-link">Read More</a>
+              <div style="clear: both;"></div>
+            </article>
+
+            <article class="node-teaser">
+              <h2 class="node-title"><a href="#">Faculty Recruitment: State Universities Call for Assistant Professors</a></h2>
+              <div class="node-meta">
+                <span><i class="fa fa-calendar"></i> November 20, 2025</span>
+                <span><i class="fa fa-user"></i> Jobs Desk</span>
+              </div>
+              <div class="node-content">
+                <p>Multiple state commissions have announced vacancies for Assistant and Associate Professors across various disciplines including Arts, Science, and Commerce. Find out the eligibility criteria and the latest UGC regulations required.</p>
+              </div>
+              <a href="#" class="read-more-link">Read More</a>
+              <div style="clear: both;"></div>
+            </article>
+
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-section">
+          <h4>Virtual Shiksha</h4>
+          <p>Your portal to comprehensive education news, competitive job listings, and rich educational resources.</p>
+        </div>
+        <div class="footer-section">
+          <h4>Quick Links</h4>
+          <ul class="footer-menu">
+            <li><a href="/news">Education News</a></li>
+            <li><a href="/jobs">Jobs Search</a></li>
+            <li><a href="/higher-education">Higher Ed</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h4>Contact Info</h4>
+          <ul class="footer-menu">
+            <li>info@vshiksha.com</li>
+            <li>New Delhi, India</li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; {{ "now"|date("Y") }} Virtual Shiksha. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+</div>

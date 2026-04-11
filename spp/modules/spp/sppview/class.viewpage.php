@@ -2,8 +2,15 @@
 
 namespace SPPMod\SPPView;
 
+require_once __DIR__ . '/class.viewtag.php';
+require_once __DIR__ . '/class.sppformelement.php';
+require_once __DIR__ . '/class.viewform.php';
+require_once __DIR__ . '/formelements/classes.formelements.php';
+
+use SPP\SPPException;
 use SPP\SPPGlobal;
 use \SPPMod\SPPView\Pages;
+use \SPPMod\SPPView\SPPViewForm;
 
 \SPP\SPPEvent::registerEvent('event_spp_include_css_files');
 \SPP\SPPEvent::registerEvent('event_spp_include_js_files');
@@ -36,7 +43,7 @@ class ViewPage extends \SPP\SPPObject
     protected static $pagebody;
     protected static $pagemeta;
     protected static $xml;
-    protected static $validators=array();
+    protected static $validators = array();
 
     /**
      * Function setPageId($id)
@@ -50,56 +57,121 @@ class ViewPage extends \SPP\SPPObject
         self::$pageid = $id;
     }
 
-    public static function seekPage($page=null){
-        $q = $_GET['q'];
-        $page = array();
+    public static function showPage($page = null, array $options = [])
+    {
+        $q = isset($_GET['q']) ? $_GET['q'] : null;
+        $pageData = array();
+        $src = Pages::getDefault('pagedir');
+        
         if ($q == null) {
             $def = Pages::getDefault('home');
-            $page = Pages::getPage($def);
+            $pageData = Pages::getPage($def);
         } else {
-            $page = Pages::getPage();
+            $pageData = Pages::getPage();
         }
-        //var_dump($page);
-        //echo ' ';
-        if($page['special']==1)
-        {
-            include(SPP_APP_DIR . SPP_US . trim($page['url']));
-            die();
-        }
-        SPPGlobal::set('page', $page);
-        SPPGlobal::set('url', $page['url']);
-        SPPGlobal::set('params', $page['params']);
-        SPPGlobal::set('q', $q);
-        SPPGlobal::set('numparams', count($page['params']));
-        if (file_exists(SPP_APP_DIR . SPP_US . $page['url']))
-        {
-            include(SPP_APP_DIR.SPP_US.$page['url']);
-            echo '
-            <script type="text/javascript">
-            if(!window.jQuery){
-            var jq_script = document.createElement("script");
 
-                        jq_script.setAttribute("src","https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js");
+        // Configuration defaults
+        $doAugment = $options['augment'] ?? (bool)\SPP\Module::getConfig('auto_page_augmentation', 'sppview');
+        $doInjectJs = $options['inject_js'] ?? (bool)\SPP\Module::getConfig('auto_js_injection', 'sppview');
 
-                        jq_script.setAttribute("type","text/javascript");
-                        document.head.appendChild(jq_script);
-        }
-                window.onload=function(){
-                    allNodes=$("*");
-                    //alert(allNodes);
-        };
-            </script>
-            ';
+        if ($pageData['special'] == 1) {
+            include(SPP_APP_DIR . SPP_US . trim($pageData['url']));
             return true;
         }
-        else
-        {
-            return false;
+
+        SPPGlobal::set('page', $pageData);
+        SPPGlobal::set('url', $pageData['url']);
+        SPPGlobal::set('params', $pageData['params']);
+        SPPGlobal::set('q', $q);
+        SPPGlobal::set('numparams', count($pageData['params']));
+        
+        $filename = SPP_APP_DIR . $src . SPP_US . $pageData['url'];
+        
+        if (file_exists($filename) && is_file($filename)) {
+            
+            if ($doAugment) {
+                ob_start();
+            }
+
+            include($filename);
+
+            if ($doAugment) {
+                if ($doInjectJs) {
+                    self::addJsIncludeFile('res/spp/js/spp-router.js');
+                    self::addJsIncludeFile('res/spp/js/sppvalidations.js');
+                    self::addJsIncludeFile('res/spp/js/spp-autoinit.js');
+                }
+                
+                $html = ob_get_clean();
+                // Pass the accumulated script list to the augmentor for internal DOM injection
+                echo FormAugmentor::augment($html, self::$jsincludelist);
+                
+                self::includeJqueryDynamic();
+                // We've already handled the script list via the augmentor
+                self::includeCSSFilesDynamic();
+                return true;
+            }
+
+            self::includeJqueryDynamic();
+            
+            if ($doInjectJs) {
+                self::addJsIncludeFile('res/spp/js/spp-router.js');
+                self::addJsIncludeFile('res/spp/js/sppvalidations.js');
+                self::addJsIncludeFile('res/spp/js/spp-autoinit.js');
+            }
+
+            self::includeJSFilesDynamic();
+            self::includeCSSFilesDynamic();
+            return true;
+        } else {
+            $err = Pages::getDefault('error');
+            if ($err != null) {
+                $pageData = Pages::getPage($err);
+                if ($pageData != null) {
+                    include(SPP_APP_DIR . $src . SPP_US . trim($pageData['url']));
+                } else {
+                    throw new SPPException('Error page not found');
+                }
+            } else {
+                throw new SPPException('Page not found');
+            }
         }
     }
 
-    public static function render($page=null){
-        $url=($page!=null)?Pages::getPage($page)['url']:null;
+
+    public static function includeCSSFilesDynamic()
+    {
+        foreach (self::$cssincludelist as $cssfile) {
+            self::includeCSSDynamic($cssfile);
+        }
+    }
+
+    public static function includeJSDynamic($jsfile)
+    {
+        echo '<script type="text/javascript" src="' . htmlspecialchars((string) $jsfile, ENT_QUOTES, 'UTF-8') . '"></script>' . "\n";
+    }
+
+    public static function includeJSFilesDynamic()
+    {
+        foreach (self::$jsincludelist as $jsfile) {
+            self::includeJSDynamic($jsfile);
+        }
+    }
+
+    public static function includeCSSDynamic($cssfile)
+    {
+        echo '<link rel="stylesheet" type="text/css" href="' . htmlspecialchars((string) $cssfile, ENT_QUOTES, 'UTF-8') . '" />' . "\n";
+    }
+
+    public static function includeJqueryDynamic()
+    {
+        // Using document.write synchronously guarantees blocking execution before dependent scripts load
+        echo '<script type="text/javascript">if(typeof jQuery === "undefined") { document.write(\'<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"><\/script>\'); }</script>' . "\n";
+    }
+
+    public static function render($page = null)
+    {
+        $url = ($page != null) ? Pages::getPage($page)['url'] : null;
         $pageid = self::getPageId();
         echo self::getPageHeader();
         echo self::getPageHead();
@@ -143,7 +215,7 @@ class ViewPage extends \SPP\SPPObject
         return self::$validators;
     }
 
-    
+
     /***** Getters and Setters *****/
     /**
      * Function setPageTitle($title)
@@ -156,7 +228,7 @@ class ViewPage extends \SPP\SPPObject
     {
         self::$pagetitle = $title;
     }
-    
+
     /**
      * Function getPageTitle()
      * Gets the title of the page.
@@ -167,7 +239,7 @@ class ViewPage extends \SPP\SPPObject
     {
         return self::$pagetitle;
     }
-    
+
     /**
      * Function setPageDescription($desc)
      * Sets the description of the page.
@@ -179,7 +251,7 @@ class ViewPage extends \SPP\SPPObject
     {
         self::$pagedescription = $desc;
     }
-    
+
     /**
      * Function getPageDescription()
      * Gets the description of the page.
@@ -190,7 +262,7 @@ class ViewPage extends \SPP\SPPObject
     {
         return self::$pagedescription;
     }
-    
+
     /**
      * Function setPageKeywords($keywords)
      * Sets the keywords of the page.
@@ -202,7 +274,7 @@ class ViewPage extends \SPP\SPPObject
     {
         self::$pagekeywords = $keywords;
     }
-    
+
     /**
      * Function getPageKeywords()
      * Gets the keywords of the page.
@@ -213,7 +285,7 @@ class ViewPage extends \SPP\SPPObject
     {
         return self::$pagekeywords;
     }
-    
+
     /**
      * Function setPageAuthor($author)
      * Sets the author of the page.
@@ -225,7 +297,7 @@ class ViewPage extends \SPP\SPPObject
     {
         self::$pageauthor = $author;
     }
-    
+
     /**
      * Function getPageAuthor()
      * Gets the author of the page.
@@ -236,7 +308,7 @@ class ViewPage extends \SPP\SPPObject
     {
         return self::$pageauthor;
     }
-    
+
     /**
      * Function setPageContent($content)
      * Sets the content of the page.
@@ -248,7 +320,7 @@ class ViewPage extends \SPP\SPPObject
     {
         self::$pagecontent = $content;
     }
-    
+
     /**
      * Function getPageContent()
      * Gets the content of the page.
@@ -259,7 +331,7 @@ class ViewPage extends \SPP\SPPObject
     {
         return self::$pagecontent;
     }
-    
+
     /**
      * Function setPageHeader($header)
      * Sets the header of the page.
@@ -271,7 +343,7 @@ class ViewPage extends \SPP\SPPObject
     {
         self::$pageheader = $header;
     }
-    
+
     /**
      * Function getPageHeader()
      * Gets the header of the page.
@@ -282,7 +354,7 @@ class ViewPage extends \SPP\SPPObject
     {
         return self::$pageheader;
     }
-    
+
     /**
      * Function setPageFooter($footer)
      * Sets the footer of the page.
@@ -294,7 +366,7 @@ class ViewPage extends \SPP\SPPObject
     {
         self::$pagefooter = $footer;
     }
-    
+
     /**
      * Function getPageFooter()
      * Gets the footer of the page.
@@ -305,7 +377,7 @@ class ViewPage extends \SPP\SPPObject
     {
         return self::$pagefooter;
     }
-    
+
     /**
      * Function setPageHead($head)
      * Sets the head of the page.
@@ -317,7 +389,7 @@ class ViewPage extends \SPP\SPPObject
     {
         self::$pagehead = $head;
     }
-    
+
     /**
      * Function getPageHead()
      * Gets the head of the page.
@@ -328,7 +400,7 @@ class ViewPage extends \SPP\SPPObject
     {
         return self::$pagehead;
     }
-    
+
     /**
      * Function setPageBody($body)
      * Sets the body of the page.
@@ -340,7 +412,7 @@ class ViewPage extends \SPP\SPPObject
     {
         self::$pagebody = $body;
     }
-    
+
     /**
      * Function getPageBody()
      * Gets the body of the page.
@@ -351,7 +423,7 @@ class ViewPage extends \SPP\SPPObject
     {
         return self::$pagebody;
     }
-    
+
     /**
      * Function setPageMeta($meta)
      * Sets the meta of the page.
@@ -363,7 +435,7 @@ class ViewPage extends \SPP\SPPObject
     {
         self::$pagemeta = $meta;
     }
-    
+
     /**
      * Function getPageMeta()
      * Gets the meta of the page.
@@ -374,12 +446,12 @@ class ViewPage extends \SPP\SPPObject
     {
         return self::$pagemeta;
     }
-    
+
     public static function getXML()
     {
         return self::$xml;
     }
-    
+
     /**
      * Function setXML($xml)
      * Sets the XML of the page.
@@ -391,7 +463,7 @@ class ViewPage extends \SPP\SPPObject
     {
         self::$xml = $xml;
     }
-    
+
     /**
      * Function getJsIncludeList()
      * Gets the list of js includes.
@@ -402,7 +474,7 @@ class ViewPage extends \SPP\SPPObject
     {
         return self::$jsincludelist;
     }
-    
+
     /**
      * Function getCssIncludeList()
      * Gets the list of css includes.
@@ -413,7 +485,7 @@ class ViewPage extends \SPP\SPPObject
     {
         return self::$cssincludelist;
     }
-    
+
     /**
      * Function getFormsList()
      * Gets the list of forms.
@@ -424,7 +496,7 @@ class ViewPage extends \SPP\SPPObject
     {
         return self::$formslist;
     }
-    
+
     /**
      * Function addJsIncludeFile($fpath)
      * Adds a js include file to the list.
@@ -444,12 +516,12 @@ class ViewPage extends \SPP\SPPObject
     }
 
     /**
-    * Function addCssIncludeFile($fpath)
-    * Adds a css include file to the list.
-    *
-    * @param string $fpath
-    * @return bool
-    */
+     * Function addCssIncludeFile($fpath)
+     * Adds a css include file to the list.
+     *
+     * @param string $fpath
+     * @return bool
+     */
     public static function addCssIncludeFile($fpath)
     {
         foreach (self::$cssincludelist as $fl) {
@@ -461,15 +533,15 @@ class ViewPage extends \SPP\SPPObject
         return true;
     }
 
-    
+
     /**
      * Function addForm(SPPViewForm $form)
      * Adds a form to the list.
      *
-     * @param SPPViewForm $form
+     * @param ViewForm $form
      * @return bool
      */
-    public static function addForm(SPPViewForm $form)
+    public static function addForm(ViewForm $form)
     {
         foreach (self::$formslist as $fl) {
             if ($fl == $form) {
@@ -488,8 +560,12 @@ class ViewPage extends \SPP\SPPObject
     public static function processForms()
     {
         if (array_key_exists('__spp_form', $_POST)) {
-            $callfunc = $_POST['__spp_form'] . '_submitted';
-            self::$formslist[$_POST['__spp_form']]->doValidation();
+            $formId = $_POST['__spp_form'];
+            if (!array_key_exists($formId, self::$formslist)) {
+                throw new SPPException('Submitted form ID "' . htmlspecialchars($formId, ENT_QUOTES, 'UTF-8') . '" is not registered on this page.');
+            }
+            $callfunc = $formId . '_submitted';
+            self::$formslist[$formId]->doValidation();
             if (function_exists($callfunc)) {
                 $callfunc();
             }
@@ -568,55 +644,80 @@ class ViewPage extends \SPP\SPPObject
         }
     }
 
-    
+
     /**
      * Function processXMLForm()
      * Processes the XML file and creates the forms.
      *
      */
-public static function processXMLForm()
+            /**
+     * Helper to ensure an item is an array of items for iteration.
+     */
+    private static function wrapArray($item): array
+    {
+        if (!is_array($item)) return [];
+        if (isset($item[0])) return $item;
+        return [$item];
+    }
+
+    public static function processXMLForm()
     {
         $xml = self::$xml;
         $arr = \SPP\SPPUtils::xml2phpArray($xml);
-        //echo '<br><br>';
-        //print_r($arr['forms']);
-        if (array_key_exists('forms', $arr))
-            foreach ($arr['forms'] as $forms) {
-                if (array_key_exists('form', $forms))
-                    foreach ($forms['form'] as $form) {
-                        $frm = new SPPViewForm($form['name'], $form['action']);
-                        //echo 'form '.$form['name'].' created';
-                        //print_r($form);
-                        if (array_key_exists('controls', $form))
-                            foreach ($form['controls'] as $controls) {
-                                if (array_key_exists('control', $controls))
-                                    foreach ($controls['control'] as $control) {
-                                        $cnt = self::createElementFromArray($control);
-                                        $frm->addElement($cnt);
-                                    }
-                            }
-                        if (class_exists('SPP_Validator')) {
-                            if (array_key_exists('validations', $form))
-                                foreach ($form['validations'] as $validations) {
-                                    if (array_key_exists('validation', $validations))
-                                        foreach ($validations['validation'] as $validation) {
-                                            self::validationsFromArray($frm, $validation);
-                                        }
-                                }
+        
+        if (!isset($arr['form'])) {
+            return;
+        }
+
+        $forms = self::wrapArray($arr['form']);
+
+        foreach ($forms as $form) {
+            $fname = $form['name'] ?? 'unnamed_form';
+            $faction = $form['action'] ?? '';
+            $fid = $form['id'] ?? null;
+            $fmethod = $form['method'] ?? 'post';
+
+            $frm = new ViewForm($fname, $fmethod, $faction, $fid);
+            self::$formslist[$fname] = $frm;
+
+            if (isset($form['controls'])) {
+                $controlsBlocks = self::wrapArray($form['controls']);
+                foreach ($controlsBlocks as $cb) {
+                    if (isset($cb['control'])) {
+                        $controls = self::wrapArray($cb['control']);
+                        foreach ($controls as $control) {
+                            $cnt = self::createElementFromArray($control);
+                            $frm->addElement($cnt);
                         }
                     }
+                }
             }
+            
+            if (class_exists('\SPPMod\SPPView\ViewValidator')) {
+                if (isset($form['validations'])) {
+                    $validationsBlocks = self::wrapArray($form['validations']);
+                    foreach ($validationsBlocks as $vb) {
+                        if (isset($vb['validation'])) {
+                            $validations = self::wrapArray($vb['validation']);
+                            foreach ($validations as $validation) {
+                                self::validationsFromArray($frm, $validation);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
      * Function validationsFromArray($form, $arr)
      * Creates the validations from the array.
      *
-     * @param SPPViewForm $form
+     * @param ViewForm $form
      * @param array $arr
-    
+
      */
-    private static function validationsFromArray(SPPViewForm $form, array $arr)
+    private static function validationsFromArray(ViewForm $form, array $arr)
     {
         $val = '';
         //print_r($arr);
@@ -650,7 +751,7 @@ public static function processXMLForm()
     }
 
 
-    
+
     /**
      * Function createElementFromArray($arr)
      * Creates the element from the array.
@@ -658,10 +759,23 @@ public static function processXMLForm()
      * @param array $arr
      * @return \SPPMod\SPPView\ViewTag
      */
-    private static function createElementFromArray($arr) : ViewTag
+    private static function createElementFromArray($arr): ViewTag
     {
-        //print_r($arr);
-        $elem = new $arr['type']($arr['name']);
+        // Ensure form elements are loaded
+        require_once __DIR__ . '/class.sppformelement.php';
+        require_once __DIR__ . '/formelements/classes.formelements.php';
+
+        $type = $arr['type'];
+        // Prepend namespace if not absolute
+        if (strpos($type, '\\') !== 0 && strpos($type, 'SPPMod\\SPPView\\') !== 0) {
+            $type = __NAMESPACE__ . '\\' . $type;
+        }
+        
+        if (!class_exists($type)) {
+            throw new \SPP\SPPException("Form element class '{$type}' not found.");
+        }
+
+        $elem = new $type($arr['name']);
         $elem->readFromArray($arr);
         return $elem;
     }
@@ -686,11 +800,11 @@ public static function processXMLForm()
         return true;
     }
 
-/*     public static function event_dojo_included()
-    {
-        self::addJsIncludeFile(SPP_DOJO_URI . SPP_US . 'dojo/dojo.js');
-    }
- */
+    /*     public static function event_dojo_included()
+        {
+            self::addJsIncludeFile(SPP_DOJO_URI . SPP_US . 'dojo/dojo.js');
+        }
+     */
     /**
      * Function getElement($ename)
      * Returns the element from the list.
@@ -717,8 +831,11 @@ public static function processXMLForm()
      */
     public static function addClass($ename, $cname)
     {
+        if (!isset(self::$elementslist[$ename])) {
+            return;
+        }
         $elem = self::$elementslist[$ename];
-        $iclass = $elem->getAttribute('id');
+        $iclass = (string) $elem->getAttribute('class');
         if (trim($iclass) == '') {
             $elem->setAttribute('class', $cname);
         } else {
@@ -750,13 +867,13 @@ public static function processXMLForm()
         self::$jsincludelist = $jsi;
         echo '<!-- Including Javascript files for Satya Portal Pack -->';
         foreach (self::$jsincludelist as $fl) {
-            echo '<script src="' . $fl . '" type="text/JavaScript"></script>';
+            echo '<script src="' . htmlspecialchars((string) $fl, ENT_QUOTES, 'UTF-8') . '" type="text/JavaScript"></script>';
         }
         echo '<!-- Include ends -->';
         \SPP\SPPEvent::endEvent('event_spp_include_js_files');
     }
 
-    
+
     /**
      * Function includeCSSFiles()
      * Includes the CSS files.
@@ -768,9 +885,60 @@ public static function processXMLForm()
         \SPP\SPPEvent::startEvent('event_spp_include_css_files');
         echo '<!-- Including CSS files for Satya Portal Pack -->';
         foreach (self::$cssincludelist as $fl) {
-            echo '<link rel="stylesheet" href="' . $fl . '" />';
+            echo '<link rel="stylesheet" href="' . htmlspecialchars((string) $fl, ENT_QUOTES, 'UTF-8') . '" />';
         }
         echo '<!-- Include ends -->';
         \SPP\SPPEvent::endEvent('event_spp_include_css_files');
+    }
+
+    /**
+     * Function redirect($page, $params = [])
+     * Redirects to an internal SPP route or an external URL.
+     *
+     * @param string $page   The page name (from pages.yml) or a full destination URL.
+     * @param array  $params Optional associative array of query parameters.
+     */
+    public static function redirect($page, $params = [])
+    {
+        // 1. Determine if it's an internal route or external URL
+        $url = $page;
+        if (!preg_match('/^(http|https|ftp):\/\//i', (string)$page)) {
+            // Internal SPP routing uses the 'q' parameter via index.php
+            $url = '?q=' . urlencode((string)$page);
+        }
+
+        // 2. Append additional parameters if provided
+        if (!empty($params)) {
+            $query = http_build_query($params);
+            $url .= (strpos($url, '?') === false ? '?' : '&') . $query;
+        }
+
+        // 3. Perform the redirect
+        if (!headers_sent()) {
+            // Standard HTTP redirect
+            header('Location: ' . $url);
+            exit;
+        } else {
+            // Fallback for when output has already started (JavaScript/Meta Refresh)
+            echo '<script type="text/javascript">window.location.href="' . addslashes((string)$url) . '";</script>';
+            echo '<noscript><meta http-equiv="refresh" content="0;url=' . htmlspecialchars((string)$url) . '" /></noscript>';
+            exit;
+        }
+    }
+
+    /**
+     * Function getForm($id)
+     * Returns the form from the list.
+     *
+     * @param string $id
+     * @return mixed
+     */
+    public static function getForm($id)
+    {
+        if (array_key_exists($id, self::$formslist)) {
+            return self::$formslist[$id];
+        } else {
+            return null;
+        }
     }
 }

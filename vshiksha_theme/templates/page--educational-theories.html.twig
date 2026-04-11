@@ -1,0 +1,109 @@
+{#
+/**
+ * @file
+ * Theme implementation for the educational theories landing page.
+ */
+#}
+<div class="layout-container section-theories">
+  <header class="site-header" role="banner">
+    <div class="container header-inner">
+      <div class="site-logo">
+        <a href="{{ front_page }}" title="{{ 'Home'|t }}" rel="home" class="site-name">
+          {{ site_name|default('Virtual Shiksha') }}
+        </a>
+      </div>
+      
+      {% if page.primary_menu %}
+        <nav class="main-navigation" role="navigation">
+          {{ page.primary_menu }}
+        </nav>
+      {% endif %}
+    </div>
+  </header>
+
+  <main role="main">
+    <div class="container">
+      
+      <h1 class="page-title" style="margin-top: 30px; font-size: 38px; color: var(--color-primary); border-bottom: 2px solid var(--color-border); padding-bottom: 15px;">Educational Theories & Practices</h1>
+
+      <div class="main-layout">
+        
+        <aside class="region-sidebar" role="complementary">
+          {% if page.sidebar_first %}
+            {{ page.sidebar_first }}
+          {% else %}
+            <div class="sidebar-block">
+              <h2 class="block-title">Theory Origins</h2>
+              <div class="block-content">
+                <ul class="sidebar-menu">
+                  <li><a href="#">Behaviorism</a></li>
+                  <li><a href="#">Cognitivism</a></li>
+                  <li><a href="#">Constructivism</a></li>
+                  <li><a href="#">Humanism</a></li>
+                </ul>
+              </div>
+            </div>
+            
+            <div class="sidebar-block">
+              <h2 class="block-title">Key Philosophers</h2>
+              <div class="block-content">
+                <p style="font-size: 13px; color: var(--color-text-muted);">Explore the works of John Dewey, Jean Piaget, Lev Vygotsky, and B.F. Skinner.</p>
+              </div>
+            </div>
+          {% endif %}
+        </aside>
+
+        <div class="region-content">
+          {{ page.content }}
+          
+          {% if not page.content|render|trim %}
+            <article class="node-teaser">
+              <h2 class="node-title"><a href="#">Constructivism vs Behaviorism in Modern Classrooms</a></h2>
+              <div class="node-meta">
+                <span><i class="fa fa-folder-open"></i> Academic Research</span>
+              </div>
+              <div class="node-content">
+                <p>A detailed comparative analysis of two of the most influential learning theories in modern education and how they are hybridized today for maximum engagement.</p>
+              </div>
+              <a href="#" class="read-more-link">Explore Theory</a>
+              <div style="clear: both;"></div>
+            </article>
+
+            <article class="node-teaser">
+              <h2 class="node-title"><a href="#">Applying Vygotsky in the Digital Age</a></h2>
+              <div class="node-meta">
+                <span><i class="fa fa-folder-open"></i> EdTech Insights</span>
+              </div>
+              <div class="node-content">
+                <p>How the theory of the Zone of Proximal Development applies to asynchronous online learning environments and intelligent tutoring systems.</p>
+              </div>
+              <a href="#" class="read-more-link">Explore Theory</a>
+              <div style="clear: both;"></div>
+            </article>
+
+            <article class="node-teaser">
+              <h2 class="node-title"><a href="#">Multiple Intelligences Theory Revisited</a></h2>
+              <div class="node-meta">
+                <span><i class="fa fa-folder-open"></i> Psychology</span>
+              </div>
+              <div class="node-content">
+                <p>Examining Howard Gardner's famous framework and how it has evolved with new neuroscientific discoveries regarding brain function and learning styles.</p>
+              </div>
+              <a href="#" class="read-more-link">Explore Theory</a>
+              <div style="clear: both;"></div>
+            </article>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; {{ "now"|date("Y") }} Virtual Shiksha. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+</div>

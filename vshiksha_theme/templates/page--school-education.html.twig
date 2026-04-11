@@ -1,0 +1,102 @@
+{#
+/**
+ * @file
+ * Theme implementation for the school education landing page.
+ */
+#}
+<div class="layout-container section-school-ed">
+  <header class="site-header" role="banner">
+    <div class="container header-inner">
+      <div class="site-logo">
+        <a href="{{ front_page }}" title="{{ 'Home'|t }}" rel="home" class="site-name">
+          {{ site_name|default('Virtual Shiksha') }}
+        </a>
+      </div>
+      
+      {% if page.primary_menu %}
+        <nav class="main-navigation" role="navigation">
+          {{ page.primary_menu }}
+        </nav>
+      {% endif %}
+    </div>
+  </header>
+
+  <main role="main">
+    <div class="container">
+      
+      <h1 class="page-title" style="margin-top: 30px; font-size: 38px; color: var(--color-primary); border-bottom: 2px solid var(--color-border); padding-bottom: 15px;">School Education</h1>
+
+      <div class="main-layout">
+        
+        <aside class="region-sidebar" role="complementary">
+          {% if page.sidebar_first %}
+            {{ page.sidebar_first }}
+          {% else %}
+            <div class="sidebar-block">
+              <h2 class="block-title">Topics</h2>
+              <div class="block-content">
+                <ul class="sidebar-menu">
+                  <li><a href="#">CBSE & ICSE Boards</a></li>
+                  <li><a href="#">State Boards</a></li>
+                  <li><a href="#">Pedagogy Innovations</a></li>
+                  <li><a href="#">Co-curricular Activities</a></li>
+                </ul>
+              </div>
+            </div>
+          {% endif %}
+        </aside>
+
+        <div class="region-content">
+          {{ page.content }}
+          
+          {% if not page.content|render|trim %}
+            <article class="node-teaser">
+              <h2 class="node-title"><a href="#">Gamification in Middle School Math</a></h2>
+              <div class="node-meta">
+                <span><i class="fa fa-folder-open"></i> Pedagogy</span>
+              </div>
+              <div class="node-content">
+                <p>How introducing competitive and reward-based games is changing the way students learn algebra and geometry. Case studies from top schools.</p>
+              </div>
+              <a href="#" class="read-more-link">Read Article</a>
+              <div style="clear: both;"></div>
+            </article>
+
+            <article class="node-teaser">
+              <h2 class="node-title"><a href="#">Mental Health Support Systems in Schools</a></h2>
+              <div class="node-meta">
+                <span><i class="fa fa-folder-open"></i> Counseling</span>
+              </div>
+              <div class="node-content">
+                <p>Best practices for integrating counseling and well-being checks into the standard school curriculum to tackle student anxiety.</p>
+              </div>
+              <a href="#" class="read-more-link">Read Article</a>
+              <div style="clear: both;"></div>
+            </article>
+
+            <article class="node-teaser">
+              <h2 class="node-title"><a href="#">Early Childhood Development Trends</a></h2>
+              <div class="node-meta">
+                <span><i class="fa fa-folder-open"></i> Pre-Primary</span>
+              </div>
+              <div class="node-content">
+                <p>Exploring the shift towards play-based learning and critical thinking introduced in kindergarten and preschool stages under new frameworks.</p>
+              </div>
+              <a href="#" class="read-more-link">Read Article</a>
+              <div style="clear: both;"></div>
+            </article>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; {{ "now"|date("Y") }} Virtual Shiksha. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+</div>

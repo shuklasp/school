@@ -1,0 +1,112 @@
+{#
+/**
+ * @file
+ * Theme implementation for the jobs section landing page.
+ * Exact structural match to the vshiksha.com archive.
+ */
+#}
+<div class="layout-container section-jobs">
+  <header class="site-header" role="banner">
+    <div class="container header-inner">
+      <div class="site-logo">
+        <a href="{{ front_page }}" title="{{ 'Home'|t }}" rel="home" class="site-name">
+          {{ site_name|default('Virtual Shiksha') }}
+        </a>
+      </div>
+      
+      {% if page.primary_menu %}
+        <nav class="main-navigation" role="navigation">
+          {{ page.primary_menu }}
+        </nav>
+      {% endif %}
+    </div>
+  </header>
+
+  <main role="main">
+    <div class="container">
+      
+      <h1 class="page-title" style="margin-top: 30px; font-size: 38px; color: var(--color-primary); border-bottom: 2px solid var(--color-border); padding-bottom: 15px;">Career & Jobs</h1>
+
+      <div class="main-layout">
+        
+        <aside class="region-sidebar" role="complementary">
+          {% if page.sidebar_first %}
+            {{ page.sidebar_first }}
+          {% else %}
+            <div class="sidebar-block">
+              <h2 class="block-title">Filter by Category</h2>
+              <div class="block-content">
+                <ul class="sidebar-menu">
+                  <li><a href="#">Assistant Professors</a></li>
+                  <li><a href="#">School Teachers</a></li>
+                  <li><a href="#">Administrative Staff</a></li>
+                  <li><a href="#">Govt. Jobs (Sarkari)</a></li>
+                </ul>
+              </div>
+            </div>
+            
+            <div class="sidebar-block" style="background: #FFF3ED; border-color: var(--color-primary);">
+              <h2 class="block-title">Job Alerts</h2>
+              <p style="font-size: 13px; color: #555;">Get latest teaching jobs delivered to your inbox.</p>
+              <a href="#" class="read-more-link" style="float: none; display: block; text-align: center;">Subscribe</a>
+            </div>
+          {% endif %}
+        </aside>
+
+        <div class="region-content">
+          {{ page.content }}
+          
+          {% if not page.content|render|trim %}
+            <article class="node-teaser">
+              <h2 class="node-title"><a href="#">Assistant Professor - Computer Science</a></h2>
+              <div class="node-meta">
+                <span><i class="fa fa-building"></i> Global Tech University</span>
+                <span><i class="fa fa-map-marker"></i> New Delhi</span>
+              </div>
+              <div class="node-content">
+                <p>Seeking a dynamic faculty member for teaching and research in AI and Data Science. PhD required with a minimum of 3 years teaching experience.</p>
+              </div>
+              <a href="#" class="read-more-link">Apply Now</a>
+              <div style="clear: both;"></div>
+            </article>
+
+            <article class="node-teaser">
+              <h2 class="node-title"><a href="#">High School English Teacher (PGT)</a></h2>
+              <div class="node-meta">
+                <span><i class="fa fa-building"></i> Horizon International School</span>
+                <span><i class="fa fa-map-marker"></i> Mumbai</span>
+              </div>
+              <div class="node-content">
+                <p>Looking for an experienced educator to lead the senior secondary English department. B.Ed and MA English mandatory.</p>
+              </div>
+              <a href="#" class="read-more-link">Apply Now</a>
+              <div style="clear: both;"></div>
+            </article>
+
+            <article class="node-teaser">
+              <h2 class="node-title"><a href="#">UPSC Assistant Director Recruitment</a></h2>
+              <div class="node-meta">
+                <span><i class="fa fa-building"></i> Union Public Service Commission</span>
+                <span><i class="fa fa-map-marker"></i> Across India</span>
+              </div>
+              <div class="node-content">
+                <p>UPSC invites online applications for the post of Assistant Director. Candidates must review the official notification for age limits and eligibility.</p>
+              </div>
+              <a href="#" class="read-more-link">Apply Now</a>
+              <div style="clear: both;"></div>
+            </article>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; {{ "now"|date("Y") }} Virtual Shiksha. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+</div>

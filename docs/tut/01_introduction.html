@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>01. Introduction | SPP Framework Tutorial</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <aside class="sidebar">
+        <h2>SPP Framework</h2>
+        <nav>
+            <ul>
+                <li><a href="index.html">Welcome</a></li>
+                <li><a href="01_introduction.html" class="active">01. Introduction</a></li>
+                <li><a href="02_getting_started.html">02. Getting Started</a></li>
+                <li><a href="03_modules.html">03. Modules Architecture</a></li>
+                <li><a href="04_data_models.html">04. Data Modeling</a></li>
+                <li><a href="05_routing_and_views.html">05. Routing & Views</a></li>
+                <li><a href="06_forms_and_validation.html">06. Forms & Validation</a></li>
+                <li><a href="07_events.html">07. The Event System</a></li>
+                <li><a href="08_advanced.html">08. Advanced Features</a></li>
+                <li><a href="09_project_twitter.html">09. Project: SPP-Twitter</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <article class="content-container">
+            <h1>01. Introduction to SPP Framework</h1>
+            <p>The <span class="accent">Satya Portal Pack (SPP)</span> is a powerful, lightweight PHP framework designed to streamline the development of modular web applications and enterprise-grade portals.</p>
+            
+            <hr>
+
+            <h2>What is SPP?</h2>
+            <p>SPP is an <span class="accent">event-driven</span>, <span class="accent">modular</span> framework that prioritizes "Pinnacle Architecture" — a design philosophy focusing on separation of concerns, high performance, and rapid application development through declarative configurations (YAML/XML).</p>
+
+            <p>At its core, SPP is:</p>
+            <ul>
+                <li><strong>Modular</strong>: Every feature is a self-contained module.</li>
+                <li><strong>Declarative</strong>: Many framework behaviors (routing, database schema, forms) are defined in configuration files.</li>
+                <li><strong>Extensible</strong>: A robust event system allows for custom hooks into core framework processes.</li>
+            </ul>
+
+            <hr>
+
+            <h2>Core Philosophy</h2>
+            <h3>1. Separation of Concerns</h3>
+            <p>Application logic is strictly separated from the framework core. Developers focus on building Modules and Entities, while the core handles bootstrapping, session management, and routing.</p>
+
+            <h3>2. "Drop and Play" SPA Architecture</h3>
+            <p>SPP is designed to automatically "augment" static pages with Single Page Application (SPA) features such as AJAX-based fragment routing and instant form validation, without requiring complex front-end frameworks like React or Vue.</p>
+
+            <h3>3. Automated Data Management</h3>
+            <p>Using the <span class="accent">SPPEntity</span> system, you define your data models in YAML. The framework then automatically handles database table creation, updates, and CRUD operations.</p>
+
+            <hr>
+
+            <h2>Key Features</h2>
+            <ol>
+                <li><strong>Modules Container</strong>: A unified registry for loading and managing independent framework components.</li>
+                <li><strong>SPPEvents</strong>: A global event bus to fire and handle system-wide hooks.</li>
+                <li><strong>SPPDB & SPPEntity</strong>: A sophisticated ORM-like layer supporting both traditional SQL and AI-driven vector models.</li>
+                <li><strong>Form Augmentation</strong>: Convert simple HTML forms into fully validated, AJAX-ready components using XML/YAML definitions.</li>
+                <li><strong>SPPLive & SPPNexus</strong>: Integrated WebSocket Support and an optimized Edge Compiler for high-speed delivery.</li>
+            </ol>
+
+            <footer class="footer-nav">
+                <a href="index.html" class="nav-button">
+                    <span class="label">Previous</span>
+                    <span class="title">&larr; Welcome</span>
+                </a>
+                <a href="02_getting_started.html" class="nav-button">
+                    <span class="label">Next</span>
+                    <span class="title">02. Getting Started &rarr;</span>
+                </a>
+            </footer>
+        </article>
+    </main>
+</body>
+</html>

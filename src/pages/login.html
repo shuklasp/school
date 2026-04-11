@@ -1,0 +1,43 @@
+<div class="login-page">
+    <script src="/school1/res/spp/js/spp-router.js"></script>
+    <h2>Access Portal</h2>
+    <form id="login_form" data-spp-post="/school1/src/serv/auth_login.php" method="POST">
+        <div class="row">
+            <label>Institution:</label>
+            <select name="tenant" id="tenant">
+                <option value="test_inst">SPP Test Institution</option>
+            </select>
+            <div id="tenant_error" class="errormsg"></div>
+        </div>
+        <div class="row">
+            <label>Username:</label>
+            <input type="text" name="username" id="username" value="admin">
+            <div id="username_error" class="errormsg"></div>
+        </div>
+        <div class="row">
+            <label>Password:</label>
+            <input type="password" name="password" id="password" value="admin123">
+            <div id="password_error" class="errormsg"></div>
+        </div>
+        <div class="row">
+            <input type="checkbox" name="remember_me" id="remember_me"> <label for="remember_me">Remember Me</label>
+        </div>
+        <button type="submit">Sign In</button>
+    </form>
+</div>
+
+<style>
+.login-page {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+.row { margin-bottom: 15px; }
+label { display: block; margin-bottom: 5px; font-weight: bold; }
+input[type="text"], input[type="password"], select { width: 100%; padding: 8px; box-sizing: border-box; }
+button { width: 100%; padding: 10px; background-color: #007bff; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+button:hover { background-color: #0056b3; }
+</style>

@@ -1,0 +1,7 @@
+table: reports
+id_field: id
+sequence: reports_seq
+login_enabled: false
+attributes:
+  name: varchar(200)
+  created_at: timestamp

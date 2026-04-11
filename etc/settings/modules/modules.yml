@@ -1,0 +1,50 @@
+modules:
+  - modname: sppauth
+    modpath: spp/sppauth
+    status: active
+    dependencies:
+      - sppcore
+  - modname: sppentity
+    modpath: spp/sppentity
+    status: active
+    dependencies:
+      - sppcore
+      - sppdb
+  - modname: sppdb
+    modpath: spp/sppdb
+    status: active
+    dependencies:
+      - sppcore
+  - modname: sppconfig
+    modpath: spp/sppconfig
+    status: active
+    dependencies:
+      - sppcore
+  - modname: spplogger
+    modpath: spp/spplogger
+    status: active
+    dependencies:
+      - sppcore
+      - sppdb
+      - sppsession
+  - modname: sppprofile
+    modpath: spp/sppprofile
+    status: active
+    dependencies:
+      - sppcore
+      - sppdb
+      - sppsession
+  - modname: sppwizard
+    modpath: spp/sppwizard
+    status: active
+    dependencies:
+      - sppcore
+      - sppdb
+      - sppsession
+  - modname: sppview
+    modpath: spp/sppview
+    status: active
+    dependencies:
+      - sppcore
+      - sppdb
+      - sppsession

@@ -1,0 +1,21 @@
+# SPP_Logger Module Configuration (Module-level Default)
+
+variables:
+    # Precedence: db_first, file_first, or parallel
+    log_precedence: "db_first"
+    
+    # Enabled targets: array of 'db', 'file' or both
+    log_targets: ["db", "file"]
+    
+    # Base subdirectory of SPP_LOG_DIR
+    log_subdir: "system"
+    
+    # Filename format using placeholders {appname}, {date}, {index}, and {level}
+    # To use rotation, {index} must be present.
+    log_filename_format: "log-{appname}-{date}-{index}.txt"
+
+    # Rotation: maximum file size in bytes (default 2MB)
+    max_file_size: 2097152
+    
+    # Retention: maximum age of log files in days (0 = retain forever)
+    log_retention_days: 30

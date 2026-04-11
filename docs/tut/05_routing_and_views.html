@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>05. Routing & Views | SPP Framework Tutorial</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <aside class="sidebar">
+        <h2>SPP Framework</h2>
+        <nav>
+            <ul>
+                <li><a href="index.html">Welcome</a></li>
+                <li><a href="01_introduction.html">01. Introduction</a></li>
+                <li><a href="02_getting_started.html">02. Getting Started</a></li>
+                <li><a href="03_modules.html">03. Modules Architecture</a></li>
+                <li><a href="04_data_models.html">04. Data Modeling</a></li>
+                <li><a href="05_routing_and_views.html" class="active">05. Routing & Views</a></li>
+                <li><a href="06_forms_and_validation.html">06. Forms & Validation</a></li>
+                <li><a href="07_events.html">07. The Event System</a></li>
+                <li><a href="08_advanced.html">08. Advanced Features</a></li>
+                <li><a href="09_project_twitter.html">09. Project: SPP-Twitter</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <article class="content-container">
+            <h1>05. Routing and Views</h1>
+            <p>Routing in SPP is simple and flexible, allowing you to define static and dynamic pages with AJAX fragment loading.</p>
+            
+            <hr>
+
+            <h2>Defining Routes in pages.yml</h2>
+            <p>The <span class="accent">etc/pages.yml</span> file is the central source of truth for routing. A typical page definition looks like this:</p>
+            <pre><code>pages:
+  - name: home
+    url: /home.php
+  - name: about
+    url: /about.php
+  - name: profile
+    url: /user_profile.php</code></pre>
+
+            <h3>Static vs. Dynamic Paths</h3>
+            <p>If a request URL (e.g., `?q=profile/123/edit`) matches a registered page name (`profile`), the remaining parts of the URL are automatically passed as positional parameters.</p>
+            <pre><code>$pageData = \SPPMod\SPPView\Pages::getPage();
+$userId = $pageData['params'][0]; // This retrieves "123"</code></pre>
+
+            <hr>
+
+            <h2>The ViewPage Rendering Engine</h2>
+            <p>The <span class="accent">ViewPage</span> class manages the HTML output of your application.</p>
+
+            <h3>1. Show the Page</h3>
+            <pre><code>\SPPMod\SPPView\ViewPage::showPage();</code></pre>
+            <p>This is the core rendering method. It handles routing and includes the appropriate PHP file from your <span class="accent">src/</span> directory.</p>
+
+            <h3>2. Include Assets Dynamically</h3>
+            <pre><code>\SPPMod\SPPView\ViewPage::addCssIncludeFile('res/custom.css');
+\SPPMod\SPPView\ViewPage::addJsIncludeFile('res/custom.js');</code></pre>
+
+            <hr>
+
+            <h2>SPA "Drop and Play"</h2>
+            <p>SPP can automatically "augment" your static PHP/HTML pages to behave like a <span class="accent">Single Page Application (SPA)</span>. When enabled, the framework:</p>
+            <ol>
+                <li><strong>Intercepts</strong> link clicks (`&lt;a&gt;` tags) and form submissions.</li>
+                <li><strong>Fetches</strong> only the necessary HTML content (fragments) using AJAX.</li>
+                <li><strong>Updates</strong> the page content without a full reload.</li>
+            </ol>
+
+            <footer class="footer-nav">
+                <a href="04_data_models.html" class="nav-button">
+                    <span class="label">Previous</span>
+                    <span class="title">&larr; 04. Data Modeling</span>
+                </a>
+                <a href="06_forms_and_validation.html" class="nav-button">
+                    <span class="label">Next</span>
+                    <span class="title">06. Forms & Validation &rarr;</span>
+                </a>
+            </footer>
+        </article>
+    </main>
+</body>
+</html>

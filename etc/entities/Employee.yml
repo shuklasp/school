@@ -1,0 +1,17 @@
+table: employees
+id_field: id
+sequence: employee_seq
+attributes:
+  full_name: varchar(255)
+  role: varchar(100) # Headquarters Staff, Admin Staff, Teaching Staff, Non-Teaching Staff
+relations:
+  -
+    parent_entity: OrganizationUnit
+    parent_entity_field: id
+    child_entity_field: org_unit_id
+    relation_type: OneToMany
+  -
+    parent_entity: Employee
+    parent_entity_field: id
+    child_entity_field: supervisor_id
+    relation_type: Hierarchy

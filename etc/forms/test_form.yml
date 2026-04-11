@@ -1,0 +1,20 @@
+form:
+    name: test_form
+    service: save_test_data
+    on_response:
+        ok: navigate:success_page
+
+fields:
+  - name: name
+    type: input
+    validations:
+      - type: required
+        message: Name is missing!
+        errorholder: name_error
+  - name: score
+    type: input
+    value: 100 # Pre-population test
+    validations:
+      - type: numeric
+        message: Must be a number!
+        errorholder: score_error

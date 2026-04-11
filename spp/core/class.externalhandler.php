@@ -4,8 +4,8 @@ namespace SPP;
 
 abstract class ExternalHandler
 {
-    protected string $event_name;
-    protected string $handler_name;
+    protected string $event_name = '';
+    protected string $handler_name = '';
     protected $before_handlers = array();
     protected $after_handlers = array();
 
@@ -18,8 +18,8 @@ abstract class ExternalHandler
      */
     public function __construct($event_name, $handler_name = null)
     {
-        $this->handler_name = $this->getHandlerName();
         $this->event_name = $event_name;
+        $this->handler_name = $handler_name ?? $this->getHandlerName();
         $this->initHandler();
     }
 
@@ -32,12 +32,12 @@ abstract class ExternalHandler
      * function beforeHandler
      * Calls before handler for the event
      */
-    public function beforeHandler()
+    public function beforeHandler(array &$params = [])
     {
         //echo 'Before handler called for ' . get_called_class() . '<br/>';
         foreach ($this->before_handlers as $handler) {
             if (is_callable(array($this, $handler)))
-                $this->$handler();
+                $this->$handler($params);
             else
                 throw new \Exception("Before handler must be callable");
         }
@@ -47,12 +47,12 @@ abstract class ExternalHandler
      * function afterHandler()
      * Calls after handler for the event
      */
-    public function afterHandler()
+    public function afterHandler(array &$params = [])
     {
         //echo 'After handler called for ' . get_called_class() . '<br/>';
         foreach ($this->after_handlers as $handler) {
             if (is_callable(array($this, $handler)))
-                $this->$handler();
+                $this->$handler($params);
             else
                 throw new \Exception("After handler must be callable");
         }
@@ -121,11 +121,9 @@ abstract class ExternalHandler
     public function getHandlerName()
     {
         if ($this->handler_name == '') {
-            $this->handler_name = get_called_class();
-            $ev = explode('\\', $this->handler_name);
-            $this->handler_name = array_pop($ev);
+            $this->handler_name = basename(str_replace('\\', '/', get_called_class()));
         }
 
-        return $this->event_name;
+        return $this->handler_name;
     }
 }

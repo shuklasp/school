@@ -1,0 +1,17 @@
+table: school_classes
+id_field: id
+sequence: school_class_seq
+attributes:
+  class_name: varchar(255)
+  grade_level: varchar(50)
+relations:
+  -
+    parent_entity: OrganizationUnit
+    parent_entity_field: id
+    child_entity_field: school_org_id
+    relation_type: OneToMany
+  -
+    parent_entity: Employee
+    parent_entity_field: id
+    child_entity_field: primary_teacher_id
+    relation_type: OneToMany

@@ -1,0 +1,20 @@
+name: Vshiksha
+type: theme
+description: 'A modern, dynamic, responsive premium theme for Vshiksha.com.'
+core_version_requirement: ^9 || ^10 || ^11
+base theme: false
+libraries:
+  - vshiksha/global-styling
+  - vshiksha/global-scripts
+
+regions:
+  header: 'Header'
+  primary_menu: 'Primary menu'
+  secondary_menu: 'Secondary menu'
+  breadcrumb: 'Breadcrumb'
+  highlighted: 'Highlighted'
+  help: 'Help'
+  content: 'Content'
+  sidebar_first: 'Sidebar first'
+  sidebar_second: 'Sidebar second'
+  footer: 'Footer'

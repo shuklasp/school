@@ -1,149 +1,118 @@
 <?php
+
 namespace SPP;
-/* 
- * class.sppscheduler.php
- * Defines the class \SPP\Scheduler
- */
 
 /**
  * class \SPP\Scheduler
  *
- * @author Satya Prakash Shukla
+ * Handles context and process scheduling for SPP.
+ *
+ * @author
+ *     Satya Prakash Shukla
+ * @version
+ *     2.1 compatible with legacy SPP 1.x
  */
-class Scheduler extends \SPP\SPPObject {
-    private static $AppContext='';
-    private static $procs=array();
-    const APP_CREATED = 1;
-    const APP_EXEC = 2;
-    const APP_WAITING = 3;
+class Scheduler extends \SPP\SPPObject
+{
+    /** @var string */
+    private static string $AppContext = '';
+
+    /** @var array<string,\SPP\App> */
+    private static array $procs = [];
 
     /**
-     * function setContext()
-     * Sets an application context.
-     * 
-     * @param string $context name of application context.
-     */
-    public static function setContext($context)
-    {
-        if($context=='')
-        {
-            $context='default';
-        }
-        if(array_key_exists($context, self::$procs))
-        {
-            if(self::$AppContext=='')
-            {
-                self::$AppContext=$context;
-            }
-            else{
-                $curr_proc = self::getActiveProc();
-                $new_proc = self::getProcObj($context);
-                $curr_proc->setStatus(\SPP\Scheduler::APP_WAITING);
-                $new_proc->setStatus(\SPP\Scheduler::APP_EXEC);
-                self::$AppContext=$context;
-            }
-        }
-        else
-        {
-            throw new \SPP\SPPException('Unregistered context : '.$context);
-        }
-    }
-
-
-    /**
-     * function regProc()
-     * Registers a new process.
+     * Set or switch application context.
      *
-     * @param \SPP\App  $proc \SPP\App object.
+     * @throws \SPP\SPPException
      */
-    public static function regProc(\SPP\App $proc)
+    public static function setContext(string $context): void
     {
-        $pname=$proc->getName();
-        if(array_key_exists($pname, self::$procs))
-        {
-            throw new \SPP\SPPException('Duplicate process registration : '.$pname);
+        $context = trim($context);
+        $context = ($context === '') ? 'default' : $context;
+
+        if (!array_key_exists($context, self::$procs)) {
+            throw new \SPP\SPPException('Unregistered context: ' . $context);
         }
-        else
-        {
-            if(is_a($proc, '\SPP\App'))
-            {
-                self::$procs[$pname]=$proc;
-            }
-            else
-            {
-                throw new \SPP\SPPException('Invalid process registration : '.$pname);
-            }
+
+        if (self::$AppContext === '') {
+            self::$AppContext = $context;
+            return;
         }
+
+        $currProc = self::getActiveProc();
+        $newProc = self::getProcObj($context);
+
+        $currProc->setStatus(\SPP\App::APP_WAITING);
+        $newProc->setStatus(\SPP\App::APP_EXEC);
+
+        self::$AppContext = $context;
     }
 
     /**
-     * function getContext()
-     * Returns currently active application context.
+     * Register a new \SPP\App process.
      *
-     * @return string context name.
+     * @throws \SPP\SPPException
      */
-    public static function getContext()
+    public static function regProc(\SPP\App $proc): void
+    {
+        $pname = $proc->getName();
+
+        if (isset(self::$procs[$pname])) {
+            throw new \SPP\SPPException('Duplicate process registration: ' . $pname);
+        }
+
+        self::$procs[$pname] = $proc;
+    }
+
+    /**
+     * Get current active context name.
+     */
+    public static function getContext(): string
     {
         return self::$AppContext;
     }
 
-    public static function getModsConfDir()
+    /**
+     * Get module configuration directory for current process.
+     */
+    public static function getModsConfDir(): string
     {
-        $proc=self::getActiveProc();
-        return $proc->getModsConfDir();
+        return self::getActiveProc()->getModsConfDir();
     }
 
     /**
-     * function getProcObj($pname)
-     * Returns \SPP\App object for given process name.
+     * Get \SPP\App object for a specific process.
      *
-     * @param string $pname process name.
-     * @return \SPP\App object.
-     * @throws \SPP\SPPException if process not registered.
+     * @throws \SPP\SPPException
      */
-    public static function getProcObj($pname)
+    public static function getProcObj(string $pname): \SPP\App
     {
-        if(array_key_exists($pname, self::$procs))
-        {
-            return self::$procs[$pname];
+        if (!array_key_exists($pname, self::$procs)) {
+            throw new \SPP\SPPException('Unregistered process: ' . $pname);
         }
-        else
-        {
-            throw new \SPP\SPPException('Unregistered process : '.$pname);
-        }
+
+        return self::$procs[$pname];
     }
 
-    
     /**
-     * function getActiveProc()
-     * Returns \SPP\App object for active application context.
+     * Get currently active \SPP\App process.
      *
-     * @return \SPP\App object.
-     * @throws \SPP\SPPException if context not set.
+     * @throws \SPP\SPPException
      */
-    public static function getActiveProc()
+    public static function getActiveProc(): \SPP\App
     {
-        if(self::$AppContext=='')
-        {
+        if (self::$AppContext === '') {
             throw new \SPP\SPPException('Application context not set.');
         }
-        else
-        {
-            $pname=self::$AppContext;
-            return self::$procs[$pname];
-        }
+
+        return self::$procs[self::$AppContext];
     }
 
     /**
-     * function getActiveErrorObj()
-     * Returns SPPError object for active application context.
-     *
-     * @return SPPError object.
-     * @throws \SPP\SPPException if context not set.
+     * Get active SPPError object from the current app.
      */
-    public static function getActiveErrorObj()
+    public static function getActiveErrorObj(): ?\SPP\SPPError
     {
-        $proc=self::getActiveProc();
-        return $proc->getErrorObj();
+        return self::getActiveProc()->getErrorObj();
     }
 }

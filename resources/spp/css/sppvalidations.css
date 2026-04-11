@@ -1,0 +1,15 @@
+/**
+ * SPP Validations - Standardized error styling
+ */
+.spp-invalid {
+    border: 2px solid #ff4d4d !important;
+    background-color: #fff2f2 !important;
+}
+
+.errormsg {
+    color: #cc0000;
+    font-size: 0.85em;
+    margin-top: 5px;
+    display: none; /* Hidden by default, shown by validation JS */
+    font-weight: bold;
+}

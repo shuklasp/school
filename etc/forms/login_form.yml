@@ -1,0 +1,46 @@
+form:
+    name: login_form
+    service: auth_login
+    on_response:
+        ok: navigate:dashboard
+        error: stay
+
+fields:
+  - name: tenant
+    type: select
+    label: Select Institution
+    options:
+      - label: School of Excellence
+        value: school_ex
+      - label: City Academy
+        value: city_acad
+      - label: Global International
+        value: global_intl
+    validations:
+      - type: required
+        message: Please select your institution.
+        errorholder: tenant_error
+
+  - name: username
+    type: input
+    label: Username
+    placeholder: Email or Username
+    validations:
+      - type: required
+        message: Username is required.
+        errorholder: username_error
+
+  - name: password
+    type: input
+    inputtype: password
+    label: Password
+    validations:
+      - type: required
+        message: Password is required.
+        errorholder: password_error
+
+  - name: remember_me
+    type: input
+    inputtype: checkbox
+    label: Remember Me
+    value: 1

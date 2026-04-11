@@ -3,17 +3,16 @@
 namespace SPPMod\SPPView;
 
 /**
- * class SPP_Single_validator
+ * abstract class SPP_Single_validator
  *
  * @author Satya Prakash Shukla
  */
-// require_once 'class.sppvalidator.php';
  
-abstract class SPP_Single_validator extends SPP_Validator {
+abstract class SPP_Single_validator extends ViewValidator {
     protected $element;
 
-    public function __construct(\SPPMod\SPPView\ViewTag $elem, $errorholder, $msg, $jsfunc) {
-        parent::__construct($errorholder, $msg, $jsfunc);
+    public function __construct(\SPPMod\SPPView\ViewTag $elem, $errorholder = 'nameerror', $msg = 'Validation error', $jsfunc = 'undefined') {
+        parent::__construct(null, $errorholder, $msg, $jsfunc);
         $this->element=$elem;
     }
 
@@ -23,7 +22,7 @@ abstract class SPP_Single_validator extends SPP_Validator {
         $this->element=$elem;
     }
 
-    public function getJsFunction()
+    public function getJsFunction(): string
     {
         $fn=$this->jsfunc.'(\''.$this->errorholder.'\',\''.$this->msg.'\',\''.$this->element->getAttribute('id').'\')';
         return $fn;
