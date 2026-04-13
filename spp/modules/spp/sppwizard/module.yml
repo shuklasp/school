@@ -1,0 +1,13 @@
+# SPP Wizard Module Manifest
+
+module:
+    name: sppwizard
+    version: "0.5"
+    pubname: SPP Wizard
+    modgroup: SPP_Optional
+    pubdesc: Handles wizards in SPP.
+    includes:
+        - class.sppwizard.php
+    deps:
+        - sppdb
+        - sppconfig

@@ -1,0 +1,11 @@
+id: studentclass
+name: StudentClass
+description: 'Class of a student'
+attributes:
+    ClassTeacher: Default
+members:
+    -
+        entity: SPPMod\SPPAuth\SPPUser
+        id: 1
+        role: member
+        rights: null

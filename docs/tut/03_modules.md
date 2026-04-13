@@ -27,8 +27,8 @@ Each module's behavior is controlled by its `module.xml` file. Here is a typical
     <description>Core Database Handler Module</description>
     <namespace>SPPMod\SPPDB</namespace>
     <autoload>
-        <class name="SPP_DB" file="class.sppdb.php"/>
-        <class name="SPP_Sequence" file="class.sppsequence.php"/>
+        <class name="SPPDB" file="class.sppdb.php"/>
+        <class name="SPPSequence" file="class.sppsequence.php"/>
     </autoload>
 </module>
 ```

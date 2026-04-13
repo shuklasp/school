@@ -1,0 +1,58 @@
+# SPP Auth Module Manifest
+# Generated from module.xml
+
+module:
+    name: sppauth
+    version: "0.5"
+    pubname: SPP Auth
+    modgroup: SPP_Optional
+    pubdesc: Handles native SPP Authentication.
+    includes:
+        - class.sppauth.php
+        - class.sppright.php
+        - class.spprole.php
+        - class.sppuser.php
+        - class.sppusersession.php
+    deps:
+        - sppdb
+        - sppconfig
+    installation:
+        tables:
+            users:
+                id: "int NOT NULL PRIMARY KEY auto_increment"
+                username: "varchar(100)"
+                email: "varchar(255)"
+                password_hash: "varchar(255)"
+                role_id: "int"
+                created_at: "datetime"
+                updated_at: "datetime"
+                status: "varchar(20)"
+            roles:
+                id: "int NOT NULL PRIMARY KEY auto_increment"
+                role_name: "varchar(100)"
+                description: "text"
+            rights:
+                id: "int NOT NULL PRIMARY KEY auto_increment"
+                name: "varchar(100)"
+                description: "text"
+            userroles:
+                userid: "int NOT NULL"
+                roleid: "int NOT NULL"
+                "PRIMARY KEY": "(userid, roleid)"
+            roleright:
+                roleid: "int NOT NULL"
+                rightid: "int NOT NULL"
+                "PRIMARY KEY": "(roleid, rightid)"
+            entity_roles:
+                target_class: "VARCHAR(255) NOT NULL"
+                target_id: "VARCHAR(100) NOT NULL"
+                role_id: "INT NOT NULL"
+                "PRIMARY KEY": "(target_class, target_id, role_id)"
+        entities:
+            - \SPPMod\SPPAuth\SPPUser
+            - \SPPMod\SPPAuth\SPPRole
+            - \SPPMod\SPPAuth\SPPRight
+        seeds:
+            roles:
+                - { id: 1, role_name: 'SuperAdmin', description: 'Full system access' }
+                - { id: 2, role_name: 'Member', description: 'General access' }

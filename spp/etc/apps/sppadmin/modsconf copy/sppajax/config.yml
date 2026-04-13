@@ -1,0 +1,11 @@
+# SPPAjax Module Configuration
+variables:
+    spa_enabled: true
+    spa_container: spp-content        # DOM id that receives injected page content
+    spa_default_mode: async           # 'async' or 'sync' for page fragment loads
+    spa_loading_indicator: true       # show spinner overlay during loads
+    spa_push_state: true              # use history.pushState for deep links
+    spa_transition: fade              # none | fade | slide
+    spa_page_dir: /src/pages          # page fragment files (relative to app root)
+    spa_service_dir: /src/serv        # service scripts (relative to app root)
+    spa_services_registry: /etc/services.yml  # service name → script mapping

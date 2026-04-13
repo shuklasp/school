@@ -264,7 +264,9 @@ class SPPError extends \SPP\SPPObject
     public static function destroyErrors($errnum = 0)
     {
         $errobj = \SPP\Scheduler::getActiveErrorObj();
-        $errobj->destroySelfErrors($errnum);
+        if ($errobj instanceof SPPError) {
+            $errobj->destroySelfErrors($errnum);
+        }
     }
 
     public function destroySelfErrors($errnum = 0)

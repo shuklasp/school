@@ -1,0 +1,10 @@
+# SPP Group Entity Definition
+table: sppgroups
+id_field: id
+sequence: sppgroup_seq
+attributes:
+  name: varchar(255)
+  description: text
+  metadata: text
+  ai_vector: text
+  created_at: datetime

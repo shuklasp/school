@@ -29,7 +29,7 @@ if (!defined('SPP_VER')) {
   define('SPP_MODULES_DIR', SPP_BASE_DIR . SPP_DS . 'modules');
   define('SPP_ETC_DIR', SPP_BASE_DIR . SPP_DS . 'etc');
   define('SPP_APP_DIR', dirname(__DIR__, 1));
-  define('APP_ETC_DIR', SPP_APP_DIR . SPP_DS . 'etc');
+  define('APP_ETC_DIR', SPP_APP_DIR . SPP_DS . 'etc' . SPP_DS . 'apps');
   define('SPP_LOG_DIR', SPP_APP_DIR . SPP_DS . 'var' . SPP_DS . 'logs');
 
   //echo SPP_APP_DIR;
@@ -38,6 +38,12 @@ if (!defined('SPP_VER')) {
   //define('SPP_APP_ETC',SPP_ETC_DIR.SPP_DS.'apps');
   //define('SPP_MODSCONF_DIR',SPP_ETC_DIR.SPP_DS.'modsconf');
   define('SPP_RC_DIR', SPP_ETC_DIR . SPP_DS . 'rc.d');
+
+// Include Composer autoloader
+$composer_autoload = SPP_APP_DIR . SPP_DS . 'vendor' . SPP_DS . 'autoload.php';
+if (file_exists($composer_autoload)) {
+    require_once $composer_autoload;
+}
 
   /**
    * Include core files.
@@ -56,10 +62,12 @@ if (!defined('SPP_VER')) {
     //var_dump($class_path);
     if (substr($class_name, strlen('Exception') * (-1)) == 'Exception') {
       require_once SPP_CORE_DIR . SPP_DS . 'class.sppexception.php';
-      class_alias('SPP\SPPException', $class_name);
-      class_alias('SPP\SPPException', 'SPPException');
-      //SPP\SPPException::createException($class_name);
-      //return;
+      if (!class_exists($class_name)) {
+        class_alias('SPP\SPPException', $class_name);
+      }
+      if (!class_exists('SPPException')) {
+        class_alias('SPP\SPPException', 'SPPException');
+      }
     }
   });
 
@@ -138,14 +146,12 @@ if (!defined('SPP_VER')) {
   /**
    * Initiate SPPSession and SPPError
    */
-  //\SPP\SPPBase::initSession();
   $app = new \SPP\App('');
-  //  \SPP\SPPEvent::endEvent('spp_init');
 
-  //$spperror=new SPPError();
-  \SPP\Module::loadAllModules();
+  // Redundant call removed here as App::__construct already handles loadAllModules()
 }
 \SPP\SPPEvent::registerEvent('spp_init');
+\SPP\SPPEvent::registerEvent('event_spp_module_install');
 //echo SPP_APP_DIR . SPP_DS . 'events';
 //\SPP\App::getAppConfDir()
 //session_destroy();

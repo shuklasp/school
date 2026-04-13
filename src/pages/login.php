@@ -11,8 +11,8 @@
 </head>
 
 <body>
-    <?php 
-    //$db=new SPPMod\SPPDB\SPP_DB();
+    <?php
+    //$db=new SPPMod\SPPDB\SPPDB();
     ?>
     <div class="loading" style="display: none;">Loading...</div>
     <header>

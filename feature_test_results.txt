@@ -1,0 +1,11 @@
+﻿Testing SPPGroup with custom attributes and member roles...
+Group created with ID: 16
+Adding user 'admin' (ID: 1) with role: coordinator
+SUCCESS: Member added with custom role.
+Verifying member role...
+ - Member: admin
+ - Assigned Role: coordinator
+SUCCESS: Role matches.
+Verifying group metadata...
+ - Metadata: {"department":"engineering","level":5}
+SUCCESS: Metadata matches.

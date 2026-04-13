@@ -1,0 +1,15 @@
+# SPP Validator Module Manifest
+
+module:
+    name: sppvalidator
+    version: "0.5"
+    pubname: SPP Validtor
+    modgroup: SPP_Optional
+    pubdesc: Handles HTML Validators in SPP.
+    includes:
+        - class.sppvalidator.php
+        - class.sppsinglevalidator.php
+        - class.sppmultiplevalidator.php
+        - classes.sppvalidators.php
+    deps:
+        - spphtml

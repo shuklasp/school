@@ -10,7 +10,7 @@ require_once('class.sppentityrelations.php');
  * Defines an entity
  */
 
-class SPPEntity
+class SPPEntity implements \JsonSerializable
 {
   protected $id = NULL;
   protected static $_metadata = array();         /** Static registry for entity configuration */
@@ -55,6 +55,8 @@ class SPPEntity
           'profile' => null,
           'attributes' => []
       ];
+
+      self::$_metadata[$class] = &$config;
 
       if ($yml_file !== false) {
           $ymlData = self::parseYaml($yml_file);
@@ -122,7 +124,6 @@ class SPPEntity
           }
       }
 
-      self::$_metadata[$class] = $config;
       static::install();
   }
 
@@ -160,6 +161,21 @@ class SPPEntity
     // To be implemented in derived classes
   }
 
+  public function after_load()
+  {
+    // To be implemented in derived classes
+  }
+
+  public function before_save()
+  {
+    // To be implemented in derived classes
+  }
+
+  public function after_save()
+  {
+    // To be implemented in derived classes
+  }
+
   /**
    * public function __toString()
    * Returns the name of the entity
@@ -168,6 +184,17 @@ class SPPEntity
   public function __toString()
   {
     return strval($this->id);
+  }
+
+  /**
+   * Serializes the entity specifically for JSON conversion.
+   */
+  public function jsonSerialize(): mixed
+  {
+      return array_merge(
+          ['id' => $this->id],
+          $this->_values
+      );
   }
 
   /**
@@ -262,8 +289,12 @@ class SPPEntity
     $path = explode('\\', $entity_name);
     $short_name = array_pop($path);
     
+    $appname = class_exists('\SPP\Scheduler') ? \SPP\Scheduler::getContext() : 'default';
+    
     $files = array();
     if (defined('APP_ETC_DIR')) {
+        $files[] = APP_ETC_DIR . SPP_DS . $appname . SPP_DS . 'entities' . SPP_DS . strtolower($short_name) . '.yml';
+        $files[] = APP_ETC_DIR . SPP_DS . $appname . SPP_DS . 'entities' . SPP_DS . $short_name . '.yml';
         $files[] = APP_ETC_DIR . SPP_DS . 'entities' . SPP_DS . strtolower($short_name) . '.yml';
         $files[] = APP_ETC_DIR . SPP_DS . 'entities' . SPP_DS . $short_name . '.yml';
     }
@@ -294,6 +325,27 @@ class SPPEntity
       }
       return false;
     }
+  }
+
+  /**
+   * Static helper to find all instances of the entity.
+   */
+  public static function find_all()
+  {
+      $instance = new static();
+      return $instance->loadAll();
+  }
+
+  /**
+   * Static helper to count all instances of the entity.
+   */
+  public static function count()
+  {
+      $db = new \SPPMod\SPPDB\SPPDB();
+      $instance = new static();
+      $sql = 'SELECT COUNT(*) as cnt FROM ' . $instance->getTable();
+      $res = $db->execute_query($sql);
+      return (int)($res[0]['cnt'] ?? 0);
   }
 
   /**
@@ -329,7 +381,11 @@ class SPPEntity
    */
   public function getTable()
   {
-    return self::getMetadata('table');
+    $table = self::getMetadata('table');
+    if (class_exists('\\SPPMod\\SPPDB\\SPPDB')) {
+        return \SPPMod\SPPDB\SPPDB::sppTable($table);
+    }
+    return $table;
   }
 
   /**
@@ -469,7 +525,7 @@ class SPPEntity
    */
   protected static function install()
   {
-    $db = new \SPPMod\SPPDB\SPP_DB();
+    $db = new \SPPMod\SPPDB\SPPDB();
     $table = self::getMetadata('table');
     $id_field = self::getMetadata('id_field', 'id');
     $attributes = self::getMetadata('attributes', []);
@@ -501,7 +557,7 @@ class SPPEntity
    */
   protected function uninstall()
   {
-    $db = new \SPPMod\SPPDB\SPP_DB();
+    $db = new \SPPMod\SPPDB\SPPDB();
     $db->remove_columns($this->getTable(), $this->getAttributes());
   }
 
@@ -512,11 +568,14 @@ class SPPEntity
    */
   public function save()
   {
-    //  print_r($this);
+    $this->before_save();
     if ($this->id == null) {
-      return $this->insert();
+      $new_id = $this->insert();
+      $this->after_save();
+      return $new_id;
     } else {
       $this->update();
+      $this->after_save();
       return $this->id;
     }
   }
@@ -531,10 +590,10 @@ class SPPEntity
     $sequence = self::getMetadata('sequence');
     $initial_id = self::getMetadata('initial_id', 1);
     
-    if (!\SPPMod\SPPDB\SPP_Sequence::sequenceExists($sequence)) {
-      \SPPMod\SPPDB\SPP_Sequence::createSequence($sequence, $initial_id, 1);
+    if (!\SPPMod\SPPDB\SPPSequence::sequenceExists($sequence)) {
+      \SPPMod\SPPDB\SPPSequence::createSequence($sequence, $initial_id, 1);
     }
-    $new_id = \SPPMod\SPPDB\SPP_Sequence::next($sequence);
+    $new_id = \SPPMod\SPPDB\SPPSequence::next($sequence);
     return $new_id;
   }
 
@@ -545,12 +604,12 @@ class SPPEntity
    */
   public function insert()
   {
-    $db = new \SPPMod\SPPDB\SPP_DB();
+    $db = new \SPPMod\SPPDB\SPPDB();
     $new_id = $this->createId();
     $this->id = $new_id;
     $val_array = array_merge(array($this->getMetadata('id_field') => $new_id), $this->_values);
     
-    if (class_exists('\\SPPMod\\SPPAI\\SPPAI')) {
+    if (class_exists('\\SPPMod\\SPPAI\\SPPAI') && $this->attributeExists('ai_vector')) {
         $val_array['ai_vector'] = json_encode(\SPPMod\SPPAI\SPPAI::createEmbedding(json_encode($this->_values)));
     }
     
@@ -648,7 +707,7 @@ class SPPEntity
    */
   public function update()
   {
-    $db = new \SPPMod\SPPDB\SPP_DB();
+    $db = new \SPPMod\SPPDB\SPPDB();
     if ($this->id != null) {
       $values = array_values($this->_values);
       $values[] = $this->id;
@@ -665,7 +724,7 @@ class SPPEntity
    */
   public function delete()
   {
-    $db = new \SPPMod\SPPDB\SPP_DB();
+    $db = new \SPPMod\SPPDB\SPPDB();
     $sql = 'delete from %tab% where ' . self::getMetadata('id_field') . '=?';
     $db->exec_squery($sql, $this->getTable(), array($this->id));
     $this->id = null;
@@ -678,19 +737,20 @@ class SPPEntity
    * @throws EntityNotFoundException
    * @return mixed $result
    **/
-  public function load($id)
-  {
-    $db = new \SPPMod\SPPDB\SPP_DB();
-    $sql = 'select * from %tab% where ' . self::getMetadata('id_field') . '=?';
-    $result = $db->exec_squery($sql, $this->getTable(), array($id));
-    //print_r($result);
-    if (sizeof($result) > 0) {
+   public function load($id)
+   {
+     $this->id = $id;
+     $db = new \SPPMod\SPPDB\SPPDB();
+     $sql = 'select * from %tab% where ' . self::getMetadata('id_field') . '=?';
+     $result = $db->exec_squery($sql, $this->getTable(), array($id));
+     if (sizeof($result) > 0) {
       $row = $result[0];
       foreach ($row as $attribute => $value) {
         if (!is_numeric($attribute)) {
           $this->set($attribute, $value);
         }
       }
+      $this->after_load();
     } else {
       throw new EntityNotFoundException('Entity with id ' . $id . ' not found');
     }
@@ -706,7 +766,7 @@ class SPPEntity
    */
   public function loadBy($attribute, $value)
   {
-    $db = new \SPPMod\SPPDB\SPP_DB();
+    $db = new \SPPMod\SPPDB\SPPDB();
     $attribute = preg_replace('/[^a-zA-Z0-9_]/', '', $attribute);
     $sql = 'select * from %tab% where ' . $attribute . '=?';
     $result = $db->exec_squery($sql, $this->getTable(), array($value));
@@ -715,6 +775,7 @@ class SPPEntity
       foreach ($row as $attribute => $value) {
         $this->set($attribute, $value);
       }
+      $this->after_load();
     } else {
       throw new EntityNotFoundException('Entity with ' . $attribute . '=' . $value . ' not found');
     }
@@ -727,7 +788,7 @@ class SPPEntity
    */
   public function loadAll()
   {
-    $db = new \SPPMod\SPPDB\SPP_DB();
+    $db = new \SPPMod\SPPDB\SPPDB();
     $sql = 'select * from %tab%';
     $result = $db->exec_squery($sql, $this->getTable());
     $entities = array();
@@ -739,6 +800,7 @@ class SPPEntity
           $entity->set($attribute, $value);
         }
       }
+      $entity->after_load();
       $entities[] = $entity;
     }
     return $entities;
@@ -753,7 +815,7 @@ class SPPEntity
    */
   public function loadMultiple(array $attributes, array $values)
   {
-    $db = new \SPPMod\SPPDB\SPP_DB();
+    $db = new \SPPMod\SPPDB\SPPDB();
     $sanitized_attributes = array();
     foreach ($attributes as $attr) {
       $sanitized_attributes[] = preg_replace('/[^a-zA-Z0-9_]/', '', $attr);
@@ -769,6 +831,7 @@ class SPPEntity
           $entity->set($attribute, $value);
         }
       }
+      $entity->after_load();
       $entities[] = $entity;
     }
     return $entities;

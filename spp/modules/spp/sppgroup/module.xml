@@ -1,8 +1,0 @@
-<module>
-    <name>sppgroup</name>
-    <description>Provides Many-to-Many Grouping logic for Entities</description>
-    <version>1.0</version>
-    <dependencies>
-        <module>sppentity</module>
-    </dependencies>
-</module>

@@ -1,0 +1,13 @@
+module:
+    name: sppuserprofile
+    pubname: SPP User Profile Bridge
+    version: 1.0
+    author: Satya Prakash Shukla
+    pubdesc: Bridges the SPPAuth subsystem with dynamic SPPProfiles to provide extensible user metadata.
+    modgroup: System
+    deps:
+        - sppauth
+        - sppprofile
+    installation:
+        scripts:
+            - install.php

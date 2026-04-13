@@ -1,100 +1,40 @@
 <?php
-
 namespace SPPMod\SPPAuth;
 
-/*require_once 'class.sppbase.php';
-require_once 'class.sppdatabase.php';
-require_once 'class.sppsequence.php';*/
+use SPPMod\SPPEntity\SPPEntity;
+use SPPMod\SPPDB\SPPDB;
 
 /**
- * class SPPRight
- *
- * @author Satya Prakash Shukla
+ * Class SPPRight
+ * Manages system permissions/rights via SPPEntity.
  */
-class SPPRight extends \SPP\SPPObject
+class SPPRight extends SPPEntity
 {
+    /**
+     * Map to existing table name.
+     */
+    public function getTable()
+    {
+        return SPPDB::sppTable('rights');
+    }
 
     /**
-     * function rightExists()
-     * Checks whether a right exists or not.
-     * 
-     * @param <type> $rt
-     * @return <type>
+     * Static helper for existence check.
      */
     public static function rightExists($rt)
     {
-        $db = new \SPPMod\SPPDB\SPP_DB();
-        $sql = 'select * from ' . \SPP\SPPBase::sppTable('rights') . ' where rightname=?';
-        $values = array($rt);
-        $result = $db->execute_query($sql, $values);
-        if (sizeof($result) > 0) {
-            return true;
-        } else {
-            return false;
-        }
+        $db = new SPPDB();
+        $res = $db->execute_query('SELECT id FROM ' . SPPDB::sppTable('rights') . ' WHERE name=?', [$rt]);
+        return count($res) > 0;
     }
 
     /**
-     * function createRight()
-     * Creates a new right.
-     * 
-     * @param string $rt
-     */
-    public static function createRight($rt)
-    {
-        if (self::rightExists($rt)) {
-            return false;
-        }
-        $db = new \SPPMod\SPPDB\SPP_DB();
-        $sql = 'insert into ' . \SPP\SPPBase::sppTable('rights') . '(rightid,rightname) values(?,?)';
-        $values = array(\SPPMod\SPPDB\SPP_Sequence::next('spprightid'), $rt);
-        $db->execute_query($sql, $values);
-        return true;
-    }
-
-    /**
-     * static function dropRight()
-     * Drops a right and permanently cascades deletion of all inherited role maps.
-     *
-     * @param string $rt
-     */
-    public static function dropRight($rt)
-    {
-        if (self::rightExists($rt)) {
-            $rightid = self::getRightId($rt);
-            $db = new \SPPMod\SPPDB\SPP_DB();
-
-            // Wipe inherited relational role mapping first to prevent ghost permission vectors
-            $rel_sql = 'delete from ' . \SPP\SPPBase::sppTable('roleright') . ' where rightid=?';
-            $db->execute_query($rel_sql, array($rightid));
-
-            // Clean the master right manifest
-            $sql = 'delete from ' . \SPP\SPPBase::sppTable('rights') . ' where rightname=?';
-            $values = array($rt);
-            $db->execute_query($sql, $values);
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * static function getRightId()
-     * Returns rightid of a right. -1 if right does not exist.
-     *
-     * @param string $rt
-     * @return integer
+     * Static helper for right ID lookup.
      */
     public static function getRightId($rt)
     {
-        $db = new \SPPMod\SPPDB\SPP_DB();
-        $sql = 'select rightid from ' . \SPP\SPPBase::sppTable('rights') . ' where rightname=?';
-        $values = array($rt);
-        $result = $db->execute_query($sql, $values);
-        if (sizeof($result) > 0) {
-            return $result[0]['rightid'];
-        } else {
-            return -1;
-        }
+        $db = new SPPDB();
+        $res = $db->execute_query('SELECT id FROM ' . SPPDB::sppTable('rights') . ' WHERE name=?', [$rt]);
+        return count($res) > 0 ? $res[0]['id'] : -1;
     }
 }
-?>

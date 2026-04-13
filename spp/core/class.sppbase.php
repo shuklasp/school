@@ -96,13 +96,7 @@ class SPPBase extends \SPP\SPPObject {
 
     public static function sppTable($tname)
     {
-/*        if(self::isAppSetup())
-        {
-            require 'settings.php';
-            global $confarray;
-            return $confarray['tableprefix'].$tname;
-        }*/
-        return $tname;
+        return \SPPMod\SPPDB\SPPDB::sppTable($tname);
     }
 }
 ?>

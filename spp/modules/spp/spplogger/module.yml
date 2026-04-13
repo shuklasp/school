@@ -1,0 +1,24 @@
+module:
+    name: spplogger
+    pubname: SPP Unified Logger
+    version: 1.2
+    author: Satya Prakash Shukla
+    pubdesc: Centralized logging engine providing multiple adapters (Database, File, Console) with support for log levels and rotation.
+    modgroup: Core
+    installation:
+        tables:
+            logger:
+                loggerid: "VARCHAR(40) NOT NULL PRIMARY KEY"
+                uid: "VARCHAR(50)"
+                uname: "VARCHAR(100)"
+                ip: "VARCHAR(50)"
+                logtime: "DATETIME"
+                sessid: "VARCHAR(100)"
+                level: "VARCHAR(20)"
+                descr: "TEXT"
+                context: "TEXT"
+                request_uri: "TEXT"
+                method: "VARCHAR(10)"
+                agent: "TEXT"
+        sequences:
+            - loggerid

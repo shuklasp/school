@@ -12,6 +12,8 @@ class SPPEvent extends \SPP\SPPObject
 {
     private static array $events = [];
     private static array $activeHandlers = [];
+    private static array $scannedDirs = [];
+    private static bool $dirsRegistered = false;
 
     /**
      * Constructor
@@ -329,10 +331,15 @@ class SPPEvent extends \SPP\SPPObject
         }
 
         foreach ($dirs as $dir) {
+            if (isset(self::$scannedDirs[$dir])) {
+                continue;
+            }
 
             if (!is_dir($dir)) {
                 continue;
             }
+            
+            self::$scannedDirs[$dir] = true;
 
             $files = scandir($dir);
 
@@ -370,8 +377,12 @@ class SPPEvent extends \SPP\SPPObject
      */
     public static function registerDirs()
     {
+        if (self::$dirsRegistered) {
+            return;
+        }
         self::scanAndRegisterDirs(SPP_BASE_DIR . SPP_DS . 'events');
         self::scanAndRegisterDirs(SPP_APP_DIR . SPP_DS . 'events');
+        self::$dirsRegistered = true;
     }
 
     /**

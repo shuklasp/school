@@ -1,0 +1,7 @@
+table: roles
+id_field: id
+sequence: roles_seq
+attributes:
+    id: int
+    role_name: varchar(100)
+    description: text

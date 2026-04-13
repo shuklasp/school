@@ -12,7 +12,9 @@ if (!defined('SPP_BASE_DIR')) {
     define('SPP_BASE_DIR', dirname(__DIR__));
 }
 
+require_once dirname(SPP_BASE_DIR) . '/vendor/autoload.php';
 require_once SPP_BASE_DIR . '/sppinit.php';
+require_once dirname(SPP_BASE_DIR) . '/global.php';
 
 /**
  * checkDevMode function
@@ -83,7 +85,9 @@ if (!checkDevMode()) {
                 </div>
             </form>
             <footer>
-                <p>Powered by Satya Portal Pack &copy; <?php echo date('Y'); ?></p>
+                <p>Powered by Satya Portal Pack &copy;
+                    <?php echo date('Y'); ?>
+                </p>
             </footer>
         </div>
     </div>
@@ -97,9 +101,13 @@ if (!checkDevMode()) {
                 <span class="logo-text">SPP <span>Admin</span></span>
                 <span class="mode-badge">Dev Mode</span>
             </div>
+            <div id="app-selector-container" style="margin-bottom: 2rem;"></div>
             <nav>
                 <ul>
-                    <li><a href="#modules" class="nav-item active" data-view="modules">
+                    <li><a href="#system" class="nav-item active" data-view="system">
+                            <span class="icon">🖥️</span> System Info
+                        </a></li>
+                    <li><a href="#modules" class="nav-item" data-view="modules">
                             <span class="icon">📦</span> Modules
                         </a></li>
                     <li><a href="#entities" class="nav-item" data-view="entities">
@@ -110,6 +118,9 @@ if (!checkDevMode()) {
                         </a></li>
                     <li><a href="#groups" class="nav-item" data-view="groups">
                             <span class="icon">👥</span> Groups
+                        </a></li>
+                    <li><a href="#access" class="nav-item" data-view="access">
+                            <span class="icon">🛡️</span> Access Control
                         </a></li>
                 </ul>
             </nav>
@@ -154,8 +165,26 @@ if (!checkDevMode()) {
         </div>
     </div>
 
-    <!-- Application Script -->
-    <script src="js/admin.js"></script>
+    <!-- Application Script (Aggressive cache busting) -->
+    <script src="js/admin.js?v=<?php echo time(); ?>"></script>
+    <!-- Inline Override for stale caches -->
+    <script>
+        setTimeout(() => {
+            if (window.admin) {
+                window.admin.escapeHtml = function (str) {
+                    if (str === null || str === undefined) return '';
+                    const div = document.createElement('div');
+                    div.textContent = String(str);
+                    return div.innerHTML;
+                };
+                window.admin.escapeAttr = function (str) {
+                    if (str === null || str === undefined) return '';
+                    return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                };
+                console.log("SPP Admin Cache Override Applied.");
+            }
+        }, 1000);
+    </script>
 </body>
 
 </html>

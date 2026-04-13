@@ -1,0 +1,4 @@
+﻿Testing SPPGroup membership with SPPUser...
+ERROR: Wrong attribute name accessed
+#0 C:\Users\Satya Prakash Shukla\.gemini\antigravity\brain\ce491947-1f15-41f7-8877-e91140efaa13\scratch\test_group_add.php(13): SPPMod\SPPEntity\SPPEntity->setValues(Array)
+#1 {main}

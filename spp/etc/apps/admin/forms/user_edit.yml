@@ -1,0 +1,31 @@
+title: "Manage User"
+entity: "\\SPPMod\\SPPAuth\\SPPUser"
+elements:
+  username:
+    type: text
+    label: "Username"
+    placeholder: "Enter unique username"
+    required: true
+  email:
+    type: email
+    label: "Email Address"
+    placeholder: "user@example.com"
+  password:
+    type: password
+    label: "Secret Password"
+    placeholder: "••••••••"
+    help: "Leave blank to keep same"
+  role_ids[]:
+    type: multiselect
+    label: "Assigned Roles"
+    source:
+        table: roles
+        value_field: id
+        label_field: role_name
+  status:
+    type: select
+    label: "Account Status"
+    options:
+        active: "Active"
+        inactive: "Inactive"
+        banned: "Banned"

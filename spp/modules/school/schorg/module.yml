@@ -1,0 +1,12 @@
+module:
+  name: schorg
+  version: 1.0
+  publicname: School Organization
+  modulegroup: School
+  publicdesc: Manages organizational entities within the school system.
+  config: null
+  includes:
+    - class.schorg.php
+  dependencies:
+    - sppconfig
+    - sppentity

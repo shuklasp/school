@@ -5,17 +5,35 @@ namespace SPPMod\SPPDB;
 require_once 'class.sppobject.php';*/
 //\SPP\Module::initWS('sppdb');
 /**
- * class SPP_DB
+ * class SPPDB
  * Handles database transations in the system.
  *
  * @author Satya Prakash Shukla
  */
 
-class SPP_DB
+class SPPDB
 {
     /** @var array<\PDO> Shared connections pool indexed by connection hash */
     private static array $sharedConnections = [];
-    
+
+    /**
+     * Resolves a table name with current context's prefix.
+     *
+     * @param string $tname
+     * @return string
+     */
+    public static function sppTable(string $tname): string
+    {
+        $prefix = \SPP\Module::getConfig('table_prefix', 'sppdb');
+        
+        // If no prefix configured for current context, fallback to default context
+        if ($prefix === false && \SPP\Scheduler::getContext() !== 'default') {
+            $prefix = \SPP\Module::getConfig('table_prefix', 'sppdb', 'default');
+        }
+        
+        return ($prefix ?: '') . $tname;
+    }
+
     /** @var \PDO The internal PDO instance */
     private \PDO $pdo;
     
@@ -330,6 +348,55 @@ class SPP_DB
         
         $sql .= ' where ' . $where;
         $this->exec_squery($sql, $table, $values);
+    }
+
+    /**
+     * public function createTableIncremental(string $tableName, array $columns)
+     * 
+     * Creates a table if missing and adds missing columns incrementally.
+     * Non-destructive.
+     */
+    public function createTableIncremental(string $tableName, array $columns)
+    {
+        if (!$this->tableExists($tableName)) {
+            // Create base table with the first column
+            $firstCol = array_key_first($columns);
+            $firstType = $columns[$firstCol];
+            
+            // Clean names for raw SQL
+            $tableNameSafe = preg_replace('/[^a-zA-Z0-9_]/', '', $tableName);
+            $firstColSafe = preg_replace('/[^a-zA-Z0-9_]/', '', $firstCol);
+            
+            $sql = "CREATE TABLE {$tableNameSafe} ({$firstColSafe} {$firstType})";
+            $this->exec($sql);
+        }
+        
+        // Use existing add_columns to fill in the rest
+        $this->add_columns($tableName, $columns);
+    }
+
+    /**
+     * public function safeInsert(string $tableName, array $data, string $identityField)
+     * 
+     * Inserts a record only if the identity field value is not already present.
+     */
+    public function safeInsert(string $tableName, array $data, string $identityField)
+    {
+        if (!isset($data[$identityField])) {
+            throw new \SPP\SPPException("Identity field '{$identityField}' missing in seed data.");
+        }
+
+        $tableNameSafe = preg_replace('/[^a-zA-Z0-9_]/', '', $tableName);
+        $identityFieldSafe = preg_replace('/[^a-zA-Z0-9_]/', '', $identityField);
+
+        $checkSql = "SELECT count(*) as cnt FROM {$tableNameSafe} WHERE {$identityFieldSafe} = ?";
+        $res = $this->execute_query($checkSql, [$data[$identityField]]);
+        
+        if ((int)$res[0]['cnt'] === 0) {
+            $this->insertValues($tableName, $data);
+            return true;
+        }
+        return false;
     }
 }
 //\SPP\Module::endWS();

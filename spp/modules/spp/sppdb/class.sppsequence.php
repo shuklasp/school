@@ -8,18 +8,18 @@ require_once('sppfuncs.php');
 require_once 'sppsystemexceptions.php';*/
 
 /**
- * class SPP_Sequence
+ * class SPPSequence
  *
  * Handles all the sequences in the system.
  */
-class SPP_Sequence extends \SPP\SPPObject
+class SPPSequence extends \SPP\SPPObject
 {
     /**
      * Installs the Sequence database table schema auto-magically if missing.
      */
-    public static function checkInstall(\SPPMod\SPPDB\SPP_DB $db)
+    public static function checkInstall(\SPPMod\SPPDB\SPPDB $db)
     {
-        $table = \SPP\SPPBase::sppTable('sequences');
+        $table = \SPPMod\SPPDB\SPPDB::sppTable('sequences');
         if (!$db->tableExists($table)) {
             $sql = 'CREATE TABLE ' . $table . ' (
                 seqname VARCHAR(255) PRIMARY KEY,
@@ -42,11 +42,11 @@ class SPP_Sequence extends \SPP\SPPObject
      */
     public static function next($seqname, $fortoday = false)
     {
-        $db = new \SPPMod\SPPDB\SPP_DB();
+        $db = new \SPPMod\SPPDB\SPPDB();
         self::checkInstall($db);
         try {
             $db->beginTransaction();
-            $sql = 'select * from ' . \SPP\SPPBase::sppTable('sequences') . ' where seqname=? FOR UPDATE';
+            $sql = 'select * from ' . \SPPMod\SPPDB\SPPDB::sppTable('sequences') . ' where seqname=? FOR UPDATE';
             $result = $db->execute_query($sql, array($seqname));
             if (count($result) > 0) {
                 $res = $result[0];
@@ -67,7 +67,7 @@ class SPP_Sequence extends \SPP\SPPObject
                     $seq += $res['incval'];
                 }
                 $acc = time();
-                $sql = 'update ' . \SPP\SPPBase::sppTable('sequences') . ' set seqval=?, lastaccess=? where seqname=?';
+                $sql = 'update ' . \SPPMod\SPPDB\SPPDB::sppTable('sequences') . ' set seqval=?, lastaccess=? where seqname=?';
                 $db->execute_query($sql, array($seq, $acc, $seqname));
                 $db->commit();
                 return $seq;
@@ -91,9 +91,9 @@ class SPP_Sequence extends \SPP\SPPObject
      */
     public static function sequenceExists($seqname)
     {
-        $db = new \SPPMod\SPPDB\SPP_DB();
+        $db = new \SPPMod\SPPDB\SPPDB();
         self::checkInstall($db);
-        $sql = 'select * from ' . \SPP\SPPBase::sppTable('sequences') . ' where seqname=?';
+        $sql = 'select * from ' . \SPPMod\SPPDB\SPPDB::sppTable('sequences') . ' where seqname=?';
         $values = array($seqname);
         $result = $db->execute_query($sql, $values);
         if (count($result) > 0) {
@@ -113,10 +113,10 @@ class SPP_Sequence extends \SPP\SPPObject
      */
     public static function createSequence($seqname, $initval, $incval)
     {
-        $db = new \SPPMod\SPPDB\SPP_DB();
+        $db = new \SPPMod\SPPDB\SPPDB();
         self::checkInstall($db);
         if (!self::sequenceExists($seqname)) {
-            $sql = 'insert into ' . \SPP\SPPBase::sppTable('sequences') . ' (seqname, initval, seqval, incval, lastaccess) values(?,?,?,?,?)';
+            $sql = 'insert into ' . \SPPMod\SPPDB\SPPDB::sppTable('sequences') . ' (seqname, initval, seqval, incval, lastaccess) values(?,?,?,?,?)';
             $values = array($seqname, $initval, 0, $incval, 0);
             $db->execute_query($sql, $values);
         } else {
@@ -133,10 +133,10 @@ class SPP_Sequence extends \SPP\SPPObject
      */
     public static function dropSequence($seqname)
     {
-        $db = new \SPPMod\SPPDB\SPP_DB();
+        $db = new \SPPMod\SPPDB\SPPDB();
         self::checkInstall($db);
         if (self::sequenceExists($seqname)) {
-            $sql = 'delete from ' . \SPP\SPPBase::sppTable('sequences') . ' where seqname=?';
+            $sql = 'delete from ' . \SPPMod\SPPDB\SPPDB::sppTable('sequences') . ' where seqname=?';
             $values = array($seqname);
             $db->execute_query($sql, $values);
             return true;

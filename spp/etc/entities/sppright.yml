@@ -1,0 +1,7 @@
+table: rights
+id_field: id
+sequence: rights_seq
+attributes:
+    id: int
+    name: varchar(100)
+    description: text

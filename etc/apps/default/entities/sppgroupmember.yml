@@ -1,0 +1,12 @@
+# SPP Group Member Polymorphic Join Entity
+table: sppgroupmembers
+id_field: id
+sequence: sppgroupmember_seq
+attributes:
+  group_id: varchar(50)
+  member_entity: varchar(255)
+  member_id: varchar(50)
+  role: varchar(50)
+  rights: text
+  ai_vector: text
+  added_at: datetime

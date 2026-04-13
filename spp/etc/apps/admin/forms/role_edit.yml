@@ -1,0 +1,19 @@
+title: "Edit Role"
+entity: "\\SPPMod\\SPPAuth\\SPPRole"
+elements:
+  role_name:
+    type: text
+    label: "Role Name"
+    placeholder: "e.g. Administrator"
+    required: true
+  description:
+    type: textarea
+    label: "Description"
+    placeholder: "What does this role do?"
+  rights:
+    type: multiselect
+    label: "Assigned Rights"
+    source:
+      table: rights
+      id: id
+      name: name

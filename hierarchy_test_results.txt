@@ -1,0 +1,12 @@
+﻿Testing SPPGroup Hierarchy (Transitive Membership)...
+Parent Group created: 17
+Child Group created: 18
+User 'admin' retrieved (ID: 1)
+Adding Child Group to Parent Group...
+ERROR: Entity with id TestGroup_1775952843 not found
+#0 C:\projects\apache\school1\spp\modules\spp\sppgroup\class.sppgroup.php(63): SPPMod\SPPEntity\SPPEntity->load('TestGroup_17759...')
+#1 C:\projects\apache\school1\spp\modules\spp\sppgroup\class.sppgroup.php(336): SPPMod\SPPGroup\SPPGroup->load('TestGroup_17759...')
+#2 C:\projects\apache\school1\spp\modules\spp\sppgroup\class.sppgroup.php(314): SPPMod\SPPGroup\SPPGroup->getParentGroups()
+#3 C:\projects\apache\school1\spp\modules\spp\sppgroup\class.sppgroup.php(260): SPPMod\SPPGroup\SPPGroup->hasAncestor(Object(SPPMod\SPPGroup\SPPGroup))
+#4 C:\Users\Satya Prakash Shukla\.gemini\antigravity\brain\ce491947-1f15-41f7-8877-e91140efaa13\scratch\test_group_hierarchy.php(30): SPPMod\SPPGroup\SPPGroup->addMember(Object(SPPMod\SPPGroup\SPPGroup))
+#5 {main}

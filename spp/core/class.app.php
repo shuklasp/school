@@ -107,7 +107,7 @@ class App extends \SPP\SPPObject
      */
     private function makeAppPath(string $appname, string $subdir): string
     {
-        return SPP_ETC_DIR . SPP_DS . 'apps' . SPP_DS . $appname . SPP_DS . $subdir . SPP_DS;
+        return APP_ETC_DIR . SPP_DS . $appname . SPP_DS . $subdir . SPP_DS;
     }
 
     /**
@@ -198,12 +198,12 @@ class App extends \SPP\SPPObject
 
     public function getModsConfDir(): string
     {
-        return SPP_ETC_DIR . SPP_DS . 'apps' . SPP_DS . $this->appname . SPP_DS . 'modsconf';
+        return APP_ETC_DIR . SPP_DS . $this->appname . SPP_DS . 'modsconf';
     }
 
     public function getAppConfDir(): string
     {
-        return SPP_ETC_DIR . SPP_DS . 'apps' . SPP_DS . $this->appname;
+        return APP_ETC_DIR . SPP_DS . $this->appname;
     }
 
     // === Session management ===

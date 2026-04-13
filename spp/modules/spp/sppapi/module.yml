@@ -1,0 +1,11 @@
+# SPPAPI Module Manifest
+# Generated from module.xml
+
+module:
+    name: sppapi
+    author: SPP Framework Builder
+    version: "1.0"
+    description: Zero-Code API engine interpreting YAML configurations into RESTful data endpoints.
+    namespace: SPPMod\SPPAPI
+    autoload:
+        - { class: SPPAPI, file: class.sppapi.php }

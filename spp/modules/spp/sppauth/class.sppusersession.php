@@ -5,7 +5,7 @@ use SPP\Exceptions\UserBannedException;
 use SPP\Exceptions\UserAuthenticationException;
 use SPP\Exceptions\InvalidUserSessionException;
 use SPP\Exceptions\UnknownPropertyException;
-use SPPMod\SPPDB\SPP_DB;
+use SPPMod\SPPDB\SPPDB;
 use SPP\SPPBase;
 use SPP\SPPSession;
 use SPPMod\SPPConfig\SPPConfig;
@@ -41,7 +41,7 @@ class SPPUserSession extends SPPSession
      */
     public function __construct($unm, $pswd)
     {
-        $db = new SPP_DB();
+        $db = new SPPDB();
         $this->user = new SPPUser($unm);
         
         if ($this->user->verifyPassword($pswd)) {
@@ -56,7 +56,7 @@ class SPPUserSession extends SPPSession
             $this->sessid = session_id();
             
             // Record login event
-            $sql = 'INSERT INTO ' . SPPBase::sppTable('loginrec') . 
+            $sql = 'INSERT INTO ' . \SPPMod\SPPDB\SPPDB::sppTable('loginrec') . 
                    '(sessid, uid, logintime, ipaddr, lastaccess) VALUES (?, ?, NOW(), ?, NOW())';
             $values = array(
                 $this->sessid, 
@@ -79,13 +79,13 @@ class SPPUserSession extends SPPSession
      */
     private function purgeExpiredSessions()
     {
-        $db = new SPP_DB();
+        $db = new SPPDB();
         try {
             $timeout = (int)SPPConfig::get('spp.user_session_timeout', 'yaml') * 60; // seconds
         } catch (\Exception $e) {
             $timeout = 60 * 60;
         }
-        $sql = 'DELETE FROM ' . SPPBase::sppTable('loginrec') . 
+        $sql = 'DELETE FROM ' . \SPPMod\SPPDB\SPPDB::sppTable('loginrec') . 
                ' WHERE TIMESTAMPDIFF(SECOND, lastaccess, NOW()) > ?';
         $db->execute_query($sql, array($timeout));
     }
@@ -101,9 +101,9 @@ class SPPUserSession extends SPPSession
      */
     public function isValid($consider_timeout = true)
     {
-        $db = new SPP_DB();
+        $db = new SPPDB();
         $sql = 'SELECT TIMESTAMPDIFF(SECOND, lastaccess, NOW()) as elapsed_time, NOW() as curr_time 
-                FROM ' . SPPBase::sppTable('loginrec') . ' WHERE sessid=?';
+                FROM ' . \SPPMod\SPPDB\SPPDB::sppTable('loginrec') . ' WHERE sessid=?';
         $result = $db->execute_query($sql, array($this->sessid));
         
         if (count($result) > 0) {
@@ -121,7 +121,7 @@ class SPPUserSession extends SPPSession
             }
             
             // Heartbeat: update activity time
-            $sql = 'UPDATE ' . SPPBase::sppTable('loginrec') . ' SET lastaccess=? WHERE sessid=?';
+            $sql = 'UPDATE ' . \SPPMod\SPPDB\SPPDB::sppTable('loginrec') . ' SET lastaccess=? WHERE sessid=?';
             $db->execute_query($sql, array($result[0]['curr_time'], $this->sessid));
             return true;
         }
@@ -133,8 +133,8 @@ class SPPUserSession extends SPPSession
      */
     public function kill()
     {
-        $db = new SPP_DB();
-        $sql = 'DELETE FROM ' . SPPBase::sppTable('loginrec') . ' WHERE sessid=?';
+        $db = new SPPDB();
+        $sql = 'DELETE FROM ' . \SPPMod\SPPDB\SPPDB::sppTable('loginrec') . ' WHERE sessid=?';
         $db->execute_query($sql, array($this->sessid));
 
         if (isset($_SESSION['__sppauth__'])) {

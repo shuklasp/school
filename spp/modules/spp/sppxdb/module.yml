@@ -1,0 +1,13 @@
+# SPP XDB Module Manifest
+
+module:
+    name: sppxdb
+    version: "0.5"
+    pubname: SPP XDB
+    modgroup: SPP_Optional
+    pubdesc: Handles XML Database in SPP.
+    includes:
+        - sppxdb.php
+    deps:
+        - sppdb
+        - sppconfig

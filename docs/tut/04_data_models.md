@@ -73,12 +73,12 @@ This means you can sync your database schema across environments simply by updat
 
 ---
 
-## The `SPP_DB` Helper
+## The `SPPDB` Helper
 
-If you need to perform raw SQL queries, use the `SPP_DB` class:
+If you need to perform raw SQL queries, use the `SPPDB` class:
 
 ```php
-$db = new \SPPMod\SPPDB\SPP_DB();
+$db = new \SPPMod\SPPDB\SPPDB();
 $sql = "SELECT * FROM %tab% WHERE status = ?";
 $results = $db->exec_squery($sql, 'students', ['active']);
 ```

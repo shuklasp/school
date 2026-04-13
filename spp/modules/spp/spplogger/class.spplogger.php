@@ -82,8 +82,8 @@ class SPP_Logger extends \SPP\SPPObject
     public static function write_to_db($message, $level, array $metadata, array $context = [])
     {
         try {
-            $db = new \SPPMod\SPPDB\SPP_DB();
-            $tableName = \SPP\SPPBase::sppTable('logger');
+            $db = new \SPPMod\SPPDB\SPPDB();
+            $tableName = \SPPMod\SPPDB\SPPDB::sppTable('logger');
 
             // Ensure table and columns exist
             if (!$db->tableExists($tableName)) {
@@ -92,8 +92,8 @@ class SPP_Logger extends \SPP\SPPObject
             }
             
             // Automatically patch mapping Sequence parameters resolving fatal exception crashes
-            if (!\SPPMod\SPPDB\SPP_Sequence::sequenceExists('loggerid')) {
-                \SPPMod\SPPDB\SPP_Sequence::createSequence('loggerid', 1, 1);
+            if (!\SPPMod\SPPDB\SPPSequence::sequenceExists('loggerid')) {
+                \SPPMod\SPPDB\SPPSequence::createSequence('loggerid', 1, 1);
             }
             
             $requiredCols = [
@@ -114,7 +114,7 @@ class SPP_Logger extends \SPP\SPPObject
             $sql = 'insert into %tab%(loggerid,uid,uname,ip,logtime,sessid,level,descr,context,request_uri,method,agent) values(?,?,?,?,?,?,?,?,?,?,?,?)';
             
             $values = [
-                date('Ymd', time()) . \SPPMod\SPPDB\SPP_Sequence::next('loggerid', true),
+                date('Ymd', time()) . \SPPMod\SPPDB\SPPSequence::next('loggerid', true),
                 $metadata['uid'],
                 $metadata['uname'],
                 $metadata['ip'],

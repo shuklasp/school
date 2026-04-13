@@ -130,3 +130,38 @@ ddid           varchar(10),
 optgroupname   varchar(50),
 optname        varchar(50));
 
+
+# Table sppgroup
+# Stores group definitions
+drop table if exists sppgroup;
+
+create table sppgroup(
+    id          integer primary key auto_increment,
+    name        varchar(100) unique not null,
+    description varchar(500),
+    metadata    longtext,
+    created_at  datetime default current_timestamp,
+    updated_at  datetime default current_timestamp on update current_timestamp
+) engine=innodb;
+
+
+# Table sppgroupmember
+# Stores polymorphic group memberships
+drop table if exists sppgroupmember;
+
+create table sppgroupmember(
+    id             integer primary key auto_increment,
+    group_id       integer not null,
+    member_entity  varchar(255) not null,
+    member_id      integer not null,
+    role           varchar(50) default 'member',
+    rights         text,
+    created_at     datetime default current_timestamp,
+    foreign key (group_id) references sppgroup(id) on delete cascade
+) engine=innodb;
+
+
+insert into sppgroup(id, name, description) values(1, 'Administrators', 'System administrators with full access');
+insert into sppgroup(id, name, description) values(2, 'Operators', 'Standard operators with limited access');
+
+

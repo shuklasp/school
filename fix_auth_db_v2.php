@@ -3,7 +3,7 @@ require_once('spp/sppinit.php');
 require_once('global.php');
 require_once('vendor/autoload.php');
 
-$db = new \SPPMod\SPPDB\SPP_DB();
+$db = new \SPPMod\SPPDB\SPPDB();
 
 echo "Step: Creating/Connecting authentication structure...\n";
 

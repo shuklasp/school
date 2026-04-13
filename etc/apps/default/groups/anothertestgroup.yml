@@ -1,0 +1,6 @@
+id: anothertestgroup
+name: AnotherTestGroup
+description: 'Just Testing'
+attributes:
+    Test: test
+members: {  }

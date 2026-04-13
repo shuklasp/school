@@ -26,8 +26,8 @@ class SPPProfile extends \SPP\SPPObject
      */
     public function __construct($pname)
     {
-        $db = new \SPPMod\SPPDB\SPP_DB();
-        $sql = 'select * from ' . \SPP\SPPBase::sppTable('profiletabs') . ' where profname=?';
+        $db = new \SPPMod\SPPDB\SPPDB();
+        $sql = 'select * from ' . \SPPMod\SPPDB\SPPDB::sppTable('profiletabs') . ' where profname=?';
         $values = array($pname);
         $result = $db->execute_query($sql, $values);
         if (sizeof($result) > 0) {
@@ -49,10 +49,10 @@ class SPPProfile extends \SPP\SPPObject
      */
     function getFields()
     {
-        $db = new \SPPMod\SPPDB\SPP_DB();
+        $db = new \SPPMod\SPPDB\SPPDB();
         if ($this->proftabname == null || $this->proftabname == '')
             throw (new \SPP\SPPException('No profile tab!'));
-        $sql = 'show columns from ' . \SPP\SPPBase::sppTable($this->proftabname);
+        $sql = 'show columns from ' . \SPPMod\SPPDB\SPPDB::sppTable($this->proftabname);
         $result = $db->execute_query($sql);
         if (sizeof($result) > 0) {
             return $result;
@@ -71,11 +71,11 @@ class SPPProfile extends \SPP\SPPObject
      */
     function seekValue($fld, $val)
     {
-        $db = new \SPPMod\SPPDB\SPP_DB();
+        $db = new \SPPMod\SPPDB\SPPDB();
         if ($this->proftabname == null || $this->proftabname == '')
             throw (new \SPP\SPPException('No profile tab!'));
         $fld = preg_replace('/[^a-zA-Z0-9_]/', '', $fld);
-        $sql = 'select * from ' . \SPP\SPPBase::sppTable($this->proftabname) . ' where ' . $fld . '=?';
+        $sql = 'select * from ' . \SPPMod\SPPDB\SPPDB::sppTable($this->proftabname) . ' where ' . $fld . '=?';
         $values = array($val);
         $result = $db->execute_query($sql, $values);
         if (sizeof($result) > 0) {
@@ -111,8 +111,8 @@ class SPPProfile extends \SPP\SPPObject
      */
     public function getAll()
     {
-        $db = new \SPPMod\SPPDB\SPP_DB();
-        $sql = $sql = 'select * from ' . \SPP\SPPBase::sppTable($this->proftabname);
+        $db = new \SPPMod\SPPDB\SPPDB();
+        $sql = $sql = 'select * from ' . \SPPMod\SPPDB\SPPDB::sppTable($this->proftabname);
         $result = $db->execute_query($sql);
         return $result;
     }
@@ -126,8 +126,8 @@ class SPPProfile extends \SPP\SPPObject
      */
     public function seekProfile($pid)
     {
-        $db = new \SPPMod\SPPDB\SPP_DB();
-        $sql = 'select * from ' . \SPP\SPPBase::sppTable($this->proftabname) . ' where ' . $this->idfield . '=?';
+        $db = new \SPPMod\SPPDB\SPPDB();
+        $sql = 'select * from ' . \SPPMod\SPPDB\SPPDB::sppTable($this->proftabname) . ' where ' . $this->idfield . '=?';
         $values = array($pid);
         $result = $db->execute_query($sql, $values);
         if (sizeof($result) > 0) {
@@ -221,12 +221,12 @@ class SPPProfile extends \SPP\SPPObject
      */
     public function update()
     {
-        $db = new \SPPMod\SPPDB\SPP_DB();
+        $db = new \SPPMod\SPPDB\SPPDB();
         //$db->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
         if (is_null($this->selectedrow)) {
             return false;
         } else {
-            $sql = 'update ' . \SPP\SPPBase::sppTable($this->proftabname) . ' set ';
+            $sql = 'update ' . \SPPMod\SPPDB\SPPDB::sppTable($this->proftabname) . ' set ';
             $values = array();
             $i = 0;
             foreach ($this->selectedrow as $fld => $val) {
@@ -252,9 +252,9 @@ class SPPProfile extends \SPP\SPPObject
      */
     public function appendNew()
     {
-        $db = new \SPPMod\SPPDB\SPP_DB();
-        $nprofid = \SPPMod\SPPDB\SPP_Sequence::next($this->profseqname);
-        $sql = 'insert into ' . \SPP\SPPBase::sppTable($this->proftabname) . '(' . $this->idfield . ') values(?)';
+        $db = new \SPPMod\SPPDB\SPPDB();
+        $nprofid = \SPPMod\SPPDB\SPPSequence::next($this->profseqname);
+        $sql = 'insert into ' . \SPPMod\SPPDB\SPPDB::sppTable($this->proftabname) . '(' . $this->idfield . ') values(?)';
         $values = array($nprofid);
         $result = $db->execute_query($sql, $values);
         $this->seekProfile($nprofid);
@@ -264,12 +264,12 @@ class SPPProfile extends \SPP\SPPObject
 
     public function appendSave($flds)
     {
-        $db = new \SPPMod\SPPDB\SPP_DB();
+        $db = new \SPPMod\SPPDB\SPPDB();
         //$db->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
         $db->beginTransaction();
         try {
-            $nprofid = \SPPMod\SPPDB\SPP_Sequence::next($this->profseqname);
-            $sql = 'insert into ' . \SPP\SPPBase::sppTable($this->proftabname) . ' set ';
+            $nprofid = \SPPMod\SPPDB\SPPSequence::next($this->profseqname);
+            $sql = 'insert into ' . \SPPMod\SPPDB\SPPDB::sppTable($this->proftabname) . ' set ';
             $values = array();
             $i = 0;
             foreach ($flds as $fld => $val) {
@@ -303,11 +303,11 @@ class SPPProfile extends \SPP\SPPObject
      */
     public function deleteMe()
     {
-        $db = new \SPPMod\SPPDB\SPP_DB();
+        $db = new \SPPMod\SPPDB\SPPDB();
         if (is_null($this->selectedrow)) {
             return false;
         } else {
-            $sql = 'delete from ' . \SPP\SPPBase::sppTable($this->proftabname) . ' where ' . $this->idfield . '=?';
+            $sql = 'delete from ' . \SPPMod\SPPDB\SPPDB::sppTable($this->proftabname) . ' where ' . $this->idfield . '=?';
             $values = array($this->profid);
             $result = $db->execute_query($sql, $values);
             $this->selectedrow = null;
@@ -324,8 +324,8 @@ class SPPProfile extends \SPP\SPPObject
      */
     public static function doesProfileExist($pname)
     {
-        $db = new \SPPMod\SPPDB\SPP_DB();
-        $sql = 'select * from ' . \SPP\SPPBase::sppTable('profiletabs') . ' where profname=?';
+        $db = new \SPPMod\SPPDB\SPPDB();
+        $sql = 'select * from ' . \SPPMod\SPPDB\SPPDB::sppTable('profiletabs') . ' where profname=?';
         $values = array($pname);
         $result = $db->execute_query($sql, $values);
         if (sizeof($result) > 0) {
@@ -344,19 +344,19 @@ class SPPProfile extends \SPP\SPPObject
      */
     public static function dropProfile($pname)
     {
-        $db = new \SPPMod\SPPDB\SPP_DB();
+        $db = new \SPPMod\SPPDB\SPPDB();
         if (self::doesProfileExist($pname)) {
-            $sql = 'select * from ' . \SPP\SPPBase::sppTable('profiletabs') . ' where profname=?';
+            $sql = 'select * from ' . \SPPMod\SPPDB\SPPDB::sppTable('profiletabs') . ' where profname=?';
             $values = array($pname);
             $result = $db->execute_query($sql, $values);
             $tabname = $result[0]['proftabname'];
             $seqname = $result[0]['profseqname'];
             //echo $tabname;
-            $sql = 'drop table ' . \SPP\SPPBase::sppTable($tabname);
+            $sql = 'drop table ' . \SPPMod\SPPDB\SPPDB::sppTable($tabname);
             $result = $db->execute_query($sql);
-            $sql = 'delete from ' . \SPP\SPPBase::sppTable('profiletabs') . ' where profname=?';
+            $sql = 'delete from ' . \SPPMod\SPPDB\SPPDB::sppTable('profiletabs') . ' where profname=?';
             $result = $db->execute_query($sql, $values);
-            \SPPMod\SPPDB\SPP_Sequence::dropSequence($seqname);
+            \SPPMod\SPPDB\SPPSequence::dropSequence($seqname);
             return true;
         } else {
             return false;
@@ -372,12 +372,12 @@ class SPPProfile extends \SPP\SPPObject
      */
     public static function createProfile($pname, $flds = array())
     {
-        $db = new \SPPMod\SPPDB\SPP_DB();
+        $db = new \SPPMod\SPPDB\SPPDB();
         $pname = preg_replace('/[^a-zA-Z0-9_]/', '', $pname);
         if (self::doesProfileExist($pname)) {
             throw new ProfileAlreadyExistsException('Profile with this name already exists!');
         } else {
-            $sql = 'create table ' . \SPP\SPPBase::sppTable('prof_' . $pname) . ' (profid  bigint primary key';
+            $sql = 'create table ' . \SPPMod\SPPDB\SPPDB::sppTable('prof_' . $pname) . ' (profid  bigint primary key';
             foreach ($flds as $fld => $fldsz) {
                 if (!is_int($fld)) {
                     $fld = preg_replace('/[^a-zA-Z0-9_]/', '', $fld);
@@ -391,9 +391,9 @@ class SPPProfile extends \SPP\SPPObject
                 }
             }
             $sql .= ')';
-            \SPPMod\SPPDB\SPP_Sequence::createSequence('prof_' . $pname . '_seq', 1, 1);
+            \SPPMod\SPPDB\SPPSequence::createSequence('prof_' . $pname . '_seq', 1, 1);
             $result = $db->execute_query($sql);
-            $sql = 'insert into ' . \SPP\SPPBase::sppTable('profiletabs') . ' (profname, proftabname, profseqname, idfield) values(?,?,?,?)';
+            $sql = 'insert into ' . \SPPMod\SPPDB\SPPDB::sppTable('profiletabs') . ' (profname, proftabname, profseqname, idfield) values(?,?,?,?)';
             $values = array($pname, 'prof_' . $pname, 'prof_' . $pname . '_seq', 'profid');
             $result = $db->execute_query($sql, $values);
         }

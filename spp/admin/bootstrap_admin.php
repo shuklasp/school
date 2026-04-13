@@ -13,14 +13,14 @@ require_once dirname(__DIR__, 2) . '/global.php';
 require_once dirname(__DIR__, 2) . '/vendor/autoload.php';
 
 use SPPMod\SPPAuth\SPPUser;
-use SPPMod\SPPDB\SPP_DB;
+use SPPMod\SPPDB\SPPDB;
 use SPP\SPPBase;
 
 try {
     echo "--- SPP Admin Bootstrap ---\n";
     
-    $db = new SPP_DB();
-    $tableName = SPPBase::sppTable('users');
+    $db = new SPPDB();
+    $tableName = \SPPMod\SPPDB\SPPDB::sppTable('users');
     
     // Check if admin already exists
     if (SPPUser::userExists('admin')) {

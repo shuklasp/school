@@ -1,0 +1,15 @@
+module:
+    name: sppdb
+    pubname: SPP Database Core
+    version: 1.2
+    author: Satya Prakash Shukla
+    pubdesc: Core database abstraction layer providing prefixed table mapping, transaction management, and incremental schema synchronization.
+    modgroup: Core
+    installation:
+        tables:
+            sequences:
+                seqname: "VARCHAR(255) PRIMARY KEY"
+                initval: "INT"
+                seqval: "INT"
+                incval: "INT"
+                lastaccess: "INT"

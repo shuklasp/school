@@ -8,7 +8,7 @@
 -->
 
 <module>
-    <name>sppentity</name>
+    <name>schorg</name>
     <version>0.5</version>
     <pubname>SPP Entity</pubname>
     <modgroup>SPP_Optional</modgroup>

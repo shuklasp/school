@@ -7,30 +7,34 @@ namespace SPP;
  * @author Satya Prakash Shukla
  */
 class SPPFS extends \SPP\SPPObject {
-    public static function findFile($file,$root=SPP_BASE_DIR) {
-        $filearray=array();
-        $stack=new \SPP\Stack();
+    public static function findFile($file, $root = SPP_BASE_DIR)
+    {
+        $filearray = array();
+        $stack = new \SPP\Stack();
         do {
-            $dir=opendir($root);
-            //echo $root.'<br />';
-            if($dir===false) {
-                return false;
+            if (!is_dir($root)) continue;
+            
+            $dir = @opendir($root);
+            if ($dir === false) {
+                // Log failure but continue searching other branches in the stack
+                continue;
             }
-            while(($fl=readdir($dir))!==false) {
-                if($fl!='.'&&$fl!='..') {
-                    if(is_dir($root.SPP_DS.$fl)) {
-                        $stack->push($root.SPP_DS.$fl);
-                        //echo '<br />Stack: '.$stack.'<br />';
-                    }
-                    else {
-                            //echo '<br />File: '.$fl.'<br />';
-                        if($file==$fl) {
-                            $filearray[]=$root.SPP_DS.$fl;
+            
+            while (($fl = readdir($dir)) !== false) {
+                if ($fl != '.' && $fl != '..') {
+                    $path = $root . SPP_DS . $fl;
+                    if (is_dir($path)) {
+                        $stack->push($path);
+                    } else {
+                        if ($file == $fl) {
+                            $filearray[] = $path;
                         }
                     }
                 }
             }
-        }while(($root=$stack->pop())!==false);
+            closedir($dir);
+        } while (($root = $stack->pop()) !== false);
+        
         return $filearray;
     }
 }

@@ -1,0 +1,6 @@
+# SPPView Module Configuration
+variables:
+    page_source_primary: yaml      
+    page_source_fallback: db       
+    auto_page_augmentation: true  # Injects data attributes and validation into standard HTML/PHP pages
+    auto_js_injection: true       # Automatically includes SPA and validation scripts

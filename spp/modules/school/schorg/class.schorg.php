@@ -23,7 +23,7 @@ class Organiusation extends \SPPMod\SPPEntity\SPPEntity{
 
     public function install()
     {
-        $db = new \SPPMod\SPPDB\SPP_DB();
+        $db = new \SPPMod\SPPDB\SPPDB();
         if ($db->tableExists($this->enttab)) {
             $query = 'create table '.$this->enttab.'(entid  varchar(20))';
             $db->execute_query($query);

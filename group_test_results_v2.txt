@@ -1,0 +1,9 @@
+﻿Testing SPPGroup membership with SPPUser...
+ERROR: Database Error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'ai_vector' in 'field list'
+#0 C:\projects\apache\school1\spp\modules\spp\sppdb\class.sppdb.php(166): SPPMod\SPPDB\SPPDB->execute_query('insert into spp...', Array)
+#1 C:\projects\apache\school1\spp\modules\spp\sppdb\class.sppdb.php(310): SPPMod\SPPDB\SPPDB->exec_squery('insert into %ta...', 'sppgroups', Array)
+#2 C:\projects\apache\school1\spp\modules\spp\sppentity\class.sppentity.php(557): SPPMod\SPPDB\SPPDB->insertValues('sppgroups', Array)
+#3 C:\projects\apache\school1\spp\modules\spp\sppentity\class.sppentity.php(517): SPPMod\SPPEntity\SPPEntity->insert()
+#4 C:\projects\apache\school1\spp\modules\spp\sppgroup\class.sppgroup.php(119): SPPMod\SPPEntity\SPPEntity->save()
+#5 C:\Users\Satya Prakash Shukla\.gemini\antigravity\brain\ce491947-1f15-41f7-8877-e91140efaa13\scratch\test_group_add.php(18): SPPMod\SPPGroup\SPPGroup->save()
+#6 {main}

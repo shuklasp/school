@@ -1,0 +1,11 @@
+# Marketing Module Manifest
+# Generated from module.xml
+
+module:
+    name: marketing
+    author: SPP Auto-Builder
+    version: "1.0"
+    description: Auto-generated marketing module.
+    namespace: SPPMod\Marketing
+    autoload:
+        - { class: Marketing, file: class.marketing.php }

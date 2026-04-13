@@ -1,0 +1,13 @@
+module:
+  name: schperson
+  version: 1.0
+  publicname: School Person
+  modulegroup: School
+  publicdesc: Manages personal entities within the school system.
+  config: null
+  includes:
+    - class.schperson.php
+    - personexceptions.php
+  dependencies:
+    - sppconfig
+    - sppentity

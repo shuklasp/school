@@ -1,0 +1,11 @@
+# SPPAI Module Manifest
+# Generated from module.xml
+
+module:
+    name: sppai
+    author: SPP Auto-Builder
+    version: "1.0"
+    description: SPPAI Core AI integration module.
+    namespace: SPPMod\SPPAI
+    autoload:
+        - { class: SPPAI, file: class.sppai.php }

@@ -233,10 +233,20 @@ class SPPAjax extends \SPP\SPPObject
             return self::$serviceRegistry;
         }
 
-        $registryPath = \SPP\Module::getConfig('spa_services_registry', 'sppajax')
-            ?: '/etc/services.yml';
+        $appname = \SPP\Scheduler::getContext();
+        $file = APP_ETC_DIR . SPP_DS . $appname . SPP_DS . 'services.yml';
 
-        $file = SPP_APP_DIR . $registryPath;
+        if (!file_exists($file)) {
+            // Check module configuration for custom override
+            $registryPath = \SPP\Module::getConfig('spa_services_registry', 'sppajax');
+            if ($registryPath) {
+                $file = SPP_APP_DIR . $registryPath;
+            } else {
+                // Fallback to legacy location /etc/services.yml
+                $file = SPP_APP_DIR . '/etc/services.yml';
+            }
+        }
+
         if (!file_exists($file)) {
             self::$serviceRegistry = [];
             return [];

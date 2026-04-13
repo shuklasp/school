@@ -1,0 +1,23 @@
+# SPP Ajax / SPA Router Module Manifest
+
+module:
+    name: sppajax
+    version: "1.0"
+    pubname: SPP Ajax / SPA Router
+    modgroup: SPP_Core
+    pubdesc: Single Page Application engine. Handles page fragment and service dispatch via AJAX.
+    includes:
+        - class.sppajax.php
+    deps:
+        - sppconfig
+        - sppview
+    config_variables:
+        - spa_enabled
+        - spa_container
+        - spa_default_mode
+        - spa_loading_indicator
+        - spa_push_state
+        - spa_transition
+        - spa_page_dir
+        - spa_service_dir
+        - spa_services_registry

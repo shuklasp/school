@@ -79,6 +79,7 @@ class SPPViewForm_Option extends SPPViewForm_Element{
         $this->tagname='option';
         $this->attrlist=array('disabled','label','selected','value');
         $this->opttext=$disptext;
+        $this->setMatterText($disptext);
         $this->setAttribute('value', $optvalue);
     }
 
@@ -108,6 +109,28 @@ class SPPViewForm_Select extends SPPViewForm_Element{
         $this->tagname='select';
         $this->attrlist=array('disabled','multiple','name','size');
         $this->addOption('Select', '', true);
+    }
+
+    public function setAttribute($name, $val) {
+        if ($name === 'value') {
+            // Force values into array for consistent comparison (supports multiselect)
+            $selectedValues = is_array($val) ? $val : array($val);
+            
+            if (!empty($this->options)) {
+                foreach ($this->options as $idx => $optArr) {
+                    $opt = $optArr[0];
+                    if (in_array($opt->getAttribute('value'), $selectedValues)) {
+                        $opt->setAttribute('selected', 'selected');
+                    } else {
+                        $opt->removeAttribute('selected');
+                    }
+                }
+            }
+            // Skip setting the actual 'value' attribute on the <select> tag if it's an array
+            // to avoid rendering warnings. The internal options already have 'selected' set.
+            if (is_array($val)) return true;
+        }
+        return parent::setAttribute($name, $val);
     }
 
     public function addOption($disptext,$optvalue,$selected=false,$ename='',$optgroup='')
@@ -145,7 +168,7 @@ class SPPViewForm_Select extends SPPViewForm_Element{
     public function getHTML()
     {
         $prevoptgroup='';
-        $htm=parent::getHTML();
+        $htm= $this->getStart();
         foreach($this->options as $opt)
         {
             if($opt[1]!=$prevoptgroup)
@@ -166,7 +189,7 @@ class SPPViewForm_Select extends SPPViewForm_Element{
         {
             $htm.= '</optgroup>';
         }
-        $htm.='</select>';
+        $htm.= $this->getEnd();
         return $htm;
     }
 
@@ -201,7 +224,7 @@ class SPPViewForm_Select extends SPPViewForm_Element{
 class SPPViewForm_SQLDropDown extends SPPViewForm_Select{
     public function  __construct($ename, $sql, $optdispfld, $optvalfld, $values=array(), $defval='', $optgrpfld='') {
         parent::__construct($ename);
-        $db=new \SPPMod\SPPDB\SPP_DB();
+        $db=new \SPPMod\SPPDB\SPPDB();
         $result=$db->execute_query($sql, $values);
         foreach($result as $res)
         {

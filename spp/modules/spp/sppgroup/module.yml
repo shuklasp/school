@@ -1,0 +1,30 @@
+module:
+    name: sppgroup
+    pubname: SPP Group Management
+    version: 1.2
+    author: Satya Prakash Shukla
+    pubdesc: Comprehensive grouping system supporting recursive membership and polymorphic entity associations.
+    modgroup: System
+    deps:
+        - sppdb
+        - sppauth
+        - sppentity
+    installation:
+        tables:
+            sppgroups:
+                id: "INT NOT NULL PRIMARY KEY auto_increment"
+                name: "VARCHAR(255)"
+                description: "TEXT"
+                source: "VARCHAR(50)"
+                group_context: "VARCHAR(100)"
+                metadata: "TEXT"
+            sppgroupmembers:
+                id: "INT NOT NULL PRIMARY KEY auto_increment"
+                groupid: "INT"
+                member_class: "VARCHAR(255)"
+                member_id: "VARCHAR(100)"
+                role: "VARCHAR(50)"
+                direct: "TINYINT(1)"
+        entities:
+            - \SPPMod\SPPGroup\SPPGroup
+            - \SPPMod\SPPGroup\SPPGroupMember

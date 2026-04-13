@@ -1,0 +1,16 @@
+module:
+    name: sppconfig
+    pubname: SPP Configuration
+    version: 1.1
+    author: Satya Prakash Shukla
+    pubdesc: Dynamic configuration management for SPP applications.
+    modgroup: Core
+    installation:
+        tables:
+            config:
+                propname: "VARCHAR(100) NOT NULL PRIMARY KEY"
+                propval: "VARCHAR(500)"
+                tabname: "VARCHAR(100)"
+                colname: "VARCHAR(100)"
+                pkname: "VARCHAR(100)"
+                pkval: "VARCHAR(100)"

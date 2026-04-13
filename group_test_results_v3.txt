@@ -1,0 +1,14 @@
+﻿Testing SPPGroup membership with SPPUser...
+Group created with ID: 15
+User 'admin' loaded with ID: 1
+Seek Method: username
+Adding user to group...
+SUCCESS: Member added.
+Verifying membership...
+SUCCESS: isMember returns true.
+Loading members...
+Member count: 1
+ - Member Class: SPPMod\SPPAuth\SPPUser
+ - Member ID: 1
+ - Member Seek Method: userid
+ - Member Username: admin

@@ -29,30 +29,42 @@ class SPPConfig extends \SPP\SPPObject
      * Resolves dot-notation mapped YAML routing configuration
      */
     public static function resolveYamlLocation($propname) {
-        $root = dirname(__DIR__, 4);
         $parts = explode('.', $propname);
         $filePath = '';
         $ymlKeys = [];
         
+        $appname = \SPP\Scheduler::getContext();
+        if (empty($appname) || $appname === 'undefined') $appname = 'default';
+
         if ($parts[0] === 'mod') {
+            // mod.* -> SPP_ETC_DIR/apps/<appname>/modsconf/<modname>/config.yml
             if (count($parts) < 3) return null;
             $modname = $parts[1];
-            $filePath = $root . '/spp/etc/apps/default/modsconf/' . $modname . '/config.yml';
+            $filePath = SPP_ETC_DIR . '/apps/' . $appname . '/modsconf/' . $modname . '/config.yml';
             $ymlKeys = array_slice($parts, 2);
-        } elseif ($parts[0] === 'spp') {
-            if (count($parts) < 3) return null;
-            $filePath = $root . '/etc/settings/app/settings.yml';
-            $ymlKeys = array_slice($parts, 1);
+        } elseif ($parts[0] === 'app' && isset($parts[1]) && $parts[1] === 'mod') {
+            // app.mod.* -> APP_ETC_DIR/<appname>/modsconf/<modname>/config.yml
+            if (count($parts) < 4) return null;
+            $modname = $parts[2];
+            $filePath = APP_ETC_DIR . '/' . $appname . '/modsconf/' . $modname . '/config.yml';
+            $ymlKeys = array_slice($parts, 3);
         } elseif ($parts[0] === 'app') {
-            if (count($parts) < 3) return null;
-            $appname = $parts[1];
-            if ($appname === 'default') $appname = 'app';
-            $filePath = $root . '/etc/settings/' . $appname . '/settings.yml';
-            $ymlKeys = array_slice($parts, 2);
+            // app.* -> APP_ETC_DIR/<appname>/settings.yml
+            if (count($parts) < 2) return null;
+            $filePath = APP_ETC_DIR . '/' . $appname . '/settings.yml';
+            $ymlKeys = array_slice($parts, 1);
+        } elseif ($parts[0] === 'spp') {
+            // spp.* -> SPP_ETC_DIR/settings.yml
+            if (count($parts) < 2) return null;
+            $filePath = SPP_ETC_DIR . '/settings.yml';
+            $ymlKeys = array_slice($parts, 1);
         } else {
-            $filePath = $root . '/etc/settings/app/settings.yml';
+            $filePath = SPP_ETC_DIR . '/settings.yml';
             $ymlKeys = $parts; 
         }
+        
+        // Normalize slashes
+        $filePath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $filePath);
         
         return ['path' => $filePath, 'keys' => $ymlKeys];
     }
@@ -117,8 +129,8 @@ class SPPConfig extends \SPP\SPPObject
             self::$configcache[$propname] = $appconf[$propname];
             return $appconf[$propname];
         } else {
-            $db = new \SPPMod\SPPDB\SPP_DB();
-            $query = 'select * from ' . \SPP\SPPBase::sppTable('config') . ' where propname=?';
+            $db = new \SPPMod\SPPDB\SPPDB();
+            $query = 'select * from ' . \SPPMod\SPPDB\SPPDB::sppTable('config') . ' where propname=?';
             $result = $db->execute_query($query, array($propname));
             if (sizeof($result) <= 0) {
                 throw new UnknownConfigVarException('Unknown config variable accessed ' . $propname);
@@ -132,7 +144,7 @@ class SPPConfig extends \SPP\SPPObject
                     $tabName = preg_replace('/[^a-zA-Z0-9_]/', '', $res['tabname']);
                     $pkName = preg_replace('/[^a-zA-Z0-9_]/', '', $res['pkname']);
 
-                    $sql = 'select ' . $colName . ' from ' . \SPP\SPPBase::sppTable($tabName) . ' where ' . $pkName . '=?';
+                    $sql = 'select ' . $colName . ' from ' . \SPPMod\SPPDB\SPPDB::sppTable($tabName) . ' where ' . $pkName . '=?';
                     $values = array($res['pkval']);
                     $result = $db->execute_query($sql, $values);
                     if (sizeof($result) <= 0) {
@@ -179,15 +191,15 @@ class SPPConfig extends \SPP\SPPObject
         if (is_array($confarray) && array_key_exists($propname, $confarray)) {
             throw new ReadonlyConfigVarException('Config var in settings.php was tried to be modified!');
         }
-        $db = new \SPPMod\SPPDB\SPP_DB();
-        $query = 'select * from ' . \SPP\SPPBase::sppTable('config') . ' where propname=?';
+        $db = new \SPPMod\SPPDB\SPPDB();
+        $query = 'select * from ' . \SPPMod\SPPDB\SPPDB::sppTable('config') . ' where propname=?';
         $result = $db->execute_query($query, array($propname));
         if (sizeof($result) <= 0) {
             throw new UnknownConfigVarException('Unknown config variable accessed ' . $propname);
         } else {
             $res = $result[0];
             if ($res['propval'] != 'fromtabs') {
-                $sql = 'update ' . \SPP\SPPBase::sppTable('config') . ' set propval=? where propname=?';
+                $sql = 'update ' . \SPPMod\SPPDB\SPPDB::sppTable('config') . ' set propval=? where propname=?';
                 $values = array($propval, $propname);
                 $result = $db->execute_query($sql, $values);
                 self::$configcache[$propname] = $propval;
@@ -196,7 +208,7 @@ class SPPConfig extends \SPP\SPPObject
                 $tabName = preg_replace('/[^a-zA-Z0-9_]/', '', $res['tabname']);
                 $pkName = preg_replace('/[^a-zA-Z0-9_]/', '', $res['pkname']);
 
-                $sql = 'update ' . \SPP\SPPBase::sppTable($tabName) . ' set ' . $colName . '=? where ' . $pkName . '=?';
+                $sql = 'update ' . \SPPMod\SPPDB\SPPDB::sppTable($tabName) . ' set ' . $colName . '=? where ' . $pkName . '=?';
                 $values = array($propval, $res['pkval']);
                 $result = $db->execute_query($sql, $values);
                 self::$configcache[$propname] = $propval;
@@ -236,8 +248,8 @@ class SPPConfig extends \SPP\SPPObject
      */
     public static function varExists($propname)
     {
-        $db = new \SPPMod\SPPDB\SPP_DB();
-        $sql = 'select * from ' . \SPP\SPPBase::sppTable('config') . ' where propname=?';
+        $db = new \SPPMod\SPPDB\SPPDB();
+        $sql = 'select * from ' . \SPPMod\SPPDB\SPPDB::sppTable('config') . ' where propname=?';
         $values = array($propname);
         $result = $db->execute_query($sql, $values);
         if (sizeof($result) > 0) {
@@ -262,11 +274,11 @@ class SPPConfig extends \SPP\SPPObject
      */
     public static function createVar($propname, $propval)
     {
-        $db = new \SPPMod\SPPDB\SPP_DB();
+        $db = new \SPPMod\SPPDB\SPPDB();
         if (self::varExists($propname)) {
             return false;
         } else {
-            $sql = 'insert into ' . \SPP\SPPBase::sppTable('config') . '(propname, propval) values(?,?)';
+            $sql = 'insert into ' . \SPPMod\SPPDB\SPPDB::sppTable('config') . '(propname, propval) values(?,?)';
             $values = array($propname, $propval);
             $db->execute_query($sql, $values);
             return true;
@@ -287,11 +299,11 @@ class SPPConfig extends \SPP\SPPObject
      */
     public static function createTabVar($propname, $tabname, $colname, $pkname, $pkval)
     {
-        $db = new \SPPMod\SPPDB\SPP_DB();
+        $db = new \SPPMod\SPPDB\SPPDB();
         if (self::varExists($propname)) {
             return false;
         } else {
-            $sql = 'insert into ' . \SPP\SPPBase::sppTable('config') . ' values(?,?,?,?,?,?)';
+            $sql = 'insert into ' . \SPPMod\SPPDB\SPPDB::sppTable('config') . ' values(?,?,?,?,?,?)';
             $values = array($propname, 'fromtabs', $tabname, $colname, $pkname, $pkval);
             $db->execute_query($sql, $values);
             return true;
@@ -308,11 +320,11 @@ class SPPConfig extends \SPP\SPPObject
      */
     public static function dropVar($propname)
     {
-        $db = new \SPPMod\SPPDB\SPP_DB();
+        $db = new \SPPMod\SPPDB\SPPDB();
         if (self::varExists($propname) == 0) {
             return false;
         } else {
-            $sql = 'delete from ' . \SPP\SPPBase::sppTable('config') . ' where propname=?';
+            $sql = 'delete from ' . \SPPMod\SPPDB\SPPDB::sppTable('config') . ' where propname=?';
             $values = array($propname);
             $db->execute_query($sql, $values);
             return true;

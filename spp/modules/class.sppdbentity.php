@@ -2,13 +2,13 @@
 require_once 'class.sppdatabase.php';
 require_once 'class.sppentity.php';
 /**
- * class SPP_DB_Entity
+ * class SPPDB_Entity
  *
  * Defines a SPP database entity.
  *
  * @author Satya Prakash Shukla
  */
-abstract class SPP_DB_Entity extends SPPEntity{
+abstract class SPPDB_Entity extends SPPEntity{
 
     /**
      * Constructor

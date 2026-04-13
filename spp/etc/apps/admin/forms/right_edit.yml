@@ -1,0 +1,12 @@
+title: "Edit Right"
+entity: "\\SPPMod\\SPPAuth\\SPPRight"
+elements:
+  name:
+    type: text
+    label: "Right Name"
+    placeholder: "e.g. system.manage"
+    required: true
+  description:
+    type: textarea
+    label: "Description"
+    placeholder: "Detailed permission description"

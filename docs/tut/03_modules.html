@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>03. Modular Architecture | SPP Framework Tutorial</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet">
 </head>
+
 <body>
     <aside class="sidebar">
         <h2>SPP Framework</h2>
@@ -29,8 +33,10 @@
     <main class="main-content">
         <article class="content-container">
             <h1>03. Modular Architecture</h1>
-            <p>SPP is built around a robust, flexible modular architecture. Every major feature in the framework — from database handling (<span class="accent">sppdb</span>) to authentication (<span class="accent">sppauth</span>) — is a self-contained **Module**.</p>
-            
+            <p>SPP is built around a robust, flexible modular architecture. Every major feature in the framework — from
+                database handling (<span class="accent">sppdb</span>) to authentication (<span
+                    class="accent">sppauth</span>) — is a self-contained **Module**.</p>
+
             <hr>
 
             <h2>What is a Module?</h2>
@@ -44,7 +50,8 @@
             <hr>
 
             <h2>Module Configuration (module.xml)</h2>
-            <p>Each module's behavior is controlled by its <span class="accent">module.xml</span> file. Here is a typical structure:</p>
+            <p>Each module's behavior is controlled by its <span class="accent">module.xml</span> file. Here is a
+                typical structure:</p>
             <pre><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
 &lt;module&gt;
     &lt;name&gt;sppdb&lt;/name&gt;
@@ -53,8 +60,8 @@
     &lt;description&gt;Core Database Handler Module&lt;/description&gt;
     &lt;namespace&gt;SPPMod\SPPDB&lt;/namespace&gt;
     &lt;autoload&gt;
-        &lt;class name="SPP_DB" file="class.sppdb.php"/&gt;
-        &lt;class name="SPP_Sequence" file="class.sppsequence.php"/&gt;
+        &lt;class name="SPPDB" file="class.sppdb.php"/&gt;
+        &lt;class name="SPPSequence" file="class.sppsequence.php"/&gt;
     &lt;/autoload&gt;
 &lt;/module&gt;</code></pre>
 
@@ -74,7 +81,8 @@ class MyModule extends \SPP\SPPObject
             <hr>
 
             <h2>Consuming Modules</h2>
-            <p>The framework automatically registers and loads enabled modules during bootstrapping. You can interact with modules using the <span class="accent">\SPP\Module</span> core class.</p>
+            <p>The framework automatically registers and loads enabled modules during bootstrapping. You can interact
+                with modules using the <span class="accent">\SPP\Module</span> core class.</p>
 
             <h3>1. Check if a Module is Enabled</h3>
             <pre><code>if (\SPP\Module::isEnabled('sppauth')) {
@@ -82,7 +90,8 @@ class MyModule extends \SPP\SPPObject
 }</code></pre>
 
             <h3>2. Get Module Configuration</h3>
-            <p>Modules can have custom settings defined in YAML or XML. Use <span class="accent">getConfig</span> to retrieve them:</p>
+            <p>Modules can have custom settings defined in YAML or XML. Use <span class="accent">getConfig</span> to
+                retrieve them:</p>
             <pre><code>$dbhost = \SPP\Module::getConfig('dbhost', 'sppdb');</code></pre>
 
             <hr>
@@ -90,7 +99,8 @@ class MyModule extends \SPP\SPPObject
             <h2>Creating a Custom Module</h2>
             <p>While you can manually create the directory and files, it's recommended to use the CLI:</p>
             <pre><code>php spp/spp.php make:module reports</code></pre>
-            <p>This scaffolds a basic <span class="accent">reports</span> module, including its namespace and base class.</p>
+            <p>This scaffolds a basic <span class="accent">reports</span> module, including its namespace and base
+                class.</p>
 
             <footer class="footer-nav">
                 <a href="02_getting_started.html" class="nav-button">
@@ -105,4 +115,5 @@ class MyModule extends \SPP\SPPObject
         </article>
     </main>
 </body>
+
 </html>

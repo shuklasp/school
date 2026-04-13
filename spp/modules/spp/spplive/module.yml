@@ -1,0 +1,10 @@
+# SPP LiveView Module Manifest
+
+module:
+    name: spplive
+    author: SPP Framework Builder
+    version: "1.0"
+    description: Progressive Reactive WebSocket LiveView subsystem mapping native HTML streams automatically.
+    namespace: SPPMod\SPPLive
+    autoload:
+        - { class: SPPLive, file: class.spplive.php }

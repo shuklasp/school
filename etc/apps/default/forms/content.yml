@@ -1,0 +1,11 @@
+form:
+  name: content
+  service: save_data
+
+fields:
+  - name: title
+    type: input
+    label: Title
+    validations:
+      - type: required
+        message: Title is required.

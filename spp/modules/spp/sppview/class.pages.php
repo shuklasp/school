@@ -71,9 +71,17 @@ class Pages extends \SPP\SPPObject
     private static function getYaml(): array
     {
         if (self::$yamlCache === null) {
-            $file = APP_ETC_DIR . SPP_DS . 'pages.yml';
+            $appname = \SPP\Scheduler::getContext();
+            $file = APP_ETC_DIR . SPP_DS . $appname . SPP_DS . 'pages.yml';
+            
             if (!file_exists($file)) {
-                throw new \SPP\SPPException('Pages configuration file not found: ' . $file);
+                // Fallback to legacy location (APP_ETC_DIR/pages.yml)
+                $legacyFile = APP_ETC_DIR . SPP_DS . 'pages.yml';
+                if (file_exists($legacyFile)) {
+                    $file = $legacyFile;
+                } else {
+                    throw new \SPP\SPPException('Pages configuration file not found in app context (' . $appname . ') or legacy location.');
+                }
             }
             try {
                 self::$yamlCache = Yaml::parseFile($file);
@@ -93,21 +101,21 @@ class Pages extends \SPP\SPPObject
      */
     private static function ensureDbSchema(): void
     {
-        $db = new \SPPMod\SPPDB\SPP_DB();
+        $db = new \SPPMod\SPPDB\SPPDB();
 
-        $db->execute_query('CREATE TABLE IF NOT EXISTS ' . \SPP\SPPBase::sppTable('sppview_pages') . ' (
+        $db->execute_query('CREATE TABLE IF NOT EXISTS ' . \SPPMod\SPPDB\SPPDB::sppTable('sppview_pages') . ' (
             id    INT          NOT NULL AUTO_INCREMENT PRIMARY KEY,
             name  VARCHAR(255) NOT NULL UNIQUE,
             url   VARCHAR(500) NOT NULL
         )');
 
-        $db->execute_query('CREATE TABLE IF NOT EXISTS ' . \SPP\SPPBase::sppTable('sppview_defaults') . ' (
+        $db->execute_query('CREATE TABLE IF NOT EXISTS ' . \SPPMod\SPPDB\SPPDB::sppTable('sppview_defaults') . ' (
             id     INT          NOT NULL AUTO_INCREMENT PRIMARY KEY,
             defkey VARCHAR(100) NOT NULL UNIQUE,
             defval VARCHAR(500) NOT NULL
         )');
 
-        $db->execute_query('CREATE TABLE IF NOT EXISTS ' . \SPP\SPPBase::sppTable('sppview_specials') . ' (
+        $db->execute_query('CREATE TABLE IF NOT EXISTS ' . \SPPMod\SPPDB\SPPDB::sppTable('sppview_specials') . ' (
             id     INT          NOT NULL AUTO_INCREMENT PRIMARY KEY,
             name   VARCHAR(100) NOT NULL UNIQUE,
             method VARCHAR(100) NOT NULL
@@ -125,11 +133,11 @@ class Pages extends \SPP\SPPObject
         }
 
         self::ensureDbSchema();
-        $db = new \SPPMod\SPPDB\SPP_DB();
+        $db = new \SPPMod\SPPDB\SPPDB();
 
-        $pages    = $db->execute_query('SELECT name, url FROM '    . \SPP\SPPBase::sppTable('sppview_pages'));
-        $defaults = $db->execute_query('SELECT defkey, defval FROM ' . \SPP\SPPBase::sppTable('sppview_defaults'));
-        $specials = $db->execute_query('SELECT name, method FROM ' . \SPP\SPPBase::sppTable('sppview_specials'));
+        $pages    = $db->execute_query('SELECT name, url FROM '    . \SPPMod\SPPDB\SPPDB::sppTable('sppview_pages'));
+        $defaults = $db->execute_query('SELECT defkey, defval FROM ' . \SPPMod\SPPDB\SPPDB::sppTable('sppview_defaults'));
+        $specials = $db->execute_query('SELECT name, method FROM ' . \SPPMod\SPPDB\SPPDB::sppTable('sppview_specials'));
 
         // Normalise into the same shape getYaml() returns
         $defaultsMap = [];
@@ -364,13 +372,13 @@ class Pages extends \SPP\SPPObject
     public static function importYamlToDb(): array
     {
         self::ensureDbSchema();
-        $db   = new \SPPMod\SPPDB\SPP_DB();
+        $db   = new \SPPMod\SPPDB\SPPDB();
         $yaml = self::getYaml();
         $counts = ['pages' => 0, 'defaults' => 0, 'specials' => 0];
 
         foreach ($yaml['pages'] ?? [] as $page) {
             $db->execute_query(
-                'INSERT IGNORE INTO ' . \SPP\SPPBase::sppTable('sppview_pages') . ' (name, url) VALUES (?, ?)',
+                'INSERT IGNORE INTO ' . \SPPMod\SPPDB\SPPDB::sppTable('sppview_pages') . ' (name, url) VALUES (?, ?)',
                 [$page['name'], $page['url']]
             );
             $counts['pages']++;
@@ -378,7 +386,7 @@ class Pages extends \SPP\SPPObject
 
         foreach ($yaml['defaults'] ?? [] as $key => $val) {
             $db->execute_query(
-                'INSERT IGNORE INTO ' . \SPP\SPPBase::sppTable('sppview_defaults') . ' (defkey, defval) VALUES (?, ?)',
+                'INSERT IGNORE INTO ' . \SPPMod\SPPDB\SPPDB::sppTable('sppview_defaults') . ' (defkey, defval) VALUES (?, ?)',
                 [$key, $val]
             );
             $counts['defaults']++;
@@ -386,7 +394,7 @@ class Pages extends \SPP\SPPObject
 
         foreach ($yaml['specials'] ?? [] as $special) {
             $db->execute_query(
-                'INSERT IGNORE INTO ' . \SPP\SPPBase::sppTable('sppview_specials') . ' (name, method) VALUES (?, ?)',
+                'INSERT IGNORE INTO ' . \SPPMod\SPPDB\SPPDB::sppTable('sppview_specials') . ' (name, method) VALUES (?, ?)',
                 [$special['name'], $special['method']]
             );
             $counts['specials']++;

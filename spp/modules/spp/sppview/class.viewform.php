@@ -23,6 +23,8 @@ class ViewForm extends ViewTag {
     private $globalset;
     private $validators=array();
     private static $valstatus=true;
+    private $entityClass;
+    private $matter;
 
     public function  __construct($ename,$method='post',$act='', $id=null) {
         parent::__construct('form',$ename);
@@ -120,6 +122,7 @@ class ViewForm extends ViewTag {
             $elem->setAttribute('value', $_POST[$ename]);
         }
         $this->elements[$ename]=$elem;
+        $this->addChild($elem);
     }
 
     public function startForm()
@@ -208,6 +211,33 @@ class ViewForm extends ViewTag {
                 return $this->attributes[$propname]=$propval;
             default:
                 throw new UnknownPropertyException('Unknown property '.$propname.' in form');
+        }
+    }
+
+    public function setEntityClass($class) { $this->entityClass = $class; }
+    public function getEntityClass() { return $this->entityClass; }
+    public function setMatter($title) { $this->matter = $title; }
+    public function getMatter() { return $this->matter; }
+
+    /**
+     * Binds an entity to the form by setting values of its elements.
+     */
+    public function bind(\SPPMod\SPPEntity\SPPEntity $entity)
+    {
+        foreach($this->elements as $id => $elem) {
+            $name = $elem->getAttribute('name') ?: $id;
+            $attrName = rtrim($name, '[]'); 
+            
+            if ($entity->attributeExists($attrName)) {
+                $value = $entity->get($attrName);
+                
+                // Special handling for many-to-many role IDs if applicable
+                if ($attrName === 'role_ids' && method_exists($entity, 'getRoles')) {
+                    $value = $entity->getRoles();
+                }
+                
+                $elem->setAttribute('value', $value);
+            }
         }
     }
 }

@@ -1,4 +1,0 @@
-table: spp_groups
-attributes:
-  name: varchar(200)
-  description: text

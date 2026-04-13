@@ -1,0 +1,21 @@
+table: users
+id_field: id
+sequence: users_seq
+attributes:
+    id: int
+    username: varchar(100)
+    email: varchar(255)
+    password_hash: varchar(255)
+    password: varchar(255)
+    role_id: int
+    status: varchar(20)
+    created_at: datetime
+    updated_at: datetime
+relations:
+    - parent_entity_field: id
+      child_entity: \SPPMod\SPPAuth\SPPRole
+      child_entity_field: id
+      relation_type: ManyToMany
+      pivot_table: userroles
+      pivot_parent_id: userid
+      pivot_child_id: roleid

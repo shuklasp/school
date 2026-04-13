@@ -32,6 +32,10 @@ class ViewFormBuilder extends \SPP\SPPObject
             $fConfig['id'] ?? null
         );
 
+        // Metadata assignment
+        if (isset($config['entity'])) $form->setEntityClass($config['entity']);
+        if (isset($config['title']))  $form->setMatter($config['title']);
+
         // SPA Integration
         if (!empty($fConfig['service'])) {
             $form->setAttribute('data-service', $fConfig['service']);
@@ -43,8 +47,12 @@ class ViewFormBuilder extends \SPP\SPPObject
             if (isset($resp['redirect'])) $form->setAttribute('data-on-redirect', $resp['redirect']);
         }
 
-        // Build Fields
-        foreach ($config['fields'] ?? [] as $field) {
+        // Build Fields - Support both 'elements' (new) and 'fields' (legacy) keys
+        foreach ($config['elements'] ?? $config['fields'] ?? [] as $name => $field) {
+            // Handle associative arrays where key is the name
+            if (is_array($field) && !isset($field['name']) && is_string($name)) {
+                $field['name'] = $name;
+            }
             $elem = self::buildElement($field);
             if ($elem) {
                 // Attach validations
@@ -63,9 +71,15 @@ class ViewFormBuilder extends \SPP\SPPObject
      */
     public static function loadConfig(string $yamlPath): array
     {
-        $fullPath = (str_starts_with($yamlPath, '/') || str_contains($yamlPath, ':')) 
-            ? $yamlPath 
-            : SPP_APP_DIR . '/' . ltrim($yamlPath, '/');
+        $fullPath = $yamlPath;
+        if (!str_starts_with($yamlPath, '/') && !str_contains($yamlPath, ':')) {
+            // Try relative to SPP_BASE_DIR first (framework-centric)
+            $fullPath = SPP_BASE_DIR . '/' . ltrim($yamlPath, '/');
+            if (!file_exists($fullPath)) {
+                // Then try relative to SPP_APP_DIR (app-centric)
+                $fullPath = SPP_APP_DIR . '/' . ltrim($yamlPath, '/');
+            }
+        }
 
         if (!file_exists($fullPath)) {
             throw new \SPP\SPPException("Form definition not found: " . $yamlPath);
@@ -107,28 +121,48 @@ class ViewFormBuilder extends \SPP\SPPObject
                 }
                 break;
 
-            case 'select':
-                if (isset($field['options_source']) && $field['options_source']['type'] === 'sql') {
-                    // Use SQL DropDown for direct DB population
-                    $src = $field['options_source'];
-                    $elem = new SPPViewForm_SQLDropDown(
-                        $name, 
-                        $src['query'], 
-                        $src['label_field'] ?? 'label', 
-                        $src['value_field'] ?? 'value'
-                    );
-                } else {
-                    $elem = new SPPViewForm_Select($name);
-                    $options = [];
-                    if (isset($field['options_source'])) {
-                        $options = self::resolveDataSource($field['options_source']);
-                    } else {
-                        $options = $field['options'] ?? [];
-                    }
+            case 'text':
+                $elem = new SPPViewForm_Input_Text($name);
+                break;
 
-                    foreach ($options as $opt) {
-                        $elem->addOption($opt['label'] ?? $opt['value'], $opt['value'], $opt['selected'] ?? false);
+            case 'password':
+                $elem = new SPPViewForm_Input_Password($name);
+                break;
+
+            case 'email':
+                $elem = new SPPViewForm_Input_Text($name);
+                $elem->setAttribute('type', 'email');
+                break;
+
+            case 'multiselect':
+            case 'select':
+                $optsSource = $field['source'] ?? $field['options_source'] ?? null;
+                $elem = new SPPViewForm_Select($name);
+                $options = [];
+
+                if (isset($optsSource)) {
+                    // Shorthand OR explicit SQL source
+                    $options = self::resolveDataSource($optsSource);
+                } else {
+                    $options = $field['options'] ?? [];
+                }
+
+                if (is_array($options)) {
+                    foreach ($options as $key => $opt) {
+                        // Handle both [ {value:x, label:y} ] and { value: label } formats
+                        if (is_array($opt)) {
+                            $label = $opt['label'] ?? $opt['value'] ?? $opt['text'] ?? $key;
+                            $val = $opt['value'] ?? $opt['id'] ?? $key;
+                        } else {
+                            $val = $key;
+                            $label = $opt;
+                        }
+                        $elem->addOption($label, $val, !empty($opt['selected']));
                     }
+                }
+                
+                if ($type === 'multiselect') {
+                    $elem->setAttribute('multiple', 'multiple');
                 }
                 break;
 
@@ -153,6 +187,9 @@ class ViewFormBuilder extends \SPP\SPPObject
     public static function resolveDataSource(array $src)
     {
         $type = $src['type'] ?? 'static';
+        if (isset($src['table']) || isset($src['tablename'])) {
+            $type = 'sql';
+        }
         
         // Resolve parameters if they use the expr: prefix
         $params = $src['params'] ?? [];
@@ -164,9 +201,51 @@ class ViewFormBuilder extends \SPP\SPPObject
 
         switch ($type) {
             case 'sql':
-                $db = new \SPPMod\SPPDB\SPP_DB();
-                // SPP_DB::execute_query() already returns the array of results
-                return $db->execute_query($src['query'], $params);
+                $db = new \SPPMod\SPPDB\SPPDB();
+                $query = $src['query'] ?? null;
+                $table = $src['table'] ?? $src['tablename'] ?? null;
+
+                if (!$query && $table) {
+                    // Shorthand logic
+                    if (str_starts_with(strtoupper(ltrim($table)), 'SELECT')) {
+                        // Table field contains a complete query
+                        $query = $table;
+                    } else {
+                        $valFld = $src['value_field'] ?? $src['id'] ?? $src['value'] ?? 'id';
+                        $lblFld = $src['label_field'] ?? $src['name'] ?? $src['text'] ?? 'name';
+                        $condition = $src['condition'] ?? $src['conditions'] ?? $src['where'] ?? '';
+
+                        $query = "SELECT {$valFld} as value, {$lblFld} as label FROM " . \SPPMod\SPPDB\SPPDB::sppTable($table);
+                        
+                        if (!empty($condition)) {
+                            if (is_array($condition)) {
+                                $condition = implode(' AND ', $condition);
+                            }
+                            $query .= " WHERE " . $condition;
+                        }
+                    }
+                }
+
+                if (!$query) return null;
+
+                // Execute the query
+                $result = $db->execute_query($query, $params);
+                
+                // Format results as standard label/value pairs for the Select element
+                $formatted = [];
+                foreach ($result as $row) {
+                    if (isset($row['value']) && isset($row['label'])) {
+                        $formatted[] = ['value' => $row['value'], 'label' => $row['label']];
+                    } else {
+                        // Fallback: use first and second columns as value and label
+                        $vals = array_values($row);
+                        $formatted[] = [
+                            'value' => $vals[0] ?? null,
+                            'label' => $vals[1] ?? ($vals[0] ?? null)
+                        ];
+                    }
+                }
+                return $formatted;
 
             case 'callback':
                 $method = $src['method'] ?? null;

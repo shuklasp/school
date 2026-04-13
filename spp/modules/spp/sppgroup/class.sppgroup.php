@@ -11,246 +11,338 @@ use SPP\SPPException;
 class SPPGroup extends SPPEntity {
     public const ROLE_MEMBER = 'member';
     public const ROLE_ADMIN = 'admin';
-    
-    /**
-     * Add an entity as a member to this group.
-     * @param SPPEntity $entity
-     * @param string $role
-     * @param array|null $rights
-     * @return bool
-     * @throws SPPException
-     */
-    public function addMember(SPPEntity $entity, string $role = self::ROLE_MEMBER, ?array $rights = null) {
-        if ($this->id == null) {
-            throw new SPPException("Group must be saved before adding members.");
-        }
-        if ($entity->getId() == null) {
-            throw new SPPException("Entity must be saved before being added to a group.");
-        }
+
+    protected $source = 'database';
+    protected $filePath = null;
+    protected $loadedMetadata = [];
+    protected $appContext = 'default';
+
+    public function setSource($source, $appContext = 'default') {
+        $this->source = $source;
+        $this->appContext = $appContext;
         
-        // Cycle detection if entity is also a group
-        if ($entity instanceof SPPGroup) {
-            if ($this->hasAncestor($entity)) {
-                throw new SPPException("Cannot add group to prevent circular nesting.");
+        if ($this->source === 'app') {
+            $name = $this->_values['name'] ?? 'new-group';
+            $slug = $this->id ?: $this->slugify($name);
+            $this->filePath = SPPGroupLoader::getAppGroupDir($appContext) . DIRECTORY_SEPARATOR . $slug . ".yml";
+            $this->id = $slug;
+        } elseif ($this->source === 'global') {
+            $name = $this->_values['name'] ?? 'new-group';
+            $slug = $this->id ?: $this->slugify($name);
+            $this->filePath = SPPGroupLoader::getGlobalGroupDir() . DIRECTORY_SEPARATOR . $slug . ".yml";
+            $this->id = $slug;
+        }
+    }
+
+    protected function slugify($text) {
+        $text = preg_replace('~[^\pL\d]+~u', '-', $text);
+        $text = iconv('utf-8', 'us-ascii//TRANSLIT', $text);
+        $text = preg_replace('~[^-\w]+~', '', $text);
+        $text = trim($text, '-');
+        $text = preg_replace('~-+~', '-', $text);
+        $text = strtolower($text);
+        return empty($text) ? 'n-a' : $text;
+    }
+
+    /**
+     * Overrides load to support priority-based resolution.
+     */
+    public function load($id) {
+        // Try resolving as a name first for file-backed groups
+        $res = SPPGroupLoader::resolveGroup($id);
+        if ($res) {
+            $this->source = $res['source'];
+            if ($this->source !== 'database') {
+                $this->filePath = $res['path'];
+                $this->loadFromFile($res['path']);
+                return;
+            } else {
+                // If found in database by name, switch to its numeric ID
+                $id = $res['id'];
             }
         }
         
-        if (!$this->isMember($entity)) {
+        // Fallback to database
+        $this->source = 'database';
+        parent::load($id);
+    }
+
+    protected function loadFromFile($path) {
+        if (!file_exists($path)) return;
+        
+        $data = null;
+        if (function_exists('yaml_parse_file')) {
+            $data = yaml_parse_file($path);
+        } elseif (class_exists('\Symfony\Component\Yaml\Yaml')) {
+            $data = \Symfony\Component\Yaml\Yaml::parseFile($path);
+        }
+
+        if (!$data) return;
+
+        $this->id = $data['id'] ?? basename($path, '.yml');
+        $this->_values['name'] = $data['name'] ?? $this->id;
+        $this->_values['description'] = $data['description'] ?? '';
+        $this->loadedMetadata = $data['members'] ?? [];
+        
+        // Map other attributes if present
+        if (isset($data['attributes'])) {
+            foreach ($data['attributes'] as $k => $v) {
+                $this->_values[$k] = $v;
+            }
+        }
+    }
+
+    /**
+     * Override to allow dynamic attributes for custom metadata.
+     */
+    public function set($attribute, $value) {
+        $this->_values[$attribute] = $value;
+        return true;
+    }
+
+    /**
+     * Override to allow dynamic attributes for custom metadata.
+     */
+    public function get($attribute) {
+        if (property_exists($this, $attribute)) return $this->$attribute;
+        return $this->_values[$attribute] ?? null;
+    }
+
+    /**
+     * Override to allow dynamic attributes for custom metadata.
+     */
+    public function attributeExists($attribute) {
+        return true;
+    }
+
+    /**
+     * Save group. If source is file-backed, write to YAML.
+     */
+    public function save() {
+        if ($this->source === 'database') {
+            return parent::save();
+        }
+
+        // Auto-pathing if source is file but path is null
+        if (empty($this->filePath)) {
+            $this->setSource($this->source, $this->appContext);
+        }
+
+        // Ensure directory exists
+        $dir = dirname($this->filePath);
+        if (!is_dir($dir)) mkdir($dir, 0777, true);
+
+        $data = [
+            'id' => $this->id,
+            'name' => $this->_values['name'] ?? '',
+            'description' => $this->_values['description'] ?? '',
+            'attributes' => array_diff_key($this->_values, ['name' => 1, 'description' => 1, 'id' => 1]),
+            'members' => $this->loadedMetadata
+        ];
+
+        if (function_exists('yaml_emit_file')) {
+            $res = yaml_emit_file($this->filePath, $data);
+        } elseif (class_exists('\Symfony\Component\Yaml\Yaml')) {
+            $res = file_put_contents($this->filePath, \Symfony\Component\Yaml\Yaml::dump($data, 4));
+        } else {
+            throw new \SPP\SPPException("No YAML emitter found.");
+        }
+        
+        return $this->id;
+    }
+
+    /**
+     * Recursive membership check.
+     */
+    public function isMember($entity, bool $recursive = true, array &$seen = []) {
+        if ($this->id == null || $entity->getId() == null) return false;
+        
+        // Prevent infinite recursion
+        $uid = $this->source . ':' . $this->id;
+        if (isset($seen[$uid])) return false;
+        $seen[$uid] = true;
+
+        $directMembers = $this->getDirectMembers();
+        foreach ($directMembers as $member) {
+            // Check if exact match
+            if (get_class($member['entity']) === get_class($entity) && $member['entity']->getId() == $entity->getId()) {
+                return true;
+            }
+
+            // If recursive, and member is a group, check its kids
+            if ($recursive && $member['entity'] instanceof SPPGroup) {
+                if ($member['entity']->isMember($entity, true, $seen)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Recursive member collection (Flattened).
+     */
+    public function getMembers(bool $recursive = true, array &$seen = []) {
+        if ($this->id == null) return [];
+
+        $uid = $this->source . ':' . $this->id;
+        if (isset($seen[$uid])) return [];
+        $seen[$uid] = true;
+
+        $direct = $this->getDirectMembers();
+        $all = [];
+
+        foreach ($direct as $m) {
+            $memberObj = $m['entity'];
+            $memberKey = get_class($memberObj) . ':' . $memberObj->getId();
+            
+            if (!isset($all[$memberKey])) {
+                $all[$memberKey] = [
+                    'entity' => $memberObj,
+                    'role' => $m['role'],
+                    'source_group' => $this->_values['name'] ?? $this->id,
+                    'direct' => true
+                ];
+            }
+
+            if ($recursive && $memberObj instanceof SPPGroup) {
+                $subMembers = $memberObj->getMembers(true, $seen);
+                foreach ($subMembers as $sm) {
+                    $smKey = get_class($sm['entity']) . ':' . $sm['entity']->getId();
+                    if (!isset($all[$smKey])) {
+                        $all[$smKey] = $sm;
+                        $all[$smKey]['direct'] = false;
+                        $all[$smKey]['inherited_via'] = $this->_values['name'] ?? $this->id;
+                    }
+                }
+            }
+        }
+
+        return array_values($all);
+    }
+
+    /**
+     * Helper to get direct members from current storage source.
+     */
+    protected function getDirectMembers() {
+        $results = [];
+        if ($this->source === 'database') {
+            $gm = new SPPGroupMember();
+            $records = $gm->loadMultiple(['group_id'], [$this->id]);
+            foreach ($records as $record) {
+                $class = $record->member_entity;
+                if (class_exists($class)) {
+                    $results[] = [
+                        'entity' => new $class($record->member_id),
+                        'role' => $record->role
+                    ];
+                }
+            }
+        } else {
+            foreach ($this->loadedMetadata as $m) {
+                $class = $m['entity'];
+                if (class_exists($class)) {
+                    $results[] = [
+                        'entity' => new $class($m['id']),
+                        'role' => $m['role'] ?? self::ROLE_MEMBER
+                    ];
+                }
+            }
+        }
+        return $results;
+    }
+
+    /**
+     * Add a member to the group (Polymorphic).
+     */
+    public function addMember($entity, string $role = self::ROLE_MEMBER, ?array $rights = null) {
+        if ($this->id == null) throw new SPPException("Group must be loaded/saved.");
+        
+        // Cycle detection
+        if ($entity instanceof SPPGroup) {
+            if ($this->hasAncestor($entity)) {
+                throw new SPPException("Cycle detected: Cannot add group.");
+            }
+        }
+
+        if ($this->isMember($entity, false)) return false;
+
+        if ($this->source === 'database') {
             $member = new SPPGroupMember();
             $member->group_id = $this->id;
             $member->member_entity = get_class($entity);
             $member->member_id = $entity->getId();
             $member->role = $role;
-            if ($rights !== null) {
-                $member->rights = json_encode($rights);
-            }
+            if ($rights) $member->rights = json_encode($rights);
             $member->save();
-            return true;
+        } else {
+            $this->loadedMetadata[] = [
+                'entity' => get_class($entity),
+                'id' => $entity->getId(),
+                'role' => $role,
+                'rights' => $rights
+            ];
+            $this->save();
         }
-        return false;
+        return true;
     }
-    
+
     /**
-     * Check if a group is an ancestor of this group to prevent cycles.
-     * @param SPPGroup $group
-     * @return bool
+     * Remove a member from the group.
      */
-    public function hasAncestor(SPPGroup $group) {
+    public function removeMember($entity) {
+        if ($this->source === 'database') {
+            $gm = new SPPGroupMember();
+            $records = $gm->loadMultiple(
+                ['group_id', 'member_entity', 'member_id'],
+                [$this->id, get_class($entity), $entity->getId()]
+            );
+            foreach ($records as $r) $r->delete();
+        } else {
+            $this->loadedMetadata = array_filter($this->loadedMetadata, function($m) use ($entity) {
+                return !($m['entity'] === get_class($entity) && $m['id'] == $entity->getId());
+            });
+            $this->save();
+        }
+        return true;
+    }
+
+    public function hasAncestor(SPPGroup $group, array &$seen = []) {
         if ($this->id == $group->getId()) return true;
         
+        $uid = $this->source . ':' . $this->id;
+        if (isset($seen[$uid])) return false;
+        $seen[$uid] = true;
+
         $parents = $this->getParentGroups();
         foreach ($parents as $parent) {
-            if ($parent->hasAncestor($group)) {
-                return true;
-            }
+            if ($parent->hasAncestor($group, $seen)) return true;
         }
         return false;
     }
-    
-    /**
-     * Retrieves all parent groups that contain this group as a member.
-     * @return SPPGroup[]
-     */
+
     public function getParentGroups() {
-        if ($this->id == null) return [];
-        $gm = new SPPGroupMember();
-        $records = $gm->loadMultiple(
-            ['member_entity', 'member_id'], 
-            [static::class, $this->id]
-        );
         $parents = [];
-        foreach ($records as $record) {
-            $parent = new SPPGroup($record->group_id);
-            $parents[] = $parent;
+        
+        // DB lookup
+        try {
+            $gm = new SPPGroupMember();
+            $records = $gm->loadMultiple(['member_entity', 'member_id'], [static::class, $this->id]);
+            foreach ($records as $r) $parents[] = new SPPGroup($r->group_id);
+        } catch (\Exception $e) {}
+
+        // File lookup (Scanning all groups)
+        $allGroups = SPPGroupLoader::listAllGroups();
+        foreach ($allGroups as $g) {
+            if ($g['name'] === $this->id) continue;
+            $groupObj = new SPPGroup();
+            $groupObj->load($g['name']);
+            if ($groupObj->isMember($this, false)) {
+                $parents[] = $groupObj;
+            }
         }
+
         return $parents;
-    }
-    
-    /**
-     * Remove an entity from this group.
-     * @param SPPEntity $entity
-     * @return bool
-     */
-    public function removeMember(SPPEntity $entity) {
-        if ($this->id == null || $entity->getId() == null) return false;
-        
-        $gm = new SPPGroupMember();
-        $records = $gm->loadMultiple(
-            ['group_id', 'member_entity', 'member_id'],
-            [$this->id, get_class($entity), $entity->getId()]
-        );
-        
-        if (count($records) > 0) {
-            foreach ($records as $record) {
-                $record->delete();
-            }
-            return true;
-        }
-        return false;
-    }
-    
-    /**
-     * Check if an entity is a member of this group.
-     * @param SPPEntity $entity
-     * @return bool
-     */
-    public function isMember(SPPEntity $entity) {
-        if ($this->id == null || $entity->getId() == null) return false;
-        $gm = new SPPGroupMember();
-        $records = $gm->loadMultiple(
-            ['group_id', 'member_entity', 'member_id'],
-            [$this->id, get_class($entity), $entity->getId()]
-        );
-        return count($records) > 0;
-    }
-    
-    /**
-     * Retrieve members of this group, optionally filtered by class type.
-     * @param ?string $entityClass
-     * @return SPPEntity[]
-     */
-    public function getMembers(?string $entityClass = null) {
-        if ($this->id == null) return [];
-        
-        $gm = new SPPGroupMember();
-        if ($entityClass) {
-            $records = $gm->loadMultiple(
-                ['group_id', 'member_entity'], 
-                [$this->id, $entityClass]
-            );
-        } else {
-            $records = $gm->loadMultiple(['group_id'], [$this->id]);
-        }
-        
-        $members = [];
-        foreach ($records as $record) {
-            $className = $record->member_entity;
-            if (class_exists($className)) {
-                $members[] = new $className($record->member_id);
-            }
-        }
-        return $members;
-    }
-    
-    /**
-     * Update an existing member's role and/or rights.
-     * @param SPPEntity $entity
-     * @param string $role
-     * @param array|null $rights
-     * @return bool
-     */
-    public function updateMember(SPPEntity $entity, string $role, ?array $rights = null) {
-        if ($this->id == null || $entity->getId() == null) return false;
-        
-        $gm = new SPPGroupMember();
-        $records = $gm->loadMultiple(
-            ['group_id', 'member_entity', 'member_id'],
-            [$this->id, get_class($entity), $entity->getId()]
-        );
-        if (count($records) > 0) {
-            $member = $records[0];
-            $member->role = $role;
-            if ($rights !== null) {
-                $member->rights = json_encode($rights);
-            } else {
-                $member->rights = null;
-            }
-            $member->save();
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Retrieve the role of a specific member.
-     * @param SPPEntity $entity
-     * @return ?string
-     */
-    public function getMemberRole(SPPEntity $entity) {
-        if ($this->id == null || $entity->getId() == null) return null;
-        $gm = new SPPGroupMember();
-        $records = $gm->loadMultiple(
-            ['group_id', 'member_entity', 'member_id'],
-            [$this->id, get_class($entity), $entity->getId()]
-        );
-        return count($records) > 0 ? $records[0]->role : null;
-    }
-
-    /**
-     * Retrieve the rights of a specific member as an array.
-     * @param SPPEntity $entity
-     * @return ?array
-     */
-    public function getMemberRights(SPPEntity $entity) {
-        if ($this->id == null || $entity->getId() == null) return null;
-        $gm = new SPPGroupMember();
-        $records = $gm->loadMultiple(
-            ['group_id', 'member_entity', 'member_id'],
-            [$this->id, get_class($entity), $entity->getId()]
-        );
-        if (count($records) > 0 && isset($records[0]->rights) && $records[0]->rights) {
-            return json_decode($records[0]->rights, true);
-        }
-        return null;
-    }
-
-    /**
-     * Determine if a member possesses admin privileges in the group.
-     * @param SPPEntity $entity
-     * @return bool
-     */
-    public function isAdmin(SPPEntity $entity) {
-        return $this->getMemberRole($entity) === self::ROLE_ADMIN;
-    }
-
-    /**
-     * Returns an array of group member entities who are admins.
-     * @param ?string $entityClass
-     * @return SPPEntity[]
-     */
-    public function getAdmins(?string $entityClass = null) {
-        if ($this->id == null) return [];
-        
-        $gm = new SPPGroupMember();
-        if ($entityClass) {
-            $records = $gm->loadMultiple(
-                ['group_id', 'member_entity', 'role'], 
-                [$this->id, $entityClass, self::ROLE_ADMIN]
-            );
-        } else {
-            $records = $gm->loadMultiple(
-                ['group_id', 'role'], 
-                [$this->id, self::ROLE_ADMIN]
-            );
-        }
-        
-        $admins = [];
-        foreach ($records as $record) {
-            $className = $record->member_entity;
-            if (class_exists($className)) {
-                $admins[] = new $className($record->member_id);
-            }
-        }
-        return $admins;
     }
 }
