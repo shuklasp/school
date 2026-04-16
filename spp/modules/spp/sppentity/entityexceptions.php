@@ -15,4 +15,12 @@ class EntityNotFoundException extends \SPP\SPPException
     }
 }
 
+class EntityConfigurationException extends \SPP\SPPException
+{
+    public function  __construct($message, $code = 2001)
+    {
+        parent::__construct($message, $code);
+    }
+}
+
 ?>

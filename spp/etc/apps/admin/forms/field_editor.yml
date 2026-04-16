@@ -1,0 +1,44 @@
+form:
+  name: field_editor
+  title: "Configure Field"
+elements:
+  name:
+    type: text
+    label: "Field Name"
+    placeholder: "e.g. first_name"
+    required: true
+  label:
+    type: text
+    label: "Display Label"
+    placeholder: "e.g. First Name"
+  type:
+    type: select
+    label: "Field Type"
+    options:
+      text: "Text Input"
+      password: "Password"
+      email: "Email"
+      textarea: "Text Area"
+      select: "Dropdown"
+      multiselect: "Multi-Select"
+      checkbox: "Checkbox"
+      submit: "Submit Button"
+  placeholder:
+    type: text
+    label: "Placeholder"
+  help:
+    type: text
+    label: "Help Text"
+  required:
+    type: checkbox
+    label: "Is Required?"
+  source_table:
+    type: text
+    label: "Data Source (Table)"
+    placeholder: "e.g. roles OR SELECT id as value, name as label FROM roles"
+    help: "Enter table name (e.g. users) or a full SQL query starting with SELECT"
+  options:
+    type: textarea
+    label: "Manual Options"
+    placeholder: "active: Active\nblocked: Blocked"
+    help: "Enter options as 'value: Label' (one per line). Overrides Data Source if provided."

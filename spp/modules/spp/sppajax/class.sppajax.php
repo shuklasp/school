@@ -209,6 +209,14 @@ class SPPAjax extends \SPP\SPPObject
     // -------------------------------------------------------------------------
 
     /**
+     * Returns a flattened list of all registered services from both YAML and DB.
+     */
+    public static function listServices(): array
+    {
+        return self::loadServiceRegistry();
+    }
+
+    /**
      * Looks up a service by name from the services registry YAML.
      * @return array<string,string>|null
      */
@@ -223,43 +231,41 @@ class SPPAjax extends \SPP\SPPObject
         return null;
     }
 
-    /**
-     * Loads and caches the services registry from the path defined in module config.
-     * @return array<int,array<string,string>>
-     */
     private static function loadServiceRegistry(): array
     {
         if (self::$serviceRegistry !== null) {
             return self::$serviceRegistry;
         }
 
-        $appname = \SPP\Scheduler::getContext();
-        $file = APP_ETC_DIR . SPP_DS . $appname . SPP_DS . 'services.yml';
-
-        if (!file_exists($file)) {
-            // Check module configuration for custom override
-            $registryPath = \SPP\Module::getConfig('spa_services_registry', 'sppajax');
-            if ($registryPath) {
-                $file = SPP_APP_DIR . $registryPath;
-            } else {
-                // Fallback to legacy location /etc/services.yml
-                $file = SPP_APP_DIR . '/etc/services.yml';
-            }
+        $registry = [];
+        
+        // 1. Load from YAML
+        $file = self::getServiceRegistryFile();
+        if (file_exists($file)) {
+            try {
+                $parsed = Yaml::parseFile($file);
+                $ymlServices = $parsed['services'] ?? [];
+                foreach ($ymlServices as &$svc) {
+                    $svc['source'] = 'yaml';
+                }
+                $registry = array_merge($registry, $ymlServices);
+            } catch (\Exception $e) {}
         }
 
-        if (!file_exists($file)) {
-            self::$serviceRegistry = [];
-            return [];
+        // 2. Load from Database
+        if (\SPP\Module::isEnabled('sppdb')) {
+            self::ensureDbSchema();
+            try {
+                $db = new \SPPMod\SPPDB\SPPDB();
+                $dbServices = $db->execute_query('SELECT name, script, method FROM ' . \SPPMod\SPPDB\SPPDB::sppTable('sppajax_services'));
+                foreach ($dbServices as &$svc) {
+                    $svc['source'] = 'db';
+                }
+                $registry = array_merge($registry, $dbServices);
+            } catch (\Exception $e) {}
         }
 
-        try {
-            $parsed = Yaml::parseFile($file);
-            self::$serviceRegistry = $parsed['services'] ?? [];
-        } catch (\Symfony\Component\Yaml\Exception\ParseException $e) {
-            error_log('SPPAjax: Failed to parse services.yml — ' . $e->getMessage());
-            self::$serviceRegistry = [];
-        }
-
+        self::$serviceRegistry = $registry;
         return self::$serviceRegistry;
     }
 
@@ -290,72 +296,105 @@ class SPPAjax extends \SPP\SPPObject
     // -------------------------------------------------------------------------
 
     /**
-     * Registers a new service into services.yml programmatically.
-     * Returns false if a service with that name already exists.
+     * Registers a new service programmatically into either services.yml or the database.
      */
-    public static function registerService(string $name, string $script, string $method = 'POST'): bool
+    public static function registerService(string $name, string $script, string $method = 'POST', string $source = 'yaml'): bool
     {
-        $registryPath = \SPP\Module::getConfig('spa_services_registry', 'sppajax') ?: '/etc/services.yml';
-        $file = SPP_APP_DIR . $registryPath;
-
-        $parsed = [];
-        if (file_exists($file)) {
-            $parsed = Yaml::parseFile($file) ?? [];
+        if ($source === 'yaml') {
+            $file = self::getServiceRegistryFile();
+            $parsed = [];
+            if (file_exists($file)) {
+                $parsed = Yaml::parseFile($file) ?? [];
+            }
+            $services = $parsed['services'] ?? [];
+            $updated = false;
+            foreach ($services as &$svc) {
+                if ($svc['name'] === $name) {
+                    $svc['script'] = basename($script);
+                    $svc['method'] = strtoupper($method);
+                    $updated = true;
+                    break;
+                }
+            }
+            if (!$updated) {
+                $services[] = [
+                    'name' => preg_replace('/[^a-zA-Z0-9_\-]/', '', $name),
+                    'script' => basename($script),
+                    'method' => strtoupper($method),
+                ];
+            }
+            $parsed['services'] = $services;
+            file_put_contents($file, Yaml::dump($parsed, 3, 4), LOCK_EX);
+        } else if ($source === 'db') {
+            self::ensureDbSchema();
+            $db = new \SPPMod\SPPDB\SPPDB();
+            $db->execute_query(
+                'REPLACE INTO ' . \SPPMod\SPPDB\SPPDB::sppTable('sppajax_services') . ' (name, script, method) VALUES (?, ?, ?)',
+                [$name, basename($script), strtoupper($method)]
+            );
         }
-
-        $services = $parsed['services'] ?? [];
-        foreach ($services as $svc) {
-            if ($svc['name'] === $name)
-                return false; // already exists
-        }
-
-        $services[] = [
-            'name' => preg_replace('/[^a-zA-Z0-9_\-]/', '', $name),
-            'script' => basename($script),
-            'method' => strtoupper($method),
-        ];
-
-        $parsed['services'] = $services;
-        file_put_contents($file, Yaml::dump($parsed, 3, 4), LOCK_EX);
 
         // Bust cache
         self::$serviceRegistry = null;
-
         return true;
     }
 
     /**
-     * Removes a service from services.yml by name.
-     * Returns false if the service was not found.
+     * Removes a service from either services.yml or the database.
      */
-    public static function unregisterService(string $name): bool
+    public static function unregisterService(string $name, string $source = 'yaml'): bool
     {
-        $registryPath = \SPP\Module::getConfig('spa_services_registry', 'sppajax') ?: '/etc/services.yml';
-        $file = SPP_APP_DIR . $registryPath;
+        if ($source === 'yaml') {
+            $file = self::getServiceRegistryFile();
+            if (!file_exists($file)) return false;
+            $parsed = Yaml::parseFile($file) ?? [];
+            $services = $parsed['services'] ?? [];
+            $filtered = array_values(array_filter($services, fn($s) => $s['name'] !== $name));
+            if (count($filtered) === count($services)) return false;
+            $parsed['services'] = $filtered;
+            file_put_contents($file, Yaml::dump($parsed, 3, 4), LOCK_EX);
+        } else if ($source === 'db') {
+            if (\SPP\Module::isEnabled('sppdb')) {
+                $db = new \SPPMod\SPPDB\SPPDB();
+                $db->execute_query('DELETE FROM ' . \SPPMod\SPPDB\SPPDB::sppTable('sppajax_services') . ' WHERE name=?', [$name]);
+            }
+        }
 
-        if (!file_exists($file))
-            return false;
-
-        $parsed = Yaml::parseFile($file) ?? [];
-        $services = $parsed['services'] ?? [];
-        $filtered = array_values(array_filter($services, fn($s) => $s['name'] !== $name));
-
-        if (count($filtered) === count($services))
-            return false;
-
-        $parsed['services'] = $filtered;
-        file_put_contents($file, Yaml::dump($parsed, 3, 4), LOCK_EX);
         self::$serviceRegistry = null;
-
         return true;
     }
 
     /**
-     * Returns all registered services.
-     * @return array<int,array<string,string>>
+     * Ensures the database schema for AJAX services exists.
      */
-    public static function listServices(): array
+    public static function ensureDbSchema(): void
     {
-        return self::loadServiceRegistry();
+        if (!\SPP\Module::isEnabled('sppdb')) return;
+        $db = new \SPPMod\SPPDB\SPPDB();
+        $db->execute_query('CREATE TABLE IF NOT EXISTS ' . \SPPMod\SPPDB\SPPDB::sppTable('sppajax_services') . ' (
+            id      INT          NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            name    VARCHAR(255) NOT NULL UNIQUE,
+            script  VARCHAR(255) NOT NULL,
+            method  VARCHAR(10)  NOT NULL DEFAULT "POST"
+        )');
+    }
+
+    /**
+     * Internal helper to resolve the service registry file path correctly.
+     */
+    private static function getServiceRegistryFile(): string
+    {
+        $appname = \SPP\Scheduler::getContext();
+        $file = APP_ETC_DIR . SPP_DS . $appname . SPP_DS . 'services.yml';
+        
+        if (!file_exists($file)) {
+            $registryPath = \SPP\Module::getConfig('spa_services_registry', 'sppajax');
+            if ($registryPath) {
+                $file = SPP_APP_DIR . $registryPath;
+            } else {
+                $file = SPP_APP_DIR . '/etc/services.yml';
+            }
+        }
+        return $file;
     }
 }

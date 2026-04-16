@@ -1,7 +1,13 @@
-table: teachers
+table: staffs
 id_field: id
 sequence: teachers_seq
 login_enabled: false
 attributes:
-  name: varchar(200)
   created_at: timestamp
+  parent_id: varchar(20)
+  department: varchar(255)
+relations:
+  -
+    child_entity_field: parent_id
+    relation_type: OneToMany
+    is_hierarchy: true

@@ -1,0 +1,10 @@
+table: staffs
+id_field: id
+login_enabled: true
+attributes:
+  id: int
+  name: varchar(255)
+  department: varchar(100)
+  created_at: timestamp
+  parent_id: varchar(20)
+relations: []

@@ -1,0 +1,17 @@
+form:
+  name: my_form
+  service: save_data
+  type: single
+fields:
+  -
+    name: new_field
+    type: text
+    label: 'New Field'
+  -
+    name: form_email
+    type: email
+    label: Email
+    placeholder: 'Enter your email'
+    help: 'Enter email'
+    source_table: 'Please enter'
+isNew: false

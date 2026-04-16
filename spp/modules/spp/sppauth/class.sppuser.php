@@ -235,14 +235,55 @@ class SPPUser extends SPPEntity
     }
 
     /**
-     * Static helper for creation (for BC).
+     * Centralized orchestration to create or update a user.
+     * Ensures identical logic for CLI and UI.
      */
-    public static function createUser($uname, $passwd, $status = 'active')
+    public static function saveUserInfo(array $data)
     {
-        $user = new self();
-        $user->username = $uname;
-        $user->password = $passwd;
+        $id = $data['id'] ?? null;
+        $username = trim($data['username'] ?? '');
+        $email = trim($data['email'] ?? '');
+        $password = $data['password'] ?? '';
+        $status = $data['status'] ?? 'active';
+        $roleIds = $data['role_ids'] ?? [];
+
+        if (!empty($id)) {
+            $user = new self($id);
+        } else {
+            $user = new self();
+            if (empty($username)) throw new \Exception("Username is required for new accounts.");
+            $user->username = $username;
+        }
+
+        $user->email = $email;
+        if (!empty($password)) $user->password = $password;
         $user->status = $status;
-        return $user->save();
+        
+        if (is_array($roleIds)) {
+            $user->setRoles($roleIds);
+        }
+
+        $user->save();
+        return $user->id;
+    }
+
+    /**
+     * Shorthand to assign a role to a user.
+     */
+    public static function assignRole(int $userId, int $roleId)
+    {
+        $db = new \SPPMod\SPPDB\SPPDB();
+        $table = \SPPMod\SPPDB\SPPDB::sppTable('userroles');
+        $db->execute_query("DELETE FROM {$table} WHERE userid=? AND roleid=?", [$userId, $roleId]);
+        $db->insertValues('userroles', ['userid' => $userId, 'roleid' => $roleId]);
+    }
+
+    /**
+     * Shorthand to remove a role from a user.
+     */
+    public static function unassignRole(int $userId, int $roleId)
+    {
+        $db = new \SPPMod\SPPDB\SPPDB();
+        $db->execute_query("DELETE FROM " . \SPPMod\SPPDB\SPPDB::sppTable('userroles') . " WHERE userid=? AND roleid=?", [$userId, $roleId]);
     }
 }

@@ -298,6 +298,31 @@ try {
         sendResponse(true, [], "You have been logged out.");
     }
 
+    /**
+     * get_profile: Retrieves metadata for the currently authenticated user.
+     */
+    if ($action === 'get_profile') {
+        try {
+            $username = SPPAuth::get('UserName');
+            if (!$username) {
+                sendResponse(false, [], "Session data missing.");
+            }
+            $user = new \SPPMod\SPPAuth\SPPUser($username);
+            
+            // Get role for display
+            $role = "Developer"; // Default for workbench
+            
+            sendResponse(true, [
+                'id' => $user->getId(),
+                'username' => $user->username,
+                'email' => $user->email,
+                'role' => $role
+            ]);
+        } catch (\Exception $e) {
+            sendResponse(false, [], "Profile fetch failed: " . $e->getMessage());
+        }
+    }
+
     // 3. Resolve App Context
     $appname = $_REQUEST['appname'] ?? $_GET['appname'] ?? $_REQUEST['context'] ?? \SPP\Scheduler::getContext();
     if (empty($appname) || $appname === 'undefined')
@@ -423,10 +448,8 @@ try {
             if (!$modname) sendResponse(false, [], "Module name required.");
             
             try {
-                // Find module manifest
-                $sys_yml = \SPP\SPPFS::findFile('module.yml', SPP_MODULES_DIR . SPP_DS . $modname);
-                $sys_xml = \SPP\SPPFS::findFile('module.xml', SPP_MODULES_DIR . SPP_DS . $modname);
-                $manifest = $sys_yml[0] ?? ($sys_xml[0] ?? null);
+                // Find module manifest using centralized resolver
+                $manifest = \SPP\Module::findManifestPath($modname);
                 
                 if (!$manifest) sendResponse(false, [], "Module manifest not found for '{$modname}'.");
                 
@@ -444,11 +467,9 @@ try {
             if (!$modname) sendResponse(false, [], "Module name required.");
             
             try {
-                $sys_yml = \SPP\SPPFS::findFile('module.yml', SPP_MODULES_DIR . SPP_DS . $modname);
-                $sys_xml = \SPP\SPPFS::findFile('module.xml', SPP_MODULES_DIR . SPP_DS . $modname);
-                $manifest = $sys_yml[0] ?? ($sys_xml[0] ?? null);
+                $manifest = \SPP\Module::findManifestPath($modname);
                 
-                if (!$manifest) sendResponse(false, [], "Module manifest not found.");
+                if (!$manifest) sendResponse(false, [], "Module manifest not found for '{$modname}'.");
                 
                 $mod = new \SPP\Module($manifest);
                 $log = $mod->runInstallation();
@@ -460,42 +481,57 @@ try {
             break;
 
         /**
-         * list_entities: Scans the application's etc/entities directory for YAML definitions.
+         * list_entities: Returns metadata for all entity definitions.
          */
         case 'list_entities':
-            $entitiesDir = APP_ETC_DIR . '/' . $appname . '/entities';
-            $entities = [];
-            if (is_dir($entitiesDir)) {
-                $files = glob($entitiesDir . '/*.yml');
-                foreach ($files as $file) {
-                    $entities[] = [
-                        'name' => basename($file, '.yml'),
-                        'content' => file_get_contents($file),
-                        'size' => filesize($file),
-                        'modified' => date('Y-m-d H:i', filemtime($file))
-                    ];
-                }
-            }
-            sendResponse(true, ['entities' => $entities]);
+            $entities = \SPPMod\SPPEntity\SPPEntity::listAvailableEntities();
+            sendResponse(true, ['entities' => array_values($entities)]);
             break;
 
         /**
-         * save_entity: Creates or updates a YAML entity configuration file.
+         * parse_entity_yaml: Converts YAML string to JSON config.
          */
-        case 'save_entity':
+        case 'parse_entity_yaml':
+            $yaml = $_POST['yaml'] ?? '';
+            try {
+                $config = \Symfony\Component\Yaml\Yaml::parse($yaml);
+                sendResponse(true, ['config' => $config]);
+            } catch (\Exception $e) {
+                sendResponse(false, [], "YAML Parse Error: " . $e->getMessage());
+            }
+            break;
+
+        /**
+         * dump_entity_yaml: Converts JSON config to YAML string.
+         */
+        case 'dump_entity_yaml':
+            $config = json_decode($_POST['config'] ?? '{}', true);
+            try {
+                $yaml = \Symfony\Component\Yaml\Yaml::dump($config, 4, 2);
+                sendResponse(true, ['yaml' => $yaml]);
+            } catch (\Exception $e) {
+                sendResponse(false, [], "YAML Dump Error: " . $e->getMessage());
+            }
+            break;
+
+        /**
+         * save_entity_config: Saves YAML and generates PHP skeleton.
+         */
+        case 'save_entity_config':
             $name = trim($_POST['name'] ?? '');
-            $content = $_POST['content'] ?? '';
-            if (empty($name) || empty($content)) {
-                sendResponse(false, [], "Entity name and YAML content are required.");
+            $configRaw = $_POST['config'] ?? '';
+            $config = json_decode($configRaw, true);
+            
+            if (empty($name) || empty($config)) {
+                sendResponse(false, [], "Entity name and configuration are required.");
             }
 
-            $entitiesDir = APP_ETC_DIR . '/' . $appname . '/entities';
-            if (!is_dir($entitiesDir))
-                mkdir($entitiesDir, 0777, true);
-
-            $filePath = $entitiesDir . '/' . strtolower($name) . '.yml';
-            file_put_contents($filePath, $content);
-            sendResponse(true, [], "Entity definition '{$name}' saved successfully.");
+            try {
+                \SPPMod\SPPEntity\SPPEntity::saveEntityDefinition($name, $appname, $config);
+                sendResponse(true, [], "Entity '$name' and skeleton class saved successfully.");
+            } catch (\Exception $e) {
+                sendResponse(false, [], "Failed to save entity: " . $e->getMessage());
+            }
             break;
 
         /**
@@ -521,23 +557,28 @@ try {
          */
         case 'list_forms':
             $formsDir = APP_ETC_DIR . '/' . $appname . '/forms';
-            $forms = [];
+            $formMap = []; // Dedup map: [name => file_data]
             if (is_dir($formsDir)) {
                 $ymlFiles = glob($formsDir . '/*.yml');
                 $xmlFiles = glob($formsDir . '/*.xml');
                 $allFiles = array_merge($ymlFiles, $xmlFiles);
                 foreach ($allFiles as $file) {
-                    $ext = pathinfo($file, PATHINFO_EXTENSION);
-                    $forms[] = [
-                        'name' => pathinfo($file, PATHINFO_FILENAME),
-                        'type' => strtoupper($ext),
-                        'content' => file_get_contents($file),
-                        'size' => filesize($file),
-                        'modified' => date('Y-m-d H:i', filemtime($file))
-                    ];
+                    $name = pathinfo($file, PATHINFO_FILENAME);
+                    $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                    
+                    // YAML priority: Only add if not seen, or if this is .yml and we previously saw .xml
+                    if (!isset($formMap[$name]) || $ext === 'yml') {
+                        $formMap[$name] = [
+                            'name' => $name,
+                            'type' => strtoupper($ext),
+                            'content' => file_get_contents($file),
+                            'size' => filesize($file),
+                            'modified' => date('Y-m-d H:i', filemtime($file))
+                        ];
+                    }
                 }
             }
-            sendResponse(true, ['forms' => $forms]);
+            sendResponse(true, ['forms' => array_values($formMap)]);
             break;
 
         /**
@@ -547,6 +588,7 @@ try {
             $name = trim($_POST['name'] ?? '');
             $content = $_POST['content'] ?? '';
             $type = strtolower(trim($_POST['type'] ?? 'yml'));
+            $checkDup = ($_POST['check_duplicate'] ?? 'false') === 'true';
 
             if (empty($name) || empty($content)) {
                 sendResponse(false, [], "Form name and content are required.");
@@ -555,6 +597,14 @@ try {
             $formsDir = APP_ETC_DIR . '/' . $appname . '/forms';
             if (!is_dir($formsDir))
                 mkdir($formsDir, 0777, true);
+
+            // Check for duplicates if requested (new forms)
+            if ($checkDup) {
+                if (file_exists($formsDir . '/' . strtolower($name) . '.yml') || 
+                    file_exists($formsDir . '/' . strtolower($name) . '.xml')) {
+                    sendResponse(false, [], "A form with the name '{$name}' already exists. Please choose a different name.");
+                }
+            }
 
             // Clean extension
             $ext = in_array($type, ['xml', 'yml', 'yaml']) ? $type : 'yml';
@@ -593,6 +643,84 @@ try {
                 sendResponse(true, [], "Form '{$name}' deleted successfully.");
             } else {
                 sendResponse(false, [], "Form '{$name}' not found.");
+            }
+            break;
+
+        /**
+         * get_form_config: Returns structured JSON for a form YAML.
+         */
+        case 'get_form_config':
+            $name = $_GET['name'] ?? $_POST['name'] ?? '';
+            $path = APP_ETC_DIR . '/' . $appname . '/forms/' . strtolower($name) . '.yml';
+            try {
+                if (file_exists($path)) {
+                    $config = \Symfony\Component\Yaml\Yaml::parseFile($path);
+                    sendResponse(true, ['config' => $config]);
+                } else {
+                    sendResponse(false, [], "Form '{$name}' not found.");
+                }
+            } catch (\Exception $e) {
+                sendResponse(false, [], "Parse error: " . $e->getMessage());
+            }
+            break;
+
+        /**
+         * parse_form_yaml: Converts raw YAML string to JSON config.
+         */
+        case 'parse_form_yaml':
+            $yaml = $_POST['yaml'] ?? '';
+            try {
+                $config = \Symfony\Component\Yaml\Yaml::parse($yaml);
+                sendResponse(true, ['config' => $config]);
+            } catch (\Exception $e) {
+                sendResponse(false, [], "Invalid YAML: " . $e->getMessage());
+            }
+            break;
+
+        /**
+         * dump_form_yaml: Converts JSON config config to raw YAML.
+         */
+        case 'dump_form_yaml':
+            $rawConfig = $_POST['config'] ?? '';
+            $config = is_string($rawConfig) ? json_decode($rawConfig, true) : $rawConfig;
+            try {
+                $yaml = \Symfony\Component\Yaml\Yaml::dump($config, 10, 2);
+                sendResponse(true, ['yaml' => $yaml]);
+            } catch (\Exception $e) {
+                sendResponse(false, [], "Dump failure: " . $e->getMessage());
+            }
+            break;
+
+        /**
+         * save_form_config: Serializes JSON config to YAML and saves it.
+         */
+        case 'save_form_config':
+            $name = trim($_POST['name'] ?? '');
+            $rawConfig = $_POST['config'] ?? '';
+            $checkDup = ($_POST['check_duplicate'] ?? 'false') === 'true';
+            $config = is_string($rawConfig) ? json_decode($rawConfig, true) : $rawConfig;
+
+            if (empty($name) || empty($config)) {
+                sendResponse(false, [], "Form name and valid configuration are required.");
+            }
+
+            $formsDir = APP_ETC_DIR . '/' . $appname . '/forms';
+            
+            // Check for duplicates if requested (new forms)
+            if ($checkDup) {
+                if (file_exists($formsDir . '/' . strtolower($name) . '.yml') || 
+                    file_exists($formsDir . '/' . strtolower($name) . '.xml')) {
+                    sendResponse(false, [], "A form with the name '{$name}' already exists. Please choose a different name.");
+                }
+            }
+
+            try {
+                $yaml = \Symfony\Component\Yaml\Yaml::dump($config, 10, 2);
+                $path = $formsDir . '/' . strtolower($name) . '.yml';
+                file_put_contents($path, $yaml);
+                sendResponse(true, [], "Form '{$name}' saved successfully.");
+            } catch (\Exception $e) {
+                sendResponse(false, [], "Dump failure: " . $e->getMessage());
             }
             break;
 
@@ -753,9 +881,9 @@ try {
          * add_group_member: Adds an entity to a group.
          */
         case 'add_group_member':
-            $groupId = $_POST['group_id'] ?? null;
-            $entityClass = repairNamespace($_POST['member_entity'] ?? '');
-            $entityId = $_POST['member_id'] ?? null;
+            $groupId = $_POST['group_id'] ?? '';
+            $entityClass = repairNamespace($_POST['member_entity'] ?? $_POST['member_class'] ?? '');
+            $entityId = $_POST['member_id'] ?? '';
             $role = $_POST['role'] ?? 'member';
 
             if (!$groupId || !$entityClass || !$entityId) {
@@ -817,7 +945,7 @@ try {
          * search_entities: Dynamic search for entities by name/type for group assignment.
          */        case 'search_entities':
             $query = trim($_REQUEST['q'] ?? '');
-            $type = $_REQUEST['type'] ?? 'user';
+            $requestedType = $_REQUEST['type'] ?? 'all';
 
             if (strlen($query) < 1) {
                 sendResponse(true, ['results' => []]);
@@ -827,7 +955,8 @@ try {
                 $db = new \SPPMod\SPPDB\SPPDB();
                 $results = [];
 
-                if ($type === 'user' || $type === 'SPPMod\\SPPAuth\\SPPUser') {
+                // 1. Search Users
+                if ($requestedType === 'all' || $requestedType === 'user' || $requestedType === 'SPPMod\\SPPAuth\\SPPUser') {
                     $table = \SPPMod\SPPDB\SPPDB::sppTable('users');
                     $sql = "SELECT id, username as name FROM {$table} WHERE username LIKE ? OR email LIKE ? LIMIT 10";
                     $data = $db->execute_query($sql, ["%{$query}%", "%{$query}%"]);
@@ -837,11 +966,15 @@ try {
                             'name' => $r['name'],
                             'label' => $r['name'],
                             'type' => 'user',
+                            'is_custom' => false,
                             'class' => '\\SPPMod\\SPPAuth\\SPPUser'
                         ];
                     }
-                } elseif ($type === 'group' || $type === 'SPPMod\\SPPEntity\\SPPGroup') {
-                    $table = \SPPMod\SPPDB\SPPDB::sppTable('sppgroup');
+                }
+
+                // 2. Search Groups
+                if ($requestedType === 'all' || $requestedType === 'group' || $requestedType === 'SPPMod\\SPPEntity\\SPPGroup') {
+                    $table = \SPPMod\SPPDB\SPPDB::sppTable('sppgroups');
                     $sql = "SELECT id, name FROM {$table} WHERE name LIKE ? LIMIT 10";
                     $data = $db->execute_query($sql, ["%{$query}%"]);
                     foreach ($data as $r) {
@@ -850,16 +983,69 @@ try {
                             'name' => $r['name'],
                             'label' => $r['name'],
                             'type' => 'group',
+                            'is_custom' => false,
                             'class' => '\\SPPMod\\SPPEntity\\SPPGroup'
                         ];
                     }
                 }
+
+                // 3. Search Login-Enabled Custom Entities
+                if ($requestedType === 'all' || (!in_array($requestedType, ['user', 'group']) && !strpos($requestedType, 'SPPMod'))) {
+                    $entitiesDir = APP_ETC_DIR . '/' . $appname . '/entities';
+                    if (is_dir($entitiesDir)) {
+                        $files = glob($entitiesDir . '/*.yml');
+                        foreach ($files as $file) {
+                            $name = basename($file, '.yml');
+                            $config = \Symfony\Component\Yaml\Yaml::parse(file_get_contents($file));
+                            
+                            // Only include login-enabled entities
+                            if (empty($config['login_enabled'])) continue;
+
+                            $table = $config['table'] ?? '';
+                            if (empty($table)) continue;
+
+                            // Dynamic check for name-like columns
+                            $searchCol = 'name';
+                            $columns = $db->execute_query("SHOW COLUMNS FROM {$table}");
+                            $found = false;
+                            foreach (['name', 'title', 'label', 'username', 'id'] as $candidate) {
+                                foreach ($columns as $col) {
+                                    if ($col['Field'] === $candidate) {
+                                        $searchCol = $candidate;
+                                        $found = true;
+                                        break 2;
+                                    }
+                                }
+                            }
+
+                            $sql = "SELECT id, {$searchCol} as display_name FROM {$table} WHERE {$searchCol} LIKE ? LIMIT 5";
+                            $data = $db->execute_query($sql, ["%{$query}%"]);
+                            
+                            $namespace = "App\\" . ucfirst($appname) . "\\Entities";
+                            $className = $namespace . "\\" . ucfirst($name);
+
+                            foreach ($data as $r) {
+                                $results[] = [
+                                    'id' => $r['id'],
+                                    'name' => $r['display_name'],
+                                    'label' => $r['display_name'] . " (" . ucfirst($name) . ")",
+                                    'type' => ucfirst($name),
+                                    'is_custom' => true,
+                                    'entity_name' => ucfirst($name),
+                                    'class' => $className
+                                ];
+                            }
+                        }
+                    }
+                }
+
                 sendResponse(true, ['results' => $results]);
             } catch (\Exception $e) {
                 sendResponse(false, [], "Search failed: " . $e->getMessage());
             }
             break;
-
+            
+            break;
 
         /**
          * system_info: Returns framework metadata for the dashboard header.
@@ -941,6 +1127,22 @@ try {
             }
 
             sendResponse(true, $info);
+            break;
+
+        /**
+         * system_update_list: Scans all modules and entities for installation deltas (Dry Run).
+         */
+        case 'system_update_list':
+            $summary = \SPP\Module::getSystemUpdateDeltas();
+            sendResponse(true, ['deltas' => $summary]);
+            break;
+
+         /**
+          * system_update_run: Applies all pending system-wide updates.
+          */
+        case 'system_update_run':
+            $log = \SPP\Module::runSystemUpdate();
+            sendResponse(true, ['log' => $log]);
             break;
 
         /**
@@ -1166,36 +1368,9 @@ try {
          * save_user: Creates or updates a user using SPPUser entity.
          */
         case 'save_user':
-            $userId = $_POST['id'] ?? null;
-            $username = trim($_POST['username'] ?? '');
-            $email = trim($_POST['email'] ?? '');
-            $password = $_POST['password'] ?? '';
-            $status = $_POST['status'] ?? 'active';
-            $roleIds = $_POST['role_ids'] ?? [];
-
             try {
-                if (!empty($userId)) {
-                    $user = new \SPPMod\SPPAuth\SPPUser($userId);
-                } else {
-                    $user = new \SPPMod\SPPAuth\SPPUser();
-                    if (empty($username)) sendResponse(false, [], "Username is required for new accounts.");
-                    $user->username = $username;
-                }
-
-                $user->email = $email;
-                if (!empty($password)) $user->password = $password;
-                $user->status = $status;
-                
-                if (is_array($roleIds)) {
-                    $user->setRoles($roleIds);
-                }
-            } catch (\Exception $e) {
-                sendResponse(false, [], "Initialization failed: " . $e->getMessage());
-            }
-
-            try {
-                $user->save();
-                sendResponse(true, ['id' => $user->getId()], "User '{$username}' saved successfully.");
+                $id = \SPPMod\SPPAuth\SPPUser::saveUserInfo($_POST);
+                sendResponse(true, ['id' => $id], "User saved successfully.");
             } catch (\Exception $e) {
                 sendResponse(false, [], "Failed to save user: " . $e->getMessage());
             }
@@ -1217,35 +1392,9 @@ try {
          * save_role: Creates or updates a role.
          */
         case 'save_role':
-            $id = $_POST['id'] ?? null;
-            $name = trim($_POST['role_name'] ?? $_POST['name'] ?? '');
-            $desc = trim($_POST['description'] ?? '');
-            $rights = $_POST['rights'] ?? [];
-
-            if (empty($name) && !empty($id)) {
-                try {
-                    $existingRole = new \SPPMod\SPPAuth\SPPRole($id);
-                    $name = $existingRole->role_name;
-                } catch (\Exception $e) {}
-            }
-
-            if (empty($name)) sendResponse(false, [], "Role name is required.");
-
-
             try {
-                $role = new \SPPMod\SPPAuth\SPPRole($id);
-                $role->role_name = $name;
-                $role->description = $desc;
-                $role->save();
-
-                // Sync rights (roleright pivot)
-                $db = new \SPPMod\SPPDB\SPPDB();
-                $db->execute_query("DELETE FROM " . \SPPMod\SPPDB\SPPDB::sppTable('roleright') . " WHERE roleid=?", [$role->id]);
-                foreach ($rights as $rid) {
-                    $db->insertValues('roleright', ['roleid' => $role->id, 'rightid' => $rid]);
-                }
-
-                sendResponse(true, ['id' => $role->id], "Role '{$name}' saved successfully.");
+                $id = \SPPMod\SPPAuth\SPPRole::saveRoleInfo($_POST);
+                sendResponse(true, ['id' => $id], "Role saved successfully.");
             } catch (\Exception $e) {
                 sendResponse(false, [], "Failed to save role: " . $e->getMessage());
             }
@@ -1379,8 +1528,9 @@ try {
         /**
          * get_form_html: Renders an SPPForm for use in the SPA UI.
          */
+        case 'get_iam_form':
         case 'get_form_html':
-            $formName = $_GET['form'] ?? $_POST['form'] ?? '';
+            $formName = $_GET['form'] ?? $_POST['form'] ?? $_GET['type'] ?? $_POST['type'] ?? '';
             $entityId = $_GET['id'] ?? $_POST['id'] ?? null;
 
             if (empty($formName)) sendResponse(false, [], "Form name required.");
@@ -1390,7 +1540,12 @@ try {
                 $adminFormPath = SPP_BASE_DIR . SPP_DS . 'etc' . SPP_DS . 'apps' . SPP_DS . 'admin' . SPP_DS . 'forms' . SPP_DS . $formName . '.yml';
                 $fullPath = file_exists($adminFormPath) ? $adminFormPath : $formName;
 
-                $form = \SPPMod\SPPView\ViewFormBuilder::fromYaml($fullPath);
+                // Support raw YAML for live preview
+                if (strpos($formName, 'form:') !== false) {
+                    $form = \SPPMod\SPPView\ViewFormBuilder::fromString($formName);
+                } else {
+                    $form = \SPPMod\SPPView\ViewFormBuilder::fromYaml($fullPath);
+                }
                 
                 // If ID is provided, bind data
                 if ($entityId !== null && $form->getEntityClass()) {
@@ -1408,6 +1563,94 @@ try {
             } catch (\Exception $e) {
                 sendResponse(false, [], "Form rendering failed: " . $e->getMessage());
             }
+            break;
+
+        /**
+         * Routing Management: Pages
+         */
+        case 'list_pages':
+            require_once SPP_BASE_DIR . '/modules/spp/sppview/class.pages.php';
+            $pages = \SPPMod\SPPView\Pages::listPages();
+            sendResponse(true, ['pages' => $pages]);
+            break;
+
+        case 'save_page':
+            $name = trim($_POST['name'] ?? '');
+            $url = trim($_POST['url'] ?? '');
+            $source = $_POST['source'] ?? 'yaml';
+            if (!$name || !$url) sendResponse(false, [], "Name and URL required.");
+            
+            require_once SPP_BASE_DIR . '/modules/spp/sppview/class.pages.php';
+            \SPPMod\SPPView\Pages::savePage($name, $url, $source);
+            sendResponse(true, [], "Page route saved to {$source}.");
+            break;
+
+        case 'remove_page':
+            $name = $_POST['name'] ?? '';
+            $source = $_POST['source'] ?? 'yaml';
+            if (!$name) sendResponse(false, [], "Name required.");
+            
+            require_once SPP_BASE_DIR . '/modules/spp/sppview/class.pages.php';
+            \SPPMod\SPPView\Pages::removePage($name, $source);
+            sendResponse(true, [], "Page route removed from {$source}.");
+            break;
+
+        /**
+         * Routing Management: AJAX Services
+         */
+        case 'list_services':
+            require_once SPP_BASE_DIR . '/modules/spp/sppajax/class.sppajax.php';
+            $services = \SPPMod\SPPAjax\SPPAjax::listServices();
+            sendResponse(true, ['services' => $services]);
+            break;
+
+        case 'save_service':
+            $name = trim($_POST['name'] ?? '');
+            $script = trim($_POST['script'] ?? '');
+            $method = strtoupper($_POST['method'] ?? 'POST');
+            $source = $_POST['source'] ?? 'yaml';
+            if (!$name || !$script) sendResponse(false, [], "Name and Script required.");
+            
+            require_once SPP_BASE_DIR . '/modules/spp/sppajax/class.sppajax.php';
+            \SPPMod\SPPAjax\SPPAjax::registerService($name, $script, $method, $source);
+            sendResponse(true, [], "Service registered in {$source}.");
+            break;
+
+        case 'remove_service':
+            $name = $_POST['name'] ?? '';
+            $source = $_POST['source'] ?? 'yaml';
+            if (!$name) sendResponse(false, [], "Name required.");
+
+            require_once SPP_BASE_DIR . '/modules/spp/sppajax/class.sppajax.php';
+            \SPPMod\SPPAjax\SPPAjax::unregisterService($name, $source);
+            sendResponse(true, [], "Service removed from {$source}.");
+            break;
+
+        /**
+         * Polyglot Bridge Management
+         */
+        case 'get_bridge_info':
+            if (!class_exists('\SPP\PolyglotBridge')) sendResponse(false, [], "PolyglotBridge core not found.");
+            $runtimes = \SPP\PolyglotBridge::discoverRuntimes();
+            
+            $sharedDir = \SPP\Module::getConfig('shared_dir', 'bridge') ?: 'var/shared';
+            if (!str_starts_with($sharedDir, '/') && !str_contains($sharedDir, ':')) {
+                $sharedDir = SPP_BASE_DIR . SPP_DS . '..' . SPP_DS . $sharedDir;
+            }
+            $bridgeFile = $sharedDir . SPP_DS . 'bridge_config.json';
+            
+            sendResponse(true, [
+                'runtimes' => $runtimes,
+                'shared_dir' => realpath($sharedDir),
+                'config_exists' => file_exists($bridgeFile),
+                'last_sync' => file_exists($bridgeFile) ? date("Y-m-d H:i:s", filemtime($bridgeFile)) : null
+            ]);
+            break;
+
+        case 'setup_bridge':
+            if (!class_exists('\SPP\PolyglotBridge')) sendResponse(false, [], "PolyglotBridge core not found.");
+            $res = \SPP\PolyglotBridge::setup();
+            sendResponse($res['success'], $res, $res['success'] ? "Bridge environment refreshed successfully." : "Bridge setup failed.");
             break;
 
         default:

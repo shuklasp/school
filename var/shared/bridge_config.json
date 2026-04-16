@@ -1,0 +1,43 @@
+{
+    "timestamp": 1776351830,
+    "spp_version": "0.5",
+    "base_dir": "\/mnt\/c\/projects\/apache\/school1\/spp",
+    "database": {
+        "dbtype": "mysql",
+        "dbhost": "localhost",
+        "dbname": "school",
+        "dbuser": "root",
+        "dbpasswd": "hello123"
+    },
+    "modules": [],
+    "runtimes": {
+        "python": {
+            "name": "Python",
+            "path": "\/usr\/bin\/python3",
+            "version": "Python 3.12.3"
+        },
+        "perl": {
+            "name": "Perl",
+            "path": "\/usr\/bin\/perl",
+            "version": "5.38.2"
+        },
+        "java": {
+            "name": "Java",
+            "path": "\/usr\/bin\/java",
+            "version": "21.0.10"
+        },
+        "dotnet": {
+            "name": ".NET",
+            "path": "",
+            "version": ""
+        },
+        "compiler": {
+            "name": "GCC",
+            "path": "\/usr\/bin\/gcc",
+            "version": "13.3.0"
+        }
+    },
+    "bridge_settings": {
+        "shared_dir": "\/mnt\/c\/projects\/apache\/school1\/var\/shared"
+    }
+}

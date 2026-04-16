@@ -25,3 +25,5 @@ settings:
     Key2:
         skey1: 'new value'
     Key3: Val3
+bridge:
+    shared_dir: var/shared

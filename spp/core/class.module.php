@@ -34,7 +34,8 @@ class Module extends \SPP\SPPObject
         'ModPath',
         'ConfigFile',
         'ConfigVariables',
-        'Installation'
+        'Installation',
+        'RuntimeBridgeConfig'
     ];
 
     /** @var array<string> */
@@ -52,7 +53,8 @@ class Module extends \SPP\SPPObject
         'ConfigFile',
         'ModuleGroup',
         'ConfigVariables',
-        'Installation'
+        'Installation',
+        'RuntimeBridgeConfig'
     ];
 
      /**
@@ -78,6 +80,9 @@ class Module extends \SPP\SPPObject
 
     /** @var array<string, array> Individual module manifest data cache */
     private static array $moduleManifestCache = [];
+
+    /** @var array Runtime bridge configuration */
+    public array $RuntimeBridgeConfig = [];
 
     /**
      * Module constructor.
@@ -246,6 +251,10 @@ class Module extends \SPP\SPPObject
                     break;
                 case 'installation':
                     $this->Installation = (array) $val;
+                    break;
+                case 'runtime_bridge':
+                case 'bridge':
+                    $this->RuntimeBridgeConfig = (array) $val;
                     break;
                 default:
                     // Ignore unknown keys (keep robust)
@@ -585,6 +594,47 @@ class Module extends \SPP\SPPObject
         } else {
             // Gracefully ignore duplicate scans instead of fatal crashing locally safely seamlessly expertly natively intuitively smoothly safely explicitly cleverly cleanly dynamically organically successfully smoothly optimally physically natively smoothly comprehensively safely.
         }
+    }
+
+    /**
+     * Finds the absolute path to a module's manifest file (module.yml or module.xml).
+     * Correctly handles nested directory structures (e.g. spp/modules/spp/modname).
+     *
+     * @param string $modname Internal name of the module
+     * @param string $type Origin type ('system' or 'user')
+     * @param string|null $appname App context for user modules
+     * @return string|null
+     */
+    public static function findManifestPath(string $modname, string $type = 'system', ?string $appname = null): ?string
+    {
+        $possible = ['module.yml', 'module.yaml', 'module.xml'];
+        $appname = $appname ?: \SPP\Scheduler::getContext();
+
+        if ($type === 'system') {
+            // Check flat root first
+            $checkPaths = [SPP_MODULES_DIR . SPP_DS . $modname];
+            // Check common subdirectories
+            foreach (['spp', 'school', 'custom'] as $sub) {
+                $checkPaths[] = SPP_MODULES_DIR . SPP_DS . $sub . SPP_DS . $modname;
+            }
+
+            foreach ($checkPaths as $dir) {
+                if (!is_dir($dir)) continue;
+                foreach ($possible as $m) {
+                    if (file_exists($dir . SPP_DS . $m)) return $dir . SPP_DS . $m;
+                }
+            }
+        } else {
+            // User/App modules
+            $userDir = SPP_APP_DIR . SPP_DS . 'modules' . SPP_DS . $appname . SPP_DS . $modname;
+            if (is_dir($userDir)) {
+                foreach ($possible as $m) {
+                    if (file_exists($userDir . SPP_DS . $m)) return $userDir . SPP_DS . $m;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -1442,5 +1492,301 @@ class Module extends \SPP\SPPObject
 
         // Invalidate cache
         self::$configCache[$modname][$varname] = (string) $value;
+    }
+
+    /**
+     * Scans the module's installation requirements and returns a list of deltas
+     * compared to the current database state.
+     *
+     * @return array
+     */
+    public function getInstallationDeltas(): array
+    {
+        $db = new \SPPMod\SPPDB\SPPDB();
+        $deltas = [
+            'tables' => [],
+            'entities' => [],
+            'sequences' => [],
+            'config' => []
+        ];
+
+        $install = $this->Installation ?? [];
+        
+        // 1. Tables check
+        $tables = $install['tables'] ?? [];
+        foreach ($tables as $tname => $cols) {
+            $tnameFull = \SPPMod\SPPDB\SPPDB::sppTable($tname);
+            if (!$db->tableExists($tnameFull)) {
+                $deltas['tables'][] = ['name' => $tname, 'status' => 'missing', 'columns' => $cols];
+            } else {
+                $missingCols = [];
+                foreach ($cols as $col => $type) {
+                    if ($col === 'PRIMARY KEY') continue; // Skip composite PK declaration
+                    if (!$db->columnExists($tnameFull, $col)) {
+                        $missingCols[$col] = $type;
+                    }
+                }
+                if (!empty($missingCols)) {
+                    $deltas['tables'][] = ['name' => $tname, 'status' => 'outdated', 'missing_columns' => $missingCols];
+                }
+            }
+        }
+
+        // 2. Entities check
+        $entities = $install['entities'] ?? [];
+        foreach ($entities as $entityClass) {
+            if (class_exists($entityClass)) {
+                try {
+                    $reflection = new \ReflectionClass($entityClass);
+                    if ($reflection->isSubclassOf('\\SPPMod\\SPPEntity\\SPPEntity')) {
+                        // Check if the table for this entity exists
+                        $entityName = $reflection->getShortName();
+                        $tableName = \SPPMod\SPPDB\SPPDB::sppTable(strtolower($entityName) . 's');
+                        if (!$db->tableExists($tableName)) {
+                             $deltas['entities'][] = ['class' => $entityClass, 'status' => 'missing'];
+                        }
+                    }
+                } catch (\Exception $e) {}
+            } else {
+                $deltas['entities'][] = ['class' => $entityClass, 'status' => 'not_found'];
+            }
+        }
+
+        $sequences = $install['sequences'] ?? [];
+        foreach ($sequences as $key => $val) {
+             $seqName = is_int($key) ? $val : $key;
+             $sDef = is_int($key) ? 1 : $val;
+
+             if (!\SPPMod\SPPDB\SPPSequence::sequenceExists($seqName)) {
+                 $start = is_array($sDef) ? ($sDef['start'] ?? 1) : $sDef;
+                 $inc = is_array($sDef) ? ($sDef['increment'] ?? 1) : 1;
+                 
+                 $deltas['sequences'][] = [
+                     'name' => $seqName, 
+                     'status' => 'missing', 
+                     'start' => (int)$start,
+                     'increment' => (int)$inc
+                 ];
+             }
+        }
+
+        return $deltas;
+    }
+
+    /**
+     * Executes the installation routines for the module incrementally.
+     *
+     * @return array Log of actions performed
+     */
+    public function runInstallation(): array
+    {
+        $db = new \SPPMod\SPPDB\SPPDB();
+        $deltas = $this->getInstallationDeltas();
+        $log = [];
+
+        // 1. Process Tables
+        foreach ($deltas['tables'] as $t) {
+            if ($t['status'] === 'missing') {
+                $db->createTableIncremental($t['name'], $t['columns']);
+                $log[] = "Created table: " . $t['name'];
+            } elseif ($t['status'] === 'outdated') {
+                $db->add_columns($t['name'], $t['missing_columns']);
+                $log[] = "Updated table " . $t['name'] . " (added " . count($t['missing_columns']) . " columns)";
+            }
+        }
+
+        // 2. Process Entities
+        $entities = $this->Installation['entities'] ?? [];
+        foreach ($entities as $entityClass) {
+            if (class_exists($entityClass)) {
+                call_user_func([$entityClass, 'install']);
+                $log[] = "Synchronized entity: " . $entityClass;
+            }
+        }
+
+        // 3. Process Sequences
+        foreach ($deltas['sequences'] as $s) {
+            \SPPMod\SPPDB\SPPSequence::createSequence($s['name'], $s['start'] ?? 1, $s['increment'] ?? 1);
+            $log[] = "Created sequence: " . $s['name'];
+        }
+
+        // 4. Process Seeds
+        $seeds = $this->Installation['seeds'] ?? [];
+        foreach ($seeds as $table => $rows) {
+            // Identify identity field (assume 'id' if not provided)
+            $idField = 'id';
+            if (isset($rows[0]) && is_array($rows[0])) {
+                // If the first row has an 'id' field, use it.
+                // Otherwise try to find any field that looks like a PK.
+                if (!isset($rows[0]['id'])) {
+                     $keys = array_keys($rows[0]);
+                     $idField = $keys[0]; // Fallback to first field
+                }
+            }
+
+            foreach ($rows as $row) {
+                if ($db->safeInsert($table, $row, $idField)) {
+                    $log[] = "Inserted seed record into $table ({$idField}=" . ($row[$idField] ?? '?') . ")";
+                }
+            }
+        }
+
+        return $log;
+    }
+
+    /**
+     * static public function getSystemUpdateDeltas()
+     * Scans all modules and independent app entities for installation deltas.
+     * Centralized logic used by both API and CLI.
+     */
+    public static function getSystemUpdateDeltas(): array
+    {
+        self::loadAllModules();
+        $summary = ['modules' => [], 'entities' => []];
+
+        // 1. Collect all unique modules from global and current app context
+        $allModules = [];
+        
+        // Global modules
+        $globalModsReg = \SPP\Registry::$reg['__modobj'] ?? [];
+        foreach ($globalModsReg as $name => $valkey) {
+            $modVal = \SPP\Registry::$values[$valkey] ?? null;
+            if ($modVal instanceof \SPP\Module) {
+                $allModules[$name] = $modVal;
+            }
+        }
+        
+        // App-specific modules
+        $context = \SPP\Scheduler::getContext();
+        if ($context !== '' && isset(\SPP\Registry::$reg['__apps'][$context]['__modobj'])) {
+            $appModsReg = \SPP\Registry::$reg['__apps'][$context]['__modobj'];
+            foreach ($appModsReg as $name => $valkey) {
+                 $modVal = \SPP\Registry::$values[$valkey] ?? null;
+                 if ($modVal instanceof \SPP\Module) {
+                     $allModules[$name] = $modVal;
+                 }
+            }
+        }
+
+        foreach ($allModules as $name => $mod) {
+            $deltas = $mod->getInstallationDeltas();
+            // Check if any significant deltas exist
+            if (!empty($deltas['tables']) || !empty($deltas['entities']) || !empty($deltas['sequences'])) {
+                $summary['modules'][$name] = $deltas;
+            }
+        }
+
+        // 2. Scan App Entities (YAML files in etc/apps/[context]/entities)
+        $appname = $context ?: 'default';
+        $entitiesDir = APP_ETC_DIR . SPP_DS . $appname . SPP_DS . 'entities';
+        if (is_dir($entitiesDir)) {
+            $files = glob($entitiesDir . '/*.yml');
+            $db = new \SPPMod\SPPDB\SPPDB();
+            foreach ($files as $f) {
+                $ename = basename($f, '.yml');
+                
+                // Refined Class Discovery
+                $classCandidates = [
+                    "\\SPPMod\\SPPEntity\\" . ucfirst($ename),
+                    "\\SPPMod\\SPPEntity\\" . $ename,
+                    ucfirst($ename),
+                    $ename
+                ];
+
+                $className = null;
+                foreach ($classCandidates as $candidate) {
+                    if (class_exists($candidate) && is_subclass_of($candidate, "\\SPPMod\\SPPEntity\\SPPEntity")) {
+                        $className = $candidate;
+                        break;
+                    }
+                }
+
+                $tname = "";
+                if ($className) {
+                     $tname = $className::getMetadata('table');
+                } else {
+                     // Fallback to basic pluralization/convention if class not found or matched
+                     $tname = \SPPMod\SPPDB\SPPDB::sppTable(strtolower($ename) . 's');
+                }
+
+                if (!empty($tname) && !$db->tableExists((string)$tname)) {
+                    $summary['entities'][] = ['name' => $ename, 'status' => 'missing', 'file' => basename($f)];
+                }
+            }
+        }
+
+        return $summary;
+    }
+
+    /**
+     * static public function runSystemUpdate()
+     * Runs the incremental installation routines for the entire system based on detected deltas.
+     */
+    public static function runSystemUpdate(): array
+    {
+        $summary = self::getSystemUpdateDeltas();
+        $log = [];
+
+        // 1. Run updates for modules
+        foreach ($summary['modules'] as $name => $deltas) {
+            $mod = null;
+            // Resolve module again from registry for safety
+            $modObj = \SPP\Registry::get('__modobj=>' . $name);
+            if ($modObj instanceof \SPP\Module) {
+                $mod = $modObj;
+            } else {
+                 // Try app context
+                 $ctx = \SPP\Scheduler::getContext();
+                 if ($ctx) {
+                     $modObj = \SPP\Registry::get('__apps=>' . $ctx . '=>__modobj=>' . $name);
+                     if ($modObj instanceof \SPP\Module) $mod = $modObj;
+                 }
+            }
+
+            if ($mod) {
+                try {
+                    $modLog = $mod->runInstallation();
+                    if (!empty($modLog)) {
+                        $log = array_merge($log, array_map(fn($l) => "Module [$name]: $l", $modLog));
+                    } else {
+                        $log[] = "Module [$name]: Already up to date.";
+                    }
+                } catch (\Exception $e) {
+                    $log[] = "Module [$name] ERROR: " . $e->getMessage();
+                }
+            }
+        }
+
+        // 2. Run updates for app entities
+        foreach ($summary['entities'] as $e) {
+            $ename = $e['name'];
+            $classCandidates = [
+                "\\SPPMod\\SPPEntity\\" . ucfirst($ename),
+                "\\SPPMod\\SPPEntity\\" . $ename,
+                ucfirst($ename),
+                $ename
+            ];
+            
+            $className = null;
+            foreach ($classCandidates as $candidate) {
+                if (class_exists($candidate) && is_subclass_of($candidate, "\\SPPMod\\SPPEntity\\SPPEntity")) {
+                    $className = $candidate;
+                    break;
+                }
+            }
+
+            if ($className) {
+                try {
+                    call_user_func([$className, 'install']);
+                    $log[] = "Entity [$ename]: Schema synchronized successfully using class $className.";
+                } catch (\Exception $ex) {
+                    $log[] = "Entity [$ename] ERROR: " . $ex->getMessage();
+                }
+            } else {
+                $log[] = "Entity [$ename]: ERROR - Entity class not found for automated installation.";
+            }
+        }
+
+        return $log;
     }
 }

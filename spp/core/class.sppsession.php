@@ -39,7 +39,35 @@ class SPPSession extends \SPP\SPPObject
     {
         if (self::$cache !== null) {
             $_SESSION[\SPP\App::getSessionName()] = serialize(self::$cache);
+            self::syncToBridge();
         }
+    }
+
+    private static function syncToBridge(): void
+    {
+        $bridgedData = [];
+        foreach (self::$cache->sessvars as $name => $data) {
+            if (!empty($data['bridged']) && !empty($data['isactive'])) {
+                $bridgedData[$name] = $data['val'];
+            }
+        }
+
+        if (empty($bridgedData)) {
+            return;
+        }
+
+        $sharedDir = \SPP\Module::getConfig('shared_dir', 'bridge') ?: 'var/shared';
+        if (!str_starts_with($sharedDir, '/') && !str_contains($sharedDir, ':')) {
+            $sharedDir = SPP_APP_DIR . SPP_DS . $sharedDir;
+        }
+        
+        $sessionBridgeDir = $sharedDir . SPP_DS . 'sessions';
+        if (!is_dir($sessionBridgeDir)) {
+            mkdir($sessionBridgeDir, 0777, true);
+        }
+
+        $file = $sessionBridgeDir . SPP_DS . session_id() . '.json';
+        file_put_contents($file, json_encode($bridgedData, JSON_PRETTY_PRINT));
     }
 
     /**
@@ -120,10 +148,10 @@ class SPPSession extends \SPP\SPPObject
      * @param string $varname
      * @param mixed $varval
      */
-    public static function setSessionVar($varname, $varval)
+    public static function setSessionVar($varname, $varval, $bridged = false)
     {
         $ssn = self::fetchSession();
-        $ssn->setVar($varname, $varval);
+        $ssn->setVar($varname, $varval, $bridged);
         self::saveSession();
     }
 
@@ -162,10 +190,11 @@ class SPPSession extends \SPP\SPPObject
      * @param string $varname
      * @param mixed $varval
      */
-    public function setVar($varname, $varval)
+    public function setVar($varname, $varval, $bridged = false)
     {
         $this->sessvars[$varname]['val'] = $varval;
         $this->sessvars[$varname]['isactive'] = true;
+        $this->sessvars[$varname]['bridged'] = $bridged;
     }
 
     /**

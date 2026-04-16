@@ -122,6 +122,9 @@ if (!checkDevMode()) {
                     <li><a href="#access" class="nav-item" data-view="access">
                             <span class="icon">🛡️</span> Access Control
                         </a></li>
+                    <li><a href="#routing" class="nav-item" data-view="routing">
+                            <span class="icon">🔗</span> Routing
+                        </a></li>
                 </ul>
             </nav>
             <div class="sidebar-footer">
@@ -132,7 +135,6 @@ if (!checkDevMode()) {
                         <div class="user-role">Developer</div>
                     </div>
                 </div>
-                <button id="logout-btn" class="btn ghost-btn" style="width:100%;justify-content:center;">Logout</button>
             </div>
         </aside>
 
@@ -140,8 +142,15 @@ if (!checkDevMode()) {
         <main class="main-content">
             <header class="content-header">
                 <h2 id="view-title"><span class="view-icon">📦</span> System Modules</h2>
-                <div class="header-actions" id="header-actions">
-                    <!-- Contextual buttons injected here -->
+                <div class="content-header-tools">
+                    <div class="header-actions" id="header-actions">
+                        <!-- Contextual buttons injected here -->
+                    </div>
+                    <div class="global-actions">
+                        <button id="logout-btn" class="btn ghost-btn btn-sm logout-btn-top">
+                            <span style="font-size: 1.1rem; margin-right: 0.4rem;">🚪</span> Logout
+                        </button>
+                    </div>
                 </div>
             </header>
 
@@ -164,6 +173,9 @@ if (!checkDevMode()) {
             </div>
         </div>
     </div>
+
+    <!-- Global Portal for dynamic overlays (avoids modal stacking context issues) -->
+    <div id="global-suggestions" class="suggestions-list"></div>
 
     <!-- Application Script (Aggressive cache busting) -->
     <script src="js/admin.js?v=<?php echo time(); ?>"></script>

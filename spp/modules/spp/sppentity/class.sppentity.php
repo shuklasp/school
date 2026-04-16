@@ -2,6 +2,7 @@
 namespace SPPMod\SPPEntity;
 use SPP\Exceptions\AttributeNotFoundException;
 use SPP\Exceptions\EntityNotFoundException;
+use SPP\Exceptions\EntityConfigurationException;
 
 require_once('entityexceptions.php');
 require_once('class.sppentityrelations.php');
@@ -102,9 +103,9 @@ class SPPEntity implements \JsonSerializable
               foreach ($ymlData['relations'] as $rel) {
                   \SPPMod\SPPEntity\SPPEntityRelations::registerEntityRelation(
                       $rel['parent_entity'] ?? $class,
-                      $rel['parent_entity_field'],
+                      $rel['parent_entity_field'] ?? 'id',
                       $rel['child_entity'] ?? $class,
-                      $rel['child_entity_field'],
+                      $rel['child_entity_field'] ?? 'parent_id',
                       $rel['relation_type'] ?? 'OneToMany'
                   );
               }
@@ -124,11 +125,17 @@ class SPPEntity implements \JsonSerializable
           }
       }
 
-      static::install();
+      // Post-load validation: If we ended up with an empty table name, it's a critical configuration failure
+      if (empty($config['table'])) {
+          throw new EntityConfigurationException("Entity configuration error: Class '{$class}' has no database table defined and no default could be resolved.");
+      }
   }
 
-  protected static function getMetadata(string $key, $default = null)
+  public static function getMetadata(string $key, $default = null)
   {
+      if (!isset(self::$_metadata[static::class])) {
+          static::loadEntityConfig(static::class);
+      }
       return self::$_metadata[static::class][$key] ?? $default;
   }
 
@@ -328,6 +335,95 @@ class SPPEntity implements \JsonSerializable
   }
 
   /**
+   * Scans all registered etc paths for entity YAML definitions.
+   * Returns a deduplicated list indexed by entity name.
+   */
+  public static function listAvailableEntities(): array
+  {
+      $appname = class_exists('\SPP\Scheduler') ? \SPP\Scheduler::getContext() : 'default';
+      $entities = [];
+      $paths = [];
+      
+      if (defined('APP_ETC_DIR')) {
+          $paths[] = APP_ETC_DIR . SPP_DS . $appname . SPP_DS . 'entities';
+          $paths[] = APP_ETC_DIR . SPP_DS . 'entities';
+      }
+      if (defined('SPP_ETC_DIR')) {
+          $paths[] = SPP_ETC_DIR . SPP_DS . 'entities';
+      }
+
+      foreach (array_unique($paths) as $dir) {
+          if (is_dir($dir)) {
+              $files = glob($dir . '/*.yml');
+              foreach ($files as $f) {
+                  $name = basename($f, '.yml');
+                  if (!isset($entities[$name])) {
+                      $content = file_get_contents($f);
+                      $config = [];
+                      try {
+                          if (class_exists('\Symfony\Component\Yaml\Yaml')) {
+                              $config = \Symfony\Component\Yaml\Yaml::parse($content);
+                          }
+                      } catch (\Exception $e) {}
+
+                      $entities[$name] = [
+                          'name' => $name,
+                          'path' => $f,
+                          'table' => $config['table'] ?? '',
+                          'modified' => date('Y-m-d H:i', filemtime($f))
+                      ];
+                  }
+              }
+          }
+      }
+      return $entities;
+  }
+
+  /**
+   * Saves an entity definition (YAML) and generates a PHP skeleton class if missing.
+   * Mirrors the logic from the Admin Workbench but shared via core.
+   */
+  public static function saveEntityDefinition(string $name, string $appname, array $config): bool
+  {
+      // 1. Save YAML Definition
+      $entitiesDir = APP_ETC_DIR . '/' . $appname . '/entities';
+      if (!is_dir($entitiesDir)) mkdir($entitiesDir, 0777, true);
+      
+      if (class_exists('\Symfony\Component\Yaml\Yaml')) {
+          $yaml = \Symfony\Component\Yaml\Yaml::dump($config, 4, 2);
+      } else {
+          // Fallback basic serialization
+          $yaml = "table: " . ($config['table'] ?? strtolower($name).'s') . "\n";
+          $yaml .= "id_field: " . ($config['id_field'] ?? 'id') . "\n";
+          if (!empty($config['extends'])) $yaml .= "extends: " . $config['extends'] . "\n";
+          $yaml .= "attributes:\n";
+          foreach (($config['attributes'] ?? []) as $k => $v) {
+              $yaml .= "  $k: $v\n";
+          }
+      }
+      
+      file_put_contents($entitiesDir . '/' . strtolower($name) . '.yml', $yaml);
+
+      // 2. Generate PHP Skeleton Class
+      $srcDir = SPP_APP_DIR . '/src/' . $appname . '/entities';
+      if (!is_dir($srcDir)) mkdir($srcDir, 0777, true);
+
+      $className = ucfirst($name);
+      $fileName = 'entity.' . strtolower($name) . '.php';
+      $filePath = $srcDir . '/' . $fileName;
+
+      if (!file_exists($filePath)) {
+          $namespace = "App\\" . ucfirst($appname) . "\\Entities";
+          $parent = !empty($config['extends']) ? $config['extends'] : "\\SPPMod\\SPPEntity\\SPPEntity";
+          
+          $phpContent = "<?php\nnamespace $namespace;\n\nuse SPPMod\\SPPEntity\\SPPEntity;\n\n/**\n * Class $className\n * Skeleton generated by SPP Entity Builder\n */\nclass $className extends $parent\n{\n    // Custom domain logic here\n}\n";
+          file_put_contents($filePath, $phpContent);
+      }
+      
+      return true;
+  }
+
+  /**
    * Static helper to find all instances of the entity.
    */
   public static function find_all()
@@ -382,6 +478,10 @@ class SPPEntity implements \JsonSerializable
   public function getTable()
   {
     $table = self::getMetadata('table');
+    if (empty($table)) {
+        throw new EntityConfigurationException("Entity " . static::class . " does not have a database table mapping. Check its YAML definition or ensure the class name follows pluralization conventions.");
+    }
+    
     if (class_exists('\\SPPMod\\SPPDB\\SPPDB')) {
         return \SPPMod\SPPDB\SPPDB::sppTable($table);
     }
@@ -520,10 +620,10 @@ class SPPEntity implements \JsonSerializable
   }
 
   /**
-   * protected function install()
+   * public static function install()
    * installs the entity and creates table for entity.
    */
-  protected static function install()
+  public static function install()
   {
     $db = new \SPPMod\SPPDB\SPPDB();
     $table = self::getMetadata('table');

@@ -99,7 +99,7 @@ class Pages extends \SPP\SPPObject
     /**
      * Ensures all three routing tables exist, creating them if absent.
      */
-    private static function ensureDbSchema(): void
+    public static function ensureDbSchema(): void
     {
         $db = new \SPPMod\SPPDB\SPPDB();
 
@@ -415,5 +415,96 @@ class Pages extends \SPP\SPPObject
         self::$yamlCache = null;
         self::$dbCache   = null;
         self::$sources   = null;
+    }
+
+    /**
+     * Returns the array of registered pages from both YAML and DB.
+     */
+    public static function listPages(): array
+    {
+        $yaml = self::getYaml();
+        $ymlPages = $yaml['pages'] ?? [];
+        foreach ($ymlPages as &$p) {
+            $p['source'] = 'yaml';
+        }
+
+        $dbPages = [];
+        if (\SPP\Module::isEnabled('sppdb')) {
+            $data = self::getDb();
+            $dbPages = $data['pages'] ?? [];
+            foreach ($dbPages as &$p) {
+                $p['source'] = 'db';
+            }
+        }
+
+        return array_merge($ymlPages, $dbPages);
+    }
+
+    /**
+     * Saves (Add or Update) a page route in either pages.yml or the database.
+     */
+    public static function savePage(string $name, string $url, string $source = 'yaml'): bool
+    {
+        if ($source === 'yaml') {
+            $appname = \SPP\Scheduler::getContext();
+            $file = APP_ETC_DIR . SPP_DS . $appname . SPP_DS . 'pages.yml';
+            
+            $yaml = file_exists($file) ? Yaml::parseFile($file) : ['pages' => [], 'defaults' => [], 'specials' => []];
+            if (!isset($yaml['pages'])) $yaml['pages'] = [];
+
+            $updated = false;
+            foreach ($yaml['pages'] as &$p) {
+                if ($p['name'] === $name) {
+                    $p['url'] = $url;
+                    $updated = true;
+                    break;
+                }
+            }
+            
+            if (!$updated) {
+                $yaml['pages'][] = ['name' => $name, 'url' => $url];
+            }
+            
+            file_put_contents($file, Yaml::dump($yaml, 4, 2));
+        } else if ($source === 'db') {
+            self::ensureDbSchema();
+            $db = new \SPPMod\SPPDB\SPPDB();
+            $db->execute_query(
+                'REPLACE INTO ' . \SPPMod\SPPDB\SPPDB::sppTable('sppview_pages') . ' (name, url) VALUES (?, ?)',
+                [$name, $url]
+            );
+        }
+        
+        self::clearCache();
+        return true;
+    }
+
+    /**
+     * Removes a page route from either pages.yml or the database by name.
+     */
+    public static function removePage(string $name, string $source = 'yaml'): bool
+    {
+        if ($source === 'yaml') {
+            $appname = \SPP\Scheduler::getContext();
+            $file = APP_ETC_DIR . SPP_DS . $appname . SPP_DS . 'pages.yml';
+            if (!file_exists($file)) return false;
+
+            $yaml = Yaml::parseFile($file);
+            if (!isset($yaml['pages'])) return false;
+
+            $oldCount = count($yaml['pages']);
+            $yaml['pages'] = array_values(array_filter($yaml['pages'], fn($p) => ($p['name'] ?? '') !== $name));
+            
+            if (count($yaml['pages']) === $oldCount) return false;
+
+            file_put_contents($file, Yaml::dump($yaml, 4, 2));
+        } else if ($source === 'db') {
+            self::ensureDbSchema();
+            $db = new \SPPMod\SPPDB\SPPDB();
+            $db->execute_query('DELETE FROM ' . \SPPMod\SPPDB\SPPDB::sppTable('sppview_pages') . ' WHERE name=?', [$name]);
+        }
+
+        self::clearCache();
+        return true;
     }
 }

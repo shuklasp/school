@@ -14,19 +14,33 @@ use Symfony\Component\Yaml\Yaml;
  */
 class ViewFormBuilder extends \SPP\SPPObject
 {
-    /**
-     * Build a ViewForm from a YAML file.
-     *
-     * @param string $yamlPath Path relative to app root or absolute.
-     * @return ViewForm
-     */
     public static function fromYaml(string $yamlPath): ViewForm
     {
         $config = self::loadConfig($yamlPath);
+        return self::fromArray($config, basename($yamlPath, '.yml'));
+    }
+
+    /**
+     * Build a ViewForm from a YAML string.
+     *
+     * @param string $yamlContent
+     * @return ViewForm
+     */
+    public static function fromString(string $yamlContent): ViewForm
+    {
+        $config = Yaml::parse($yamlContent) ?? [];
+        return self::fromArray($config, 'live_preview');
+    }
+
+    /**
+     * Build a ViewForm from a config array.
+     */
+    public static function fromArray(array $config, string $defaultName): ViewForm
+    {
         $fConfig = $config['form'] ?? [];
 
         $form = new ViewForm(
-            $fConfig['name'] ?? basename($yamlPath, '.yml'),
+            $fConfig['name'] ?? $defaultName,
             $fConfig['method'] ?? 'post',
             $fConfig['action'] ?? '',
             $fConfig['id'] ?? null
@@ -174,6 +188,7 @@ class ViewFormBuilder extends \SPP\SPPObject
         if ($elem) {
             if (isset($field['label']))       $elem->setAttribute('label', $field['label']);
             if (isset($field['placeholder'])) $elem->setAttribute('placeholder', $field['placeholder']);
+            if (isset($field['help']))        $elem->setAttribute('help', $field['help']);
             if ($resolvedValue !== null)      $elem->setAttribute('value', $resolvedValue);
             if (isset($field['class']))       $elem->addClass($field['class']);
         }

@@ -25,4 +25,7 @@
     <src>
         <dir>src</dir>
     </src>
+    <bridge>
+        <shared_dir>var/shared</shared_dir>
+    </bridge>
 </settings>

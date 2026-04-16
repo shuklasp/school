@@ -1,5 +1,5 @@
 form:
-  name: login
+  name: unique_form_test
   service: save_data
   type: single
 fields:
@@ -12,6 +12,7 @@ fields:
     type: text
     label: 'New Field'
   -
-    name: new_field
+    name: new_field1
     type: text
-    label: 'New Field'
+    label: 'New Field1'
+isNew: true

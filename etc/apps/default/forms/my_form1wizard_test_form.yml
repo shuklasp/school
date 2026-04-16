@@ -1,0 +1,23 @@
+form:
+  name: my_form1wizard_test_form
+  service: save_data
+  type: wizard
+isNew: true
+steps:
+  -
+    title: 'Step 1'
+    fields:
+      -
+        name: title
+        type: input
+        label: Title
+  -
+    title: 'New Step'
+    fields:
+      -
+        name: new_field
+        type: text
+        label: 'New Field'
+  -
+    title: 'New Step'
+    fields: {  }

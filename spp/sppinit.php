@@ -28,7 +28,9 @@ if (!defined('SPP_VER')) {
   define('SPP_IMG_URI', SPP_RES_URI . SPP_US . 'images');
   define('SPP_MODULES_DIR', SPP_BASE_DIR . SPP_DS . 'modules');
   define('SPP_ETC_DIR', SPP_BASE_DIR . SPP_DS . 'etc');
-  define('SPP_APP_DIR', dirname(__DIR__, 1));
+  if (!defined('SPP_APP_DIR')) {
+    define('SPP_APP_DIR', dirname(__DIR__, 1));
+  }
   define('APP_ETC_DIR', SPP_APP_DIR . SPP_DS . 'etc' . SPP_DS . 'apps');
   define('SPP_LOG_DIR', SPP_APP_DIR . SPP_DS . 'var' . SPP_DS . 'logs');
 
@@ -96,6 +98,20 @@ if (file_exists($composer_autoload)) {
     }
   });
 
+  spl_autoload_register(function ($class_name) {
+    if (strpos($class_name, 'App\\') === 0) {
+      $parts = explode('\\', $class_name);
+      if (count($parts) >= 4 && $parts[2] === 'Entities') {
+        $appName = strtolower($parts[1]);
+        $entityName = strtolower($parts[3]);
+        $file = SPP_APP_DIR . SPP_DS . 'src' . SPP_DS . $appName . SPP_DS . 'entities' . SPP_DS . 'entity.' . $entityName . '.php';
+        if (file_exists($file)) {
+          require_once $file;
+        }
+      }
+    }
+  });
+
 
   if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -149,6 +165,11 @@ if (file_exists($composer_autoload)) {
   $app = new \SPP\App('');
 
   // Redundant call removed here as App::__construct already handles loadAllModules()
+  
+  // Bridge Configuration Export
+  if (defined('SPP_BASE_DIR') && class_exists('\SPP\PolyglotBridge')) {
+      \SPP\PolyglotBridge::setup();
+  }
 }
 \SPP\SPPEvent::registerEvent('spp_init');
 \SPP\SPPEvent::registerEvent('event_spp_module_install');

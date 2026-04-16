@@ -1,0 +1,8 @@
+table: test_entity
+id_field: id
+attributes:
+  name: varchar(255)
+  test1: int
+  dob: datetime
+relations: {  }
+extends: \SPPMod\SPPAuth\SPPUser

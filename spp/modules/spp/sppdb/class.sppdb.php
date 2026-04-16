@@ -246,7 +246,7 @@ class SPPDB
     {
         try {
             // Using parameterized string filtering since SHOW TABLES LIKE does not support standard binding
-            $safe_table = preg_replace('/[^a-zA-Z0-9_]/', '', $table);
+            $safe_table = preg_replace('/[^a-zA-Z0-9_]/', '', (string)$table);
             $result = $this->query("SHOW TABLES LIKE '{$safe_table}'");
             return $result && $result->rowCount() > 0;
         } catch (\Exception $e) {
@@ -366,6 +366,10 @@ class SPPDB
             // Clean names for raw SQL
             $tableNameSafe = preg_replace('/[^a-zA-Z0-9_]/', '', $tableName);
             $firstColSafe = preg_replace('/[^a-zA-Z0-9_]/', '', $firstCol);
+            
+            if (empty($tableNameSafe)) {
+                throw new \Exception("Cannot create table: target table name is empty after sanitization.");
+            }
             
             $sql = "CREATE TABLE {$tableNameSafe} ({$firstColSafe} {$firstType})";
             $this->exec($sql);

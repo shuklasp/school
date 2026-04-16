@@ -1,48 +1,67 @@
 specials:
-  - name: service
+  -
+    name: service
     method: getService
-  - name: res
+  -
+    name: res
     method: getResource
-  - name: files
+  -
+    name: files
     method: getFile
 defaults:
   home: index
   error: error
-  pagesrc: yaml, db
+  pagesrc: 'yaml, db'
   filesdir: /files
   servdir: /services
   resdir: /resources
   pagedir: /src/pages
 pages:
-  - name: index
+  -
+    name: index
     url: /index.php
-  - name: home
+  -
+    name: home
     url: /home.php
-  - name: error
+  -
+    name: error
     url: /error.php
-  - name: student-sidebar
+  -
+    name: student-sidebar
     url: /student-sidebar.php
-  - name: student
+  -
+    name: student
     url: /student.php
-  - name: staff-sidebar
+  -
+    name: staff-sidebar
     url: /staff-sidebar.php
-  - name: staff
+  -
+    name: staff
     url: /staff.php
-  - name: finance-sidebar
+  -
+    name: finance-sidebar
     url: /finance-sidebar.php
-  - name: finance
+  -
+    name: finance
     url: /finance.php
-  - name: management-sidebar
+  -
+    name: management-sidebar
     url: /management-sidebar.php
-  - name: management
+  -
+    name: management
     url: /management.php
-  - name: about
-    url: /dashboard.php
-  - name: login
+  -
+    name: about
+    url: /about-us.php
+  -
+    name: login
     url: /login.html
-  - name: services
+  -
+    name: services
     url: /finance.php
-  - name: test_form
+  -
+    name: test_form
     url: /test_form.php
-  - name: test_success
+  -
+    name: test_success
     url: /test_success.php

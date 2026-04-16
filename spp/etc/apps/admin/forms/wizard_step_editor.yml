@@ -1,0 +1,17 @@
+form:
+  name: wizard_step_editor
+  title: "Configure Wizard Step"
+elements:
+  title:
+    type: text
+    label: "Step Title"
+    placeholder: "e.g. Identity Verification"
+    required: true
+  description:
+    type: textarea
+    label: "Description"
+    placeholder: "Brief explanation of this step..."
+  icon:
+    type: text
+    label: "Icon (optional)"
+    placeholder: "e.g. 👤"

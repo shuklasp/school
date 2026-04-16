@@ -229,9 +229,9 @@ class SPPGroup extends SPPEntity {
         $results = [];
         if ($this->source === 'database') {
             $gm = new SPPGroupMember();
-            $records = $gm->loadMultiple(['group_id'], [$this->id]);
+            $records = $gm->loadMultiple(['groupid'], [$this->id]);
             foreach ($records as $record) {
-                $class = $record->member_entity;
+                $class = $record->member_class;
                 if (class_exists($class)) {
                     $results[] = [
                         'entity' => new $class($record->member_id),
@@ -270,8 +270,8 @@ class SPPGroup extends SPPEntity {
 
         if ($this->source === 'database') {
             $member = new SPPGroupMember();
-            $member->group_id = $this->id;
-            $member->member_entity = get_class($entity);
+            $member->groupid = $this->id;
+            $member->member_class = get_class($entity);
             $member->member_id = $entity->getId();
             $member->role = $role;
             if ($rights) $member->rights = json_encode($rights);
@@ -295,7 +295,7 @@ class SPPGroup extends SPPEntity {
         if ($this->source === 'database') {
             $gm = new SPPGroupMember();
             $records = $gm->loadMultiple(
-                ['group_id', 'member_entity', 'member_id'],
+                ['groupid', 'member_class', 'member_id'],
                 [$this->id, get_class($entity), $entity->getId()]
             );
             foreach ($records as $r) $r->delete();
@@ -328,8 +328,8 @@ class SPPGroup extends SPPEntity {
         // DB lookup
         try {
             $gm = new SPPGroupMember();
-            $records = $gm->loadMultiple(['member_entity', 'member_id'], [static::class, $this->id]);
-            foreach ($records as $r) $parents[] = new SPPGroup($r->group_id);
+            $records = $gm->loadMultiple(['member_class', 'member_id'], [static::class, $this->id]);
+            foreach ($records as $r) $parents[] = new SPPGroup($r->groupid);
         } catch (\Exception $e) {}
 
         // File lookup (Scanning all groups)
@@ -344,5 +344,59 @@ class SPPGroup extends SPPEntity {
         }
 
         return $parents;
+    }
+
+    /**
+     * Centralized orchestration to create or update a group.
+     */
+    public static function saveGroupInfo(array $data)
+    {
+        $id = $data['id'] ?? $data['slug'] ?? null;
+        $name = trim($data['name'] ?? '');
+        $desc = trim($data['description'] ?? '');
+        $source = $data['source'] ?? 'database';
+        $appContext = $data['app_context'] ?? 'default';
+
+        $group = new self();
+        if (!empty($id)) {
+            $group->load($id);
+        } else {
+            $group->setSource($source, $appContext);
+        }
+
+        if (!empty($name)) $group->set('name', $name);
+        if (isset($data['description'])) $group->set('description', $desc);
+        
+        return $group->save();
+    }
+
+    /**
+     * Shorthand to add a member to a group.
+     */
+    public static function addMemberToGroup(string $slug, string $class, $mid, $role = self::ROLE_MEMBER)
+    {
+        $group = new self();
+        $group->load($slug);
+        if (!$group->id) throw new \Exception("Group '{$slug}' not found.");
+        
+        if (!class_exists($class)) throw new \Exception("Member class '{$class}' not found.");
+        $member = new $class($mid);
+        
+        return $group->addMember($member, $role);
+    }
+
+    /**
+     * Shorthand to remove a member from a group.
+     */
+    public static function removeMemberFromGroup(string $slug, string $class, $mid)
+    {
+        $group = new self();
+        $group->load($slug);
+        if (!$group->id) throw new \Exception("Group '{$slug}' not found.");
+        
+        if (!class_exists($class)) throw new \Exception("Member class '{$class}' not found.");
+        $member = new $class($mid);
+        
+        return $group->removeMember($member);
     }
 }
