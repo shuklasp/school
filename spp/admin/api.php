@@ -1508,7 +1508,7 @@ try {
             try {
                 $db = new \SPPMod\SPPDB\SPPDB();
                 foreach ($roleIds as $roleId) {
-                    // Avoid duplicates
+                    // 1. Update polymorphic entity_roles
                     $check = $db->execute_query("SELECT 1 FROM " . \SPPMod\SPPDB\SPPDB::sppTable('entity_roles') . " WHERE target_class=? AND target_id=? AND role_id=?", [$targetClass, $targetId, $roleId]);
                     if (empty($check)) {
                         $db->insertValues('entity_roles', [
@@ -1516,6 +1516,14 @@ try {
                             'target_id' => $targetId,
                             'role_id' => $roleId
                         ]);
+                    }
+
+                    // 2. Sync with userroles if target is a user
+                    if (strpos($targetClass, 'SPPUser') !== false) {
+                        $checkUser = $db->execute_query("SELECT 1 FROM " . \SPPMod\SPPDB\SPPDB::sppTable('userroles') . " WHERE userid=? AND roleid=?", [$targetId, $roleId]);
+                        if (empty($checkUser)) {
+                            $db->insertValues('userroles', ['userid' => $targetId, 'roleid' => $roleId]);
+                        }
                     }
                 }
                 sendResponse(true, [], "Role(s) assigned successfully.");
@@ -1567,7 +1575,75 @@ try {
                 $db = new \SPPMod\SPPDB\SPPDB();
                 $db->execute_query("DELETE FROM " . \SPPMod\SPPDB\SPPDB::sppTable('entity_roles') . " WHERE target_class=? AND target_id=? AND role_id=?", 
                     [$targetClass, $targetId, $roleId]);
+                
+                // Sync with userroles if target is a user
+                if (strpos($targetClass, 'SPPUser') !== false) {
+                    $db->execute_query("DELETE FROM " . \SPPMod\SPPDB\SPPDB::sppTable('userroles') . " WHERE userid=? AND roleid=?", 
+                        [$targetId, $roleId]);
+                }
+
                 sendResponse(true, [], "Role removed from entity.");
+            } catch (\Exception $e) {
+                sendResponse(false, [], "Removal failed: " . $e->getMessage());
+            }
+            break;
+
+        /**
+         * get_iam_details: Retrieves roles for a user or rights for a role.
+         */
+        case 'get_iam_details':
+            $type = $_GET['type'] ?? $_POST['type'] ?? '';
+            $id = $_GET['id'] ?? $_POST['id'] ?? '';
+            if (!$type || !$id) sendResponse(false, [], "Type and ID required.");
+
+            try {
+                if ($type === 'users') {
+                    $user = new \SPPMod\SPPAuth\SPPUser($id);
+                    $roles = \SPPMod\SPPAuth\SPPRole::find_all();
+                    sendResponse(true, [
+                        'assigned_ids' => $user->getRoles(),
+                        'available' => $roles
+                    ]);
+                } else if ($type === 'roles') {
+                    $role = new \SPPMod\SPPAuth\SPPRole($id);
+                    $rights = \SPPMod\SPPAuth\SPPRight::find_all();
+                    sendResponse(true, [
+                        'assigned_ids' => $role->getRights(),
+                        'available' => $rights
+                    ]);
+                } else {
+                    sendResponse(false, [], "Unsupported IAM type for details.");
+                }
+            } catch (\Exception $e) {
+                sendResponse(false, [], "Fetch failed: " . $e->getMessage());
+            }
+            break;
+
+        /**
+         * assign_right_to_role: Link a permission to a role.
+         */
+        case 'assign_right_to_role':
+            $roleId = $_POST['role_id'] ?? '';
+            $rightId = $_POST['right_id'] ?? '';
+            if (!$roleId || !$rightId) sendResponse(false, [], "Role ID and Right ID required.");
+            try {
+                \SPPMod\SPPAuth\SPPRole::assignRight($roleId, $rightId);
+                sendResponse(true, [], "Right assigned to role.");
+            } catch (\Exception $e) {
+                sendResponse(false, [], "Assignment failed: " . $e->getMessage());
+            }
+            break;
+
+        /**
+         * remove_right_from_role: Unlink a permission from a role.
+         */
+        case 'remove_right_from_role':
+            $roleId = $_POST['role_id'] ?? '';
+            $rightId = $_POST['right_id'] ?? '';
+            if (!$roleId || !$rightId) sendResponse(false, [], "Role ID and Right ID required.");
+            try {
+                \SPPMod\SPPAuth\SPPRole::unassignRight($roleId, $rightId);
+                sendResponse(true, [], "Right removed from role.");
             } catch (\Exception $e) {
                 sendResponse(false, [], "Removal failed: " . $e->getMessage());
             }

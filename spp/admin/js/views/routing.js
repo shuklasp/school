@@ -54,10 +54,10 @@ export default class RoutingView extends BaseComponent {
 
         return html`
             <div class="routing-workspace">
-                <div class="routing-tabs glass-panel mb-4">
-                    <button class="tab-btn ${activeTab === 'pages' ? 'active' : ''}" 
+                <div class="tab-bar-secondary mb-4">
+                    <button class="sub-tab-btn ${activeTab === 'pages' ? 'active' : ''}" 
                         onclick="${() => this.switchTab('pages')}">📄 Page Routes</button>
-                    <button class="tab-btn ${activeTab === 'services' ? 'active' : ''}" 
+                    <button class="sub-tab-btn ${activeTab === 'services' ? 'active' : ''}" 
                         onclick="${() => this.switchTab('services')}">⚡ AJAX Services</button>
                 </div>
 
