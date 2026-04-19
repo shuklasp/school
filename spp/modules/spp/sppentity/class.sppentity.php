@@ -370,7 +370,8 @@ class SPPEntity implements \JsonSerializable
                           'name' => $name,
                           'path' => $f,
                           'table' => $config['table'] ?? '',
-                          'modified' => date('Y-m-d H:i', filemtime($f))
+                          'modified' => date('Y-m-d H:i', filemtime($f)),
+                          'content' => $content
                       ];
                   }
               }

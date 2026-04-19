@@ -664,29 +664,40 @@ class Module extends \SPP\SPPObject
         }
 
         $appname = \SPP\Scheduler::getContext();
+        $registries = [];
 
-        // 1. System-level registries (Internal SPP)
-        $sys_registries = [
-            SPP_ETC_DIR . SPP_DS . 'modules.yml',
-            SPP_ETC_DIR . SPP_DS . 'modules.xml',
-            // Per-app system config
-            SPP_ETC_DIR . SPP_DS . 'apps' . SPP_DS . $appname . SPP_DS . 'modules.yml',
-            SPP_ETC_DIR . SPP_DS . 'apps' . SPP_DS . $appname . SPP_DS . 'modules.xml',
-        ];
-
-        foreach ($sys_registries as $r) {
-            self::loadModulesFromManifest($r, 'system');
+        // 1. Primary App Preference: SPP_ETC_DIR/apps/<app>/modsconf/
+        if ($appname !== '') {
+            $modsconfDir = SPP_ETC_DIR . SPP_DS . 'apps' . SPP_DS . $appname . SPP_DS . 'modsconf';
+            if (file_exists($modsconfDir . SPP_DS . 'modules.yml')) {
+                $registries[] = ['file' => $modsconfDir . SPP_DS . 'modules.yml', 'type' => 'system'];
+            } elseif (file_exists($modsconfDir . SPP_DS . 'modules.xml')) {
+                $registries[] = ['file' => $modsconfDir . SPP_DS . 'modules.xml', 'type' => 'system'];
+            }
         }
 
-        // 2. Application-level registries (User/App)
+        // 2. User Overrides (etc/apps/): Standard priority
         if ($appname !== '') {
-            $app_registries = [
-                APP_ETC_DIR . SPP_DS . $appname . SPP_DS . 'modsconf' . SPP_DS . 'modules.yml',
-                APP_ETC_DIR . SPP_DS . $appname . SPP_DS . 'modsconf' . SPP_DS . 'modules.xml',
-            ];
-            foreach ($app_registries as $r) {
-                self::loadModulesFromManifest($r, 'user');
+            $userModsconf = APP_ETC_DIR . SPP_DS . $appname . SPP_DS . 'modsconf';
+            if (file_exists($userModsconf . SPP_DS . 'modules.yml')) {
+                $registries[] = ['file' => $userModsconf . SPP_DS . 'modules.yml', 'type' => 'user'];
+            } elseif (file_exists($userModsconf . SPP_DS . 'modules.xml')) {
+                $registries[] = ['file' => $userModsconf . SPP_DS . 'modules.xml', 'type' => 'user'];
             }
+        }
+
+        // 3. System Defaults (spp/etc/): Fallbacks
+        $registries[] = ['file' => SPP_ETC_DIR . SPP_DS . 'modules.yml', 'type' => 'system'];
+        $registries[] = ['file' => SPP_ETC_DIR . SPP_DS . 'modules.xml', 'type' => 'system'];
+        
+        // 4. Per-app Legacy Defaults (spp/etc/apps/)
+        if ($appname !== '') {
+            $registries[] = ['file' => SPP_ETC_DIR . SPP_DS . 'apps' . SPP_DS . $appname . SPP_DS . 'modules.yml', 'type' => 'system'];
+            $registries[] = ['file' => SPP_ETC_DIR . SPP_DS . 'apps' . SPP_DS . $appname . SPP_DS . 'modules.xml', 'type' => 'system'];
+        }
+
+        foreach ($registries as $r) {
+            self::loadModulesFromManifest($r['file'], $r['type']);
         }
 
         self::$allModulesLoaded = true;
@@ -899,6 +910,13 @@ class Module extends \SPP\SPPObject
         if (class_exists('\\SPP\\Scheduler')) {
             try { $appname = \SPP\Scheduler::getContext(); } catch (\Throwable $e) {}
         }
+        // Fallback to GET/POST parameter if Scheduler context is not set
+        if ($appname === '' && isset($_POST['appname'])) {
+            $appname = $_POST['appname'];
+        }
+        if ($appname === '' && isset($_GET['appname'])) {
+            $appname = $_GET['appname'];
+        }
         if ($appname === '') $appname = 'default';
 
         // 1. Identify type and location
@@ -942,23 +960,20 @@ class Module extends \SPP\SPPObject
              throw new \SPP\SPPException("Module '{$modname}' could not be located in the filesystem.");
         }
 
-        // 2. Collect candidate manifest files strictly based on type
+        // 2. Canonical write target: SPP_ETC_DIR/apps/<appname>/modsconf/modules.yml
         $candidates = [];
         $preferred = '';
-        
-        if ($type === 'system') {
-            if (defined('SPP_ETC_DIR')) {
-                $preferred = SPP_ETC_DIR . SPP_DS . 'apps' . SPP_DS . $appname . SPP_DS . 'modules.yml';
-                $candidates[] = $preferred;
-                $candidates[] = SPP_ETC_DIR . SPP_DS . 'apps' . SPP_DS . $appname . SPP_DS . 'modules.xml';
-                $candidates[] = SPP_ETC_DIR . SPP_DS . 'modules.yml';
-                $candidates[] = SPP_ETC_DIR . SPP_DS . 'modules.xml';
-            }
-        } else {
-            if (defined('APP_ETC_DIR')) {
-                $preferred = APP_ETC_DIR . SPP_DS . $appname . SPP_DS . 'modsconf' . SPP_DS . 'modules.yml';
-                $candidates[] = $preferred;
-                $candidates[] = APP_ETC_DIR . SPP_DS . $appname . SPP_DS . 'modsconf' . SPP_DS . 'modules.xml';
+
+        if (defined('SPP_ETC_DIR')) {
+            $preferred = SPP_ETC_DIR . SPP_DS . 'apps' . SPP_DS . $appname . SPP_DS . 'modsconf' . SPP_DS . 'modules.yml';
+            $candidates[] = $preferred;
+        }
+
+        // 2a. Auto-migrate: if modules.yml doesn't exist but modules.xml does, migrate first
+        if ($preferred !== '' && !file_exists($preferred)) {
+            $xmlSibling = substr($preferred, 0, -4) . '.xml'; // same path but .xml
+            if (file_exists($xmlSibling)) {
+                self::migrateXmlToYaml($xmlSibling, $preferred);
             }
         }
 
@@ -967,9 +982,7 @@ class Module extends \SPP\SPPObject
             if (!file_exists($file)) continue;
 
             $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-            if ($ext === 'xml' && self::toggleInXml($file, $modname, $status)) {
-                $updatedFiles[] = $file;
-            } elseif (($ext === 'yml' || $ext === 'yaml') && self::toggleInYaml($file, $modname, $status)) {
+            if (($ext === 'yml' || $ext === 'yaml') && self::toggleInYaml($file, $modname, $status)) {
                 $updatedFiles[] = $file;
             }
         }
@@ -993,6 +1006,61 @@ class Module extends \SPP\SPPObject
         }
 
         return $updatedFiles;
+    }
+
+    /**
+     * Migrates a modules.xml file to modules.yml in the same directory.
+     *
+     * Reads all <module> entries from the XML and writes them as a
+     * structured YAML file. The XML file is left untouched.
+     *
+     * @param string $xmlFile  Absolute path to the source modules.xml
+     * @param string $ymlFile  Absolute path to the target modules.yml
+     * @return bool True if migration succeeded
+     */
+    public static function migrateXmlToYaml(string $xmlFile, string $ymlFile): bool
+    {
+        if (!file_exists($xmlFile)) {
+            return false;
+        }
+
+        libxml_use_internal_errors(true);
+        $xml = simplexml_load_file($xmlFile);
+        if ($xml === false) {
+            return false;
+        }
+
+        $modules = [];
+        foreach ($xml->module as $mod) {
+            $entry = [];
+            // Normalize: modules.xml uses <modname>, some use <name>
+            $entry['modname'] = (string) ($mod->modname ?? $mod->name ?? '');
+            if (empty($entry['modname'])) continue;
+            $entry['path']   = (string) ($mod->modpath ?? $mod->path ?? '');
+            $entry['status'] = (string) ($mod->status ?? 'active');
+            // Preserve dependencies if present
+            if (isset($mod->dependencies)) {
+                $deps = [];
+                foreach ($mod->dependencies->dependency as $dep) {
+                    $deps[] = (string) $dep;
+                }
+                if (!empty($deps)) $entry['dependencies'] = $deps;
+            }
+            $modules[] = $entry;
+        }
+
+        if (empty($modules)) {
+            return false;
+        }
+
+        $data = ['modules' => $modules];
+
+        if (!is_dir(dirname($ymlFile))) {
+            mkdir(dirname($ymlFile), 0755, true);
+        }
+
+        file_put_contents($ymlFile, Yaml::dump($data, 4, 4));
+        return true;
     }
 
     /**
@@ -1038,6 +1106,7 @@ class Module extends \SPP\SPPObject
                 $newStatus = $dom->createElement('status', $status);
                 $moduleNode->appendChild($newStatus);
                 $modified = true;
+                $dom->save($file);
             }
             break;
         }

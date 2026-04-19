@@ -1,85 +1,70 @@
 modules:
-  - modname: sppauth
-    modpath: spp/sppauth
-    status: active
-    dependencies:
-      - sppcore
-  - modname: sppentity
-    modpath: spp/sppentity
-    status: active
-    dependencies:
-      - sppcore
-      - sppdb
-  - modname: sppdb
-    modpath: spp/sppdb
-    status: active
-    dependencies:
-      - sppcore
-  - modname: sppconfig
-    modpath: spp/sppconfig
-    status: active
-    dependencies:
-      - sppcore
-  - modname: spplogger
-    modpath: spp/spplogger
-    status: active
-    dependencies:
-      - sppcore
-      - sppdb
-      - sppsession
-  - modname: sppprofile
-    modpath: spp/sppprofile
-    status: active
-    dependencies:
-      - sppcore
-      - sppdb
-      - sppsession
-  - modname: sppwizard
-    modpath: spp/sppwizard
-    status: active
-    dependencies:
-      - sppcore
-      - sppdb
-      - sppsession
-  - modname: sppdojo
-    modpath: spp/sppdojo
-    status: active
-    dependencies:
-      - sppcore
-      - sppdb
-      - sppsession
-  - modname: sppdijit
-    modpath: spp/sppdojo/sppdijit
-    status: active
-    dependencies:
-      - sppcore
-      - sppdb
-      - sppsession
-  - modname: sppvalidator
-    modpath: spp/sppvalidator
-    status: active
-    dependencies:
-      - sppcore
-      - sppdb
-      - sppsession
-  - modname: spphtml
-    modpath: spp/spphtml
-    status: active
-    dependencies:
-      - sppcore
-      - sppdb
-      - sppsession
-  - modname: sppajax
-    modpath: spp/sppajax
-    status: active
-    dependencies:
-      - sppcore
-      - sppdb
-      - sppsession
-  - modname: sppglobal
-    modpath: spp/sppglobal
-    status: inactive
-    dependencies:
-      - sppcore
-      - sppdb
-      - sppsession
+    0:
+        modname: sppauth
+        modpath: spp/sppauth
+        status: active
+        dependencies:
+            - sppcore
+    1:
+        modname: sppentity
+        modpath: spp/sppentity
+        status: active
+        dependencies:
+            - sppcore
+            - sppdb
+    2:
+        modname: sppdb
+        modpath: spp/sppdb
+        status: active
+        dependencies:
+            - sppcore
+    3:
+        modname: sppconfig
+        modpath: spp/sppconfig
+        status: active
+        dependencies:
+            - sppcore
+    4:
+        modname: spplogger
+        modpath: spp/spplogger
+        status: active
+        dependencies:
+            - sppcore
+            - sppdb
+            - sppsession
+    5:
+        modname: sppprofile
+        modpath: spp/sppprofile
+        status: active
+        dependencies:
+            - sppcore
+            - sppdb
+            - sppsession
+    6:
+        modname: sppwizard
+        modpath: spp/sppwizard
+        status: active
+        dependencies:
+            - sppcore
+            - sppdb
+            - sppsession
+    11:
+        modname: sppajax
+        modpath: spp/sppajax
+        status: active
+        dependencies:
+            - sppcore
+            - sppdb
+            - sppsession
+    12:
+        modname: sppglobal
+        modpath: spp/sppglobal
+        status: inactive
+        dependencies:
+            - sppcore
+            - sppdb
+            - sppsession
+    13:
+        name: sppxdb
+        path: spp/sppxdb
+        status: inactive

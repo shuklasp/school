@@ -21,15 +21,13 @@ function getModuleStatusFromManifests(string $modname, string $appname, string $
         }
     }
 
-    print_r($candidates);
-
+    echo "Testing $modname in $appname...\n";
     foreach ($candidates as $file) {
         if (!file_exists($file))
             continue;
 
         $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-        echo "Checking $file\n";
-        
+        echo " -> Checking $file\n";
         if ($ext === 'yml' || $ext === 'yaml') {
             try {
                 $yml = \Symfony\Component\Yaml\Yaml::parseFile($file);
@@ -37,7 +35,6 @@ function getModuleStatusFromManifests(string $modname, string $appname, string $
                 foreach ($mods as $k => $m) {
                     $mArr = (array) $m;
                     $name = $mArr['name'] ?? $mArr['modname'] ?? '';
-                    echo "Found YAML mod: $name => ".($mArr['status'] ?? 'active')."\n";
                     if ($name === $modname) {
                         return (string) ($mArr['status'] ?? 'active');
                     }
@@ -50,7 +47,6 @@ function getModuleStatusFromManifests(string $modname, string $appname, string $
                 continue;
             foreach ($xml->module as $mod) {
                 $name = (string) ($mod->modname ?? $mod->name ?? '');
-                echo "Found XML mod: $name => ".($mod->status ?? 'active')."\n";
                 if ($name === $modname) {
                     return (string) ($mod->status ?? 'active');
                 }
@@ -60,10 +56,13 @@ function getModuleStatusFromManifests(string $modname, string $appname, string $
     
     // Fallback: If not explicitly found in manifests, check framework registry status
     if (class_exists('\\SPP\\Module') && \SPP\Module::isEnabled($modname)) {
-        return 'active (fallback)';
+        return 'active (fallback registry)';
     }
 
-    return 'inactive (fallback)';
+    return 'inactive (end)';
 }
 
-echo "Result: " . getModuleStatusFromManifests('spplogger', 'default', 'system') . "\n";
+echo "--- DEMO ---\n";
+foreach(['spplogger', 'sppdb', 'sppprofile'] as $mod) { 
+    echo $mod . ': ' . getModuleStatusFromManifests($mod, 'demo', 'system') . "\n";
+}

@@ -17,6 +17,19 @@ class SPPGroup extends SPPEntity {
     protected $loadedMetadata = [];
     protected $appContext = 'default';
 
+    public function define_attributes()
+    {
+        return [
+            'name' => 'varchar(255)',
+            'description' => 'text',
+            'created_at' => 'datetime',
+            'ai_vector' => 'text',
+            'metadata' => 'text',
+            'source' => 'varchar(50)',
+            'group_context' => 'varchar(100)'
+        ];
+    }
+
     public function setSource($source, $appContext = 'default') {
         $this->source = $source;
         $this->appContext = $appContext;
@@ -298,14 +311,20 @@ class SPPGroup extends SPPEntity {
                 ['groupid', 'member_class', 'member_id'],
                 [$this->id, get_class($entity), $entity->getId()]
             );
+            if (empty($records)) return false;
             foreach ($records as $r) $r->delete();
+            return true;
         } else {
+            $initialCount = count($this->loadedMetadata);
             $this->loadedMetadata = array_filter($this->loadedMetadata, function($m) use ($entity) {
                 return !($m['entity'] === get_class($entity) && $m['id'] == $entity->getId());
             });
-            $this->save();
+            if (count($this->loadedMetadata) < $initialCount) {
+                $this->save();
+                return true;
+            }
+            return false;
         }
-        return true;
     }
 
     public function hasAncestor(SPPGroup $group, array &$seen = []) {

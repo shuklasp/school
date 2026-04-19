@@ -3,4 +3,9 @@ name: AnotherTestGroup
 description: 'Just Testing'
 attributes:
     Test: test
-members: {  }
+members:
+    -
+        entity: SPPMod\SPPAuth\SPPUser
+        id: 1
+        role: member
+        rights: null

@@ -49,12 +49,12 @@ if (!checkDevMode()) {
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
     <!-- Premium Stylesheet -->
-    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/admin.css?v=<?php echo time(); ?>">
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="images/spp-logo.jpg">
 </head>
 
-<body class="dark-mode">
+<body data-theme="night">
 
     <!-- Framework Message Center (SPPError Display) -->
     <div id="toast-container"></div>
@@ -135,6 +135,12 @@ if (!checkDevMode()) {
                         <div class="user-role">Developer</div>
                     </div>
                 </div>
+
+                <div class="theme-switcher">
+                    <button class="theme-btn" onclick="admin.setTheme('day')" title="Day Mode">☀️</button>
+                    <button class="theme-btn" onclick="admin.setTheme('night')" title="Night Mode">🌙</button>
+                    <button class="theme-btn" onclick="admin.setTheme('saffron')" title="Saffron Mode">🌅</button>
+                </div>
             </div>
         </aside>
 
@@ -167,7 +173,7 @@ if (!checkDevMode()) {
         <div class="glass-panel modal-box">
             <h3 id="modal-title">Editor</h3>
             <div id="modal-body"></div>
-            <div class="modal-footer">
+            <div id="modal-footer" class="modal-footer">
                 <button class="btn secondary-btn" id="modal-close">Cancel</button>
                 <button class="btn primary-btn" id="modal-save">Save Changes</button>
             </div>
@@ -177,12 +183,15 @@ if (!checkDevMode()) {
     <!-- Global Portal for dynamic overlays (avoids modal stacking context issues) -->
     <div id="global-suggestions" class="suggestions-list"></div>
 
-    <!-- Application Script (Aggressive cache busting) -->
+    <!-- Framework Infrastructure (Standard Scripts for maximum compatibility) -->
+    <script src="js/sppux.js?v=<?php echo time(); ?>"></script>
     <script src="js/admin.js?v=<?php echo time(); ?>"></script>
+
     <!-- Inline Override for stale caches -->
     <script>
         setTimeout(() => {
             if (window.admin) {
+                // Ensure critical utilities are globally available as fallbacks
                 window.admin.escapeHtml = function (str) {
                     if (str === null || str === undefined) return '';
                     const div = document.createElement('div');
@@ -193,9 +202,18 @@ if (!checkDevMode()) {
                     if (str === null || str === undefined) return '';
                     return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 };
-                console.log("SPP Admin Cache Override Applied.");
+                window.admin.truncatePath = function (path, len = 60) {
+                    if (!path || path.length <= len) return path;
+                    const parts = path.split(/[\\/]/);
+                    if (parts.length <= 2) return path.substring(0, len) + '...';
+                    const first = parts[0], last = parts[parts.length - 1], mid = '...';
+                    const remainingLen = len - first.length - last.length - mid.length;
+                    if (remainingLen <= 0) return '...' + last;
+                    return `${first}/${mid}/${last}`;
+                };
+                console.log("SPP Admin Reliability Overrides Applied.");
             }
-        }, 1000);
+        }, 500); // Reduced delay for faster stabilization
     </script>
 </body>
 

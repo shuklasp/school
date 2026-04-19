@@ -1,0 +1,5 @@
+AddType application/javascript .js
+AddType application/javascript .mjs
+<IfModule mod_headers.c>
+    Header set Content-Type "application/javascript"
+</IfModule>

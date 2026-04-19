@@ -122,20 +122,36 @@ function getModuleStatusFromManifests(string $modname, string $appname, string $
 {
     $candidates = [];
 
-    if ($type === 'system' || $type === 'any') {
-        if (defined('SPP_ETC_DIR')) {
-            $candidates[] = SPP_ETC_DIR . DIRECTORY_SEPARATOR . 'modules.yml';
-            $candidates[] = SPP_ETC_DIR . DIRECTORY_SEPARATOR . 'modules.xml';
-            $candidates[] = SPP_ETC_DIR . DIRECTORY_SEPARATOR . 'apps' . DIRECTORY_SEPARATOR . $appname . DIRECTORY_SEPARATOR . 'modules.yml';
-            $candidates[] = SPP_ETC_DIR . DIRECTORY_SEPARATOR . 'apps' . DIRECTORY_SEPARATOR . $appname . DIRECTORY_SEPARATOR . 'modules.xml';
+    // 1. Primary App Preference: SPP_ETC_DIR/apps/<app>/modsconf/
+    if (defined('SPP_ETC_DIR') && $appname !== '') {
+        $modsconfDir = SPP_ETC_DIR . DIRECTORY_SEPARATOR . 'apps' . DIRECTORY_SEPARATOR . $appname . DIRECTORY_SEPARATOR . 'modsconf';
+        if (file_exists($modsconfDir . DIRECTORY_SEPARATOR . 'modules.yml')) {
+            $candidates[] = $modsconfDir . DIRECTORY_SEPARATOR . 'modules.yml';
+        } elseif (file_exists($modsconfDir . DIRECTORY_SEPARATOR . 'modules.xml')) {
+            $candidates[] = $modsconfDir . DIRECTORY_SEPARATOR . 'modules.xml';
         }
     }
 
-    if ($type === 'user' || $type === 'any') {
-        if (defined('APP_ETC_DIR') && $appname !== '') {
-            $candidates[] = APP_ETC_DIR . DIRECTORY_SEPARATOR . $appname . DIRECTORY_SEPARATOR . 'modsconf' . DIRECTORY_SEPARATOR . 'modules.yml';
-            $candidates[] = APP_ETC_DIR . DIRECTORY_SEPARATOR . $appname . DIRECTORY_SEPARATOR . 'modsconf' . DIRECTORY_SEPARATOR . 'modules.xml';
+    // 2. User Overrides (Highest Priority - Root /etc/apps/)
+    if (defined('APP_ETC_DIR') && $appname !== '') {
+        $userModsconf = APP_ETC_DIR . DIRECTORY_SEPARATOR . $appname . DIRECTORY_SEPARATOR . 'modsconf';
+        if (file_exists($userModsconf . DIRECTORY_SEPARATOR . 'modules.yml')) {
+            $candidates[] = $userModsconf . DIRECTORY_SEPARATOR . 'modules.yml';
+        } elseif (file_exists($userModsconf . DIRECTORY_SEPARATOR . 'modules.xml')) {
+            $candidates[] = $userModsconf . DIRECTORY_SEPARATOR . 'modules.xml';
         }
+    }
+
+    // 3. Framework-level App Defaults (spp/etc/apps/)
+    if (defined('SPP_ETC_DIR')) {
+        if ($appname !== '') {
+            $candidates[] = SPP_ETC_DIR . DIRECTORY_SEPARATOR . 'apps' . DIRECTORY_SEPARATOR . $appname . DIRECTORY_SEPARATOR . 'modules.yml';
+            $candidates[] = SPP_ETC_DIR . DIRECTORY_SEPARATOR . 'apps' . DIRECTORY_SEPARATOR . $appname . DIRECTORY_SEPARATOR . 'modules.xml';
+        }
+        
+        // 4. Global Framework Defaults (spp/etc/)
+        $candidates[] = SPP_ETC_DIR . DIRECTORY_SEPARATOR . 'modules.yml';
+        $candidates[] = SPP_ETC_DIR . DIRECTORY_SEPARATOR . 'modules.xml';
     }
 
     foreach ($candidates as $file) {
@@ -167,8 +183,10 @@ function getModuleStatusFromManifests(string $modname, string $appname, string $
             }
         }
     }
-
-    return 'unknown';
+    
+    // Fallback: Module not explicitly listed in any manifest.
+    // If not configured, treat as inactive.
+    return 'inactive';
 }
 
 /**
@@ -383,13 +401,11 @@ try {
                 $user_xml = is_dir($user_mod_dir) ? (\SPP\SPPFS::findFile('module.xml', $user_mod_dir) ?: []) : [];
 
                 $manifests = [];
-                // Collect and prioritize (type: system) - Only if context is default or not strictly isolated
-                if ($appname === 'default') {
-                    foreach (array_merge($sys_yml, $sys_xml) as $f) {
-                        $name = basename(dirname($f));
-                        if (!isset($manifests[$name])) {
-                            $manifests[$name] = ['file' => $f, 'type' => 'system'];
-                        }
+                // Collect and prioritize (type: system) - System modules are available in all contexts
+                foreach (array_merge($sys_yml, $sys_xml) as $f) {
+                    $name = basename(dirname($f));
+                    if (!isset($manifests[$name])) {
+                        $manifests[$name] = ['file' => $f, 'type' => 'system'];
                     }
                 }
 
@@ -893,8 +909,9 @@ try {
             try {
                 require_once(SPP_BASE_DIR . '/modules/spp/sppgroup/class.sppgroup.php');
                 require_once(SPP_BASE_DIR . '/modules/spp/sppauth/class.sppuser.php');
+                
                 $group = new \SPPMod\SPPGroup\SPPGroup($groupId);
-
+                
                 if (!class_exists($entityClass)) {
                     sendResponse(false, [], "Entity class '$entityClass' not found.");
                 }
@@ -924,8 +941,9 @@ try {
 
             try {
                 require_once(SPP_BASE_DIR . '/modules/spp/sppgroup/class.sppgroup.php');
+                
                 $group = new \SPPMod\SPPGroup\SPPGroup($groupId);
-
+                
                 if (!class_exists($entityClass)) {
                     sendResponse(false, [], "Entity class not found.");
                 }
@@ -1349,6 +1367,36 @@ try {
                 sendResponse(true, ['path' => $targetPath], "Raw config for '{$modname}' (app: {$appname}) saved to " . basename($targetPath) . ".");
             } catch (\Throwable $e) {
                 sendResponse(false, [], "Failed to save raw config: " . $e->getMessage());
+            }
+            break;
+
+        /**
+         * call_service: Executes application-specific PHP services from src/<appname>/serv/
+         */
+        case 'call_service':
+            $app = $_REQUEST['appname'] ?? 'default';
+            $service = $_REQUEST['service'] ?? '';
+            // Security check: Only allow alphanumeric and underscore
+            if (!preg_match('/^[a-zA-Z0-9_]+$/', $service)) {
+                sendResponse(false, [], "Invalid service name.");
+            }
+            
+            $path = dirname(SPP_BASE_DIR) . "/src/$app/serv/$service.php";
+            if (file_exists($path)) {
+                $params = json_decode($_REQUEST['params'] ?? '{}', true);
+                $db = new \SPPMod\SPPDB\SPPDB();
+                
+                // Expose context to the script
+                $input = $params;
+                
+                require $path;
+                
+                if (isset($response)) {
+                    sendResponse(true, $response);
+                }
+                exit; // Ensure no double output
+            } else {
+                sendResponse(false, [], "Service '$service' not found in app '$app'.");
             }
             break;
 

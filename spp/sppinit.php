@@ -113,8 +113,15 @@ if (file_exists($composer_autoload)) {
   });
 
 
-  if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+  if (php_sapi_name() !== 'cli') {
+    if (session_status() === PHP_SESSION_NONE) {
+      session_start();
+    }
+  } else {
+    // In CLI mode, ensure $_SESSION is at least an empty array to prevent bridge/core failures
+    if (!isset($_SESSION)) {
+      $_SESSION = [];
+    }
   }
 
   //\SPP\SPPEvent::startEvent('spp_init');

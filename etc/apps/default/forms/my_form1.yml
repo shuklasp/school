@@ -1,9 +1,13 @@
 form:
-  name: my_form
+  name: my_form1
   service: save_data
 fields:
   -
     name: title
     type: input
     label: Title
+  -
+    name: new_field
+    type: text
+    label: 'New field'
 isNew: true

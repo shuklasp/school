@@ -16,7 +16,10 @@ if ($argc < 2) {
     echo "  php spp.php [command] [arguments]\n\n";
     echo "Available commands:\n";
     echo "  ent:list                    List all registered entities.\n";
+    echo "  ent:show <Name>             Show the current YAML config of an entity.\n";
     echo "  ent:create                  Interactive Entity creation wizard.\n";
+    echo "  ent:edit <Name>             Interactive Entity definition editor.\n";
+    echo "  ent:delete <Name>           Interactive Entity definition removal.\n";
     echo "  ent:manage <Name>           Interactive record management REPL.\n";
     echo "  auth:user:list              List all system users.\n";
     echo "  auth:user:create            Interactive User creation wizard.\n";
@@ -96,19 +99,23 @@ function printTable($headers, $rows) {
 switch ($command) {
     case 'make:entity':
     case 'ent:create':
-        // For ent:create, we enter an interactive mode
         $entityName = $argv[2] ?? null;
         if (!$entityName) $entityName = prompt("Entity Name (e.g. Student)");
         
         $entityName = preg_replace('/[^a-zA-Z0-9_]/', '', $entityName);
         $appname = prompt("Application/Context", "default");
         $tableName = prompt("Database Table", strtolower($entityName) . "s");
+        $extends = prompt("Extends (Parent Entity class, optional)", "");
+        $login = strtolower(prompt("Enable Login Support? (y/n)", "n")) === 'y';
         
         $config = [
             'table' => $tableName,
             'id_field' => 'id',
             'sequence' => $tableName . '_seq',
-            'attributes' => []
+            'extends' => $extends,
+            'login_enabled' => $login,
+            'attributes' => [],
+            'relations' => []
         ];
 
         echo "\nEntity Attributes (Press Enter on empty Name to finish):\n";
@@ -117,6 +124,26 @@ switch ($command) {
             if (!$attrName) break;
             $attrType = prompt("  Type (e.g. varchar(255), int, text, timestamp)", "varchar(255)");
             $config['attributes'][$attrName] = $attrType;
+        }
+
+        echo "\nEntity Relationships (Press Enter on empty Target to finish):\n";
+        while(true) {
+            $target = prompt("  Target Entity (e.g. \\App\\Entities\\Course)");
+            if (!$target) break;
+            $type = prompt("  Relation Type (OneToMany / ManyToMany)", "OneToMany");
+            $fk = prompt("  Foreign Key Field", strtolower($entityName) . "_id");
+            
+            $rel = [
+                'child_entity' => $target,
+                'relation_type' => $type,
+                'child_entity_field' => $fk
+            ];
+            
+            if ($type === 'ManyToMany') {
+                $rel['pivot_table'] = prompt("  Pivot Table Name", strtolower($entityName) . "_" . strtolower(basename(str_replace('\\', '/', $target))));
+            }
+            
+            $config['relations'][] = $rel;
         }
 
         require_once __DIR__ . '/sppinit.php';
@@ -230,21 +257,130 @@ switch ($command) {
         }
         break;
 
+    case 'ent:edit':
+        $entityName = $argv[2] ?? null;
+        if (!$entityName) {
+            require_once __DIR__ . '/sppinit.php';
+            $entities = \SPPMod\SPPEntity\SPPEntity::listAvailableEntities();
+            echo "Available Entities:\n";
+            foreach (array_keys($entities) as $name) echo "  - $name\n";
+            $entityName = prompt("\nEntity Name to Edit");
+        }
+        
+        require_once __DIR__ . '/sppinit.php';
+        $cfgFile = \SPPMod\SPPEntity\SPPEntity::getEntityConfigFile($entityName);
+        if (!$cfgFile) die("Error: Entity '{$entityName}' not found.\n");
+        
+        try {
+            $config = \Symfony\Component\Yaml\Yaml::parseFile($cfgFile);
+            $appname = strpos($cfgFile, 'apps/') !== false ? explode('/', explode('apps/', $cfgFile)[1])[0] : 'default';
+
+            while(true) {
+                echo "\n--- Editing Entity: {$entityName} ---\n";
+                echo "1) Edit Metadata (Table: {$config['table']}, Parent: " . ($config['extends'] ?? 'None') . ", Login: " . ($config['login_enabled'] ? 'Yes' : 'No') . ")\n";
+                echo "2) Manage Attributes (" . count($config['attributes'] ?? []) . " defined)\n";
+                echo "3) Manage Relationships (" . count($config['relations'] ?? []) . " defined)\n";
+                echo "4) Save & Quit\n";
+                echo "5) Quit without Saving\n";
+                
+                $choice = prompt("Choice", "4");
+                
+                if ($choice == '1') {
+                    $config['table'] = prompt("  Database Table", $config['table']);
+                    $config['extends'] = prompt("  Extends (Parent)", $config['extends'] ?? '');
+                    $config['login_enabled'] = strtolower(prompt("  Enable Login Support? (y/n)", ($config['login_enabled'] ?? false) ? 'y' : 'n')) === 'y';
+                } elseif ($choice == '2') {
+                    while(true) {
+                        echo "\nAttributes:\n";
+                        foreach (($config['attributes'] ?? []) as $k => $v) echo "  - $k: $v\n";
+                        $act = strtolower(prompt("  (A)dd, (E)dit, (R)emove, (B)ack", "b"));
+                        if ($act === 'b') break;
+                        if ($act === 'a') {
+                            $name = prompt("    Name");
+                            if ($name) $config['attributes'][$name] = prompt("    Type", "varchar(255)");
+                        } elseif ($act === 'e') {
+                            $name = prompt("    Attribute Name to Edit");
+                            if (isset($config['attributes'][$name])) {
+                                $newName = prompt("      New Name", $name);
+                                $type = prompt("      Type", $config['attributes'][$name]);
+                                if ($newName !== $name) unset($config['attributes'][$name]);
+                                $config['attributes'][$newName] = $type;
+                            } else {
+                                echo "    Error: Attribute '{$name}' not found.\n";
+                            }
+                        } elseif ($act === 'r') {
+                            $name = prompt("    Name to Remove");
+                            if (isset($config['attributes'][$name])) unset($config['attributes'][$name]);
+                        }
+                    }
+                } elseif ($choice == '3') {
+                    while(true) {
+                        echo "\nRelationships:\n";
+                        foreach (($config['relations'] ?? []) as $idx => $rel) {
+                            echo "  $idx) {$rel['relation_type']} -> {$rel['child_entity']} ({$rel['child_entity_field']})\n";
+                        }
+                        $act = strtolower(prompt("  (A)dd, (E)dit, (R)emove, (B)ack", "b"));
+                        if ($act === 'b') break;
+                        if ($act === 'a') {
+                            $target = prompt("    Target Entity");
+                            if ($target) {
+                                $rel = [
+                                    'child_entity' => $target,
+                                    'relation_type' => prompt("    Type", "OneToMany"),
+                                    'child_entity_field' => prompt("    FK Field", strtolower($entityName) . "_id")
+                                ];
+                                if ($rel['relation_type'] === 'ManyToMany') {
+                                    $rel['pivot_table'] = prompt("    Pivot Table", strtolower($entityName) . "_" . strtolower(basename(str_replace('\\', '/', $target))));
+                                }
+                                $config['relations'][] = $rel;
+                            }
+                        } elseif ($act === 'e') {
+                            $idx = prompt("    Index to Edit");
+                            if (isset($config['relations'][$idx])) {
+                                $rel = &$config['relations'][$idx];
+                                $rel['child_entity'] = prompt("      Target Entity", $rel['child_entity']);
+                                $rel['relation_type'] = prompt("      Type", $rel['relation_type']);
+                                $rel['child_entity_field'] = prompt("      FK Field", $rel['child_entity_field']);
+                                if ($rel['relation_type'] === 'ManyToMany') {
+                                    $rel['pivot_table'] = prompt("      Pivot Table", $rel['pivot_table'] ?? '');
+                                } else {
+                                    unset($rel['pivot_table']);
+                                }
+                            } else {
+                                echo "    Error: Relation index '{$idx}' not found.\n";
+                            }
+                        } elseif ($act === 'r') {
+                            $idx = prompt("    Index to Remove");
+                            if (isset($config['relations'][$idx])) array_splice($config['relations'], $idx, 1);
+                        }
+                    }
+                } elseif ($choice == '4') {
+                    \SPPMod\SPPEntity\SPPEntity::saveEntityDefinition($entityName, $appname, $config);
+                    echo "Success: Entity definition updated.\n";
+                    break;
+                } elseif ($choice == '5') {
+                    break;
+                }
+            }
+        } catch (\Exception $e) {
+            echo "Error: " . $e->getMessage() . "\n";
+        }
+        break;
+
     case 'ent:delete':
         $entityName = $argv[2] ?? null;
         if (!$entityName) die("Error: Entity name required.\n");
-        $appname = prompt("Context", "default");
         require_once __DIR__ . '/sppinit.php';
         
-        $filePath = APP_ETC_DIR . '/' . $appname . '/entities/' . strtolower($entityName) . '.yml';
-        if (file_exists($filePath)) {
+        $cfgFile = \SPPMod\SPPEntity\SPPEntity::getEntityConfigFile($entityName);
+        if ($cfgFile && file_exists($cfgFile)) {
             $confirm = prompt("Are you sure you want to delete entity '{$entityName}' configuration? (y/N)", "n");
             if (strtolower($confirm) === 'y') {
-                unlink($filePath);
+                unlink($cfgFile);
                 echo "Success: Entity definition deleted.\n";
             }
         } else {
-            echo "Error: Entity definition not found at {$filePath}\n";
+            echo "Error: Entity definition not found for '{$entityName}'.\n";
         }
         break;
 

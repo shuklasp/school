@@ -1,73 +1,9 @@
 modules:
-    1:
-        name: sppentity
-        path: spp/sppentity
+    -
+        name: marketing
+        path: spp/marketing
         status: active
-        deps:
-            - sppcore
-            - sppdb
-    2:
-        name: sppdb
-        path: spp/sppdb
+    -
+        name: sppapi
+        path: spp/sppapi
         status: active
-        deps:
-            - sppcore
-    3:
-        name: sppconfig
-        path: spp/sppconfig
-        status: active
-        deps:
-            - sppcore
-    4:
-        name: spplogger
-        path: spp/spplogger
-        status: active
-        deps:
-            - sppcore
-            - sppdb
-            - sppsession
-    5:
-        name: sppprofile
-        path: spp/sppprofile
-        status: active
-        deps:
-            - sppcore
-            - sppdb
-            - sppsession
-    6:
-        name: sppwizard
-        path: spp/sppwizard
-        status: active
-        deps:
-            - sppcore
-            - sppdb
-            - sppsession
-    7:
-        name: sppview
-        path: spp/sppview
-        status: active
-        deps:
-            - sppcore
-            - sppdb
-            - sppsession
-    8:
-        name: sppajax
-        path: spp/sppajax
-        status: active
-        deps:
-            - sppcore
-            - sppview
-    9:
-        name: sppgroup
-        path: spp/sppgroup
-        status: active
-        deps:
-            - sppentity
-    11:
-        name: sppai
-        path: spp/sppai
-        status: active
-    12:
-        name: sppxdb
-        path: spp/sppxdb
-        status: inactive

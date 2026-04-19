@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <!--
     Document   : modules.xml
     Created on : 08 October 2009, 09:32
@@ -7,7 +6,6 @@
     Description:
         Modules configuration.
 -->
-
 <modules>
     <module>
         <modname>sppauth</modname>
@@ -36,7 +34,7 @@
     <module>
         <modname>spplogger</modname>
         <modpath>spp/spplogger</modpath>
-        <status>inactive</status>
+        <status>active</status>
         <dependencies>
             <dependency>sppcore</dependency>
             <dependency>sppdb</dependency>

@@ -43,7 +43,7 @@
     <module>
         <modname>spplogger</modname>
         <modpath>spp/spplogger</modpath>
-        <status>active</status>
+        <status>inactive</status>
         <dependencies>
             <dependency>sppcore</dependency>
             <dependency>sppdb</dependency>
