@@ -1,0 +1,5 @@
+app:
+    name: autodemo
+    type: php
+    version: 1.0.0
+    description: 'Auto-generated php-SPA application.'

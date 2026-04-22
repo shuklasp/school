@@ -57,6 +57,7 @@ class SPPError extends \SPP\SPPObject
         );
         if ($handleerror) {
             $this->init();
+            set_exception_handler('SPP\SPPError::exceptionHandler');
         }
     }
 
@@ -102,8 +103,33 @@ class SPPError extends \SPP\SPPObject
      * @param int $linenum
      * @param array $vars
      */
+    public static function exceptionHandler(\Throwable $e)
+    {
+        if (ob_get_length()) ob_clean();
+        
+        $debug = defined('SPP_DEBUG') && SPP_DEBUG;
+        $title = get_class($e);
+        $message = $e->getMessage();
+        $file = $e->getFile();
+        $line = $e->getLine();
+        $trace = $e->getTrace();
+
+        if (php_sapi_name() === 'cli') {
+            echo "\n[UNCAUGHT EXCEPTION] $title: $message in $file on line $line\n";
+            exit(1);
+        }
+
+        if ($debug) {
+            include __DIR__ . '/error_template.php';
+        } else {
+            echo "<h1>500 Internal Server Error</h1><p>Something went wrong. Please try again later.</p>";
+        }
+        exit(1);
+    }
+
     public static function errorHandler($errno, $errmsg, $filename, $linenum, $vars = array())
     {
+        // ... existing logic
         $proc = \SPP\Scheduler::getActiveProc();
         $pname = $proc->getName();
         $err = $proc->getErrorObj();
@@ -111,6 +137,12 @@ class SPPError extends \SPP\SPPObject
             return;
         }
         $err->errors[$errno][] = array('errno' => $errno, 'errmsg' => $errmsg, 'filename' => $filename, 'linenum' => $linenum);
+        
+        // If it's a fatal error, treat it like an exception
+        if (in_array($errno, [E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR])) {
+            self::exceptionHandler(new \ErrorException($errmsg, $errno, 0, $filename, $linenum));
+        }
+
         if ($err->customerrhnd != '') {
             if (is_callable($err->customerrhnd))
                 call_user_func($err->customerrhnd);

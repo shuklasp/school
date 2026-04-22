@@ -17,21 +17,94 @@ class SPPDB
     private static array $sharedConnections = [];
 
     /**
-     * Resolves a table name with current context's prefix.
+     * Resolves a table name with current context's prefix, supporting shared group inheritance.
      *
      * @param string $tname
      * @return string
      */
     public static function sppTable(string $tname): string
     {
-        $prefix = \SPP\Module::getConfig('table_prefix', 'sppdb');
-        
-        // If no prefix configured for current context, fallback to default context
-        if ($prefix === false && \SPP\Scheduler::getContext() !== 'default') {
+        $settings = self::loadGlobalSettings();
+        $context = \SPP\Scheduler::getContext();
+        $appMeta = $settings['apps'][$context] ?? null;
+
+        $prefix = null;
+
+        // 1. Try resolving via Shared Group inheritance
+        if ($appMeta && !empty($appMeta['shared_group'])) {
+            $prefix = self::resolveSharedPrefix($tname, $appMeta['shared_group'], $settings['shared_groups'] ?? []);
+        }
+
+        // 2. Fallback to App-specific prefix if not shared
+        if ($prefix === null) {
+            if ($appMeta && isset($appMeta['table_prefix'])) {
+                $prefix = $appMeta['table_prefix'];
+            } else {
+                $prefix = \SPP\Module::getConfig('table_prefix', 'sppdb');
+            }
+        }
+
+        // 3. Global Default Fallback
+        if ($prefix === false && $context !== 'default') {
             $prefix = \SPP\Module::getConfig('table_prefix', 'sppdb', 'default');
         }
-        
+
         return ($prefix ?: '') . $tname;
+    }
+
+    /**
+     * Recursively resolves a prefix for a table through shared group inheritance.
+     */
+    private static function resolveSharedPrefix(string $tname, string $groupName, array $groups): ?string
+    {
+        if (!isset($groups[$groupName])) {
+            return null;
+        }
+
+        $group = $groups[$groupName];
+        
+        // Normalize table name for comparison (remove prefix if it's already there or handle as entity name)
+        // For simplicity, we assume $tname corresponds to names in the 'entities' list
+        $entities = $group['entities'] ?? [];
+        if (in_array($tname, $entities)) {
+            return $group['table_prefix'] ?? null;
+        }
+
+        // Walk up inheritance
+        if (!empty($group['extends'])) {
+            return self::resolveSharedPrefix($tname, $group['extends'], $groups);
+        }
+
+        return null;
+    }
+
+    /**
+     * Helper to load global settings.
+     */
+    private static function loadGlobalSettings(): array
+    {
+        static $cached = null;
+        if ($cached !== null) return $cached;
+
+        $path = (defined('SPP_BASE_DIR') ? SPP_BASE_DIR : dirname(__DIR__, 3)) . '/etc/global-settings.yml';
+        if (!file_exists($path)) {
+            $cached = ['apps' => [], 'shared_groups' => []];
+            return $cached;
+        }
+
+        try {
+            // Use Symfony YAML if available
+            if (class_exists('\\Symfony\\Component\\Yaml\\Yaml')) {
+                $cached = \Symfony\Component\Yaml\Yaml::parseFile($path);
+            } else {
+                // Low-level fallback or error
+                $cached = ['apps' => [], 'shared_groups' => []];
+            }
+        } catch (\Exception $e) {
+            $cached = ['apps' => [], 'shared_groups' => []];
+        }
+
+        return is_array($cached) ? $cached : ['apps' => [], 'shared_groups' => []];
     }
 
     /** @var \PDO The internal PDO instance */
@@ -42,29 +115,49 @@ class SPPDB
     /**
      * public function __construct
      * 
-     * Creates or reuses a database connection.
-     *
-     * @param string|null $dburl
-     * @param string|null $dbuser
-     * @param string|null $dbpasswd
-     * @param array|null $options
-     * @param bool $shared Whether to use the shared connection pool (default: true)
-     * @return void
+     * Creates or reuses a database connection, supporting per-app overrides.
      */
     public function __construct($dburl = null, $dbuser = null, $dbpasswd = null, $options = null, bool $shared = true)
     {
         try {
             $url = null;
+            $settings = self::loadGlobalSettings();
+            $context = \SPP\Scheduler::getContext();
+            $dbOverride = $settings['apps'][$context]['db_config'] ?? null;
+
             if ($dburl == null) {
-                $dbtype = \SPP\Module::getConfig('dbtype', 'sppdb');
-                $dbhost = \SPP\Module::getConfig('dbhost', 'sppdb');
-                $dbname = \SPP\Module::getConfig('dbname', 'sppdb');
-                $url = $dbtype . ':host=' . $dbhost . ';dbname=' . $dbname;
+                if ($dbOverride) {
+                    $dbtype = $dbOverride['dbtype'] ?? \SPP\Module::getConfig('dbtype', 'sppdb');
+                    $dbhost = $dbOverride['dbhost'] ?? \SPP\Module::getConfig('dbhost', 'sppdb');
+                    $dbname = $dbOverride['dbname'] ?? \SPP\Module::getConfig('dbname', 'sppdb');
+                    $url = $dbtype . ':host=' . $dbhost . ';dbname=' . $dbname;
+                    $dbuser = $dbOverride['dbuser'] ?? \SPP\Module::getConfig('dbuser', 'sppdb');
+                    $dbpasswd = $dbOverride['dbpasswd'] ?? \SPP\Module::getConfig('dbpasswd', 'sppdb');
+                } else {
+                    $dbtype = \SPP\Module::getConfig('dbtype', 'sppdb');
+                    $dbhost = \SPP\Module::getConfig('dbhost', 'sppdb');
+                    $dbname = \SPP\Module::getConfig('dbname', 'sppdb');
+                    $url = ($dbtype && $dbhost && $dbname) ? ($dbtype . ':host=' . $dbhost . ';dbname=' . $dbname) : null;
+                    $dbuser = \SPP\Module::getConfig('dbuser', 'sppdb');
+                    $dbpasswd = \SPP\Module::getConfig('dbpasswd', 'sppdb');
+                }
             } else {
                 $url = $dburl;
+                $dbuser = ($dbuser == null) ? \SPP\Module::getConfig('dbuser', 'sppdb') : $dbuser;
+                $dbpasswd = ($dbpasswd == null) ? \SPP\Module::getConfig('dbpasswd', 'sppdb') : $dbpasswd;
             }
-            $dbuser = ($dbuser == null) ? \SPP\Module::getConfig('dbuser', 'sppdb') : $dbuser;
-            $dbpasswd = ($dbpasswd == null) ? \SPP\Module::getConfig('dbpasswd', 'sppdb') : $dbpasswd;
+
+            // Diagnostic validation
+            if (!$url || !$dbuser) {
+                $configPath = \SPP\Module::getExpectedConfigPath('sppdb');
+                $missing = [];
+                if (!$dbhost) $missing[] = 'dbhost';
+                if (!$dbname) $missing[] = 'dbname';
+                if (!$dbuser) $missing[] = 'dbuser';
+                $missingStr = implode(', ', $missing);
+                
+                throw new \SPP\SPPException("Database configuration properties ($missingStr) are not defined in {$configPath}. Please check your configuration.");
+            }
 
             // Generate a unique key for the connection parameters if sharing is enabled
             $key = null;

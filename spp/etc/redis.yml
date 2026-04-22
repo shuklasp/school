@@ -1,0 +1,12 @@
+# SPP Enterprise Redis Configuration
+enabled: true
+host: 127.0.0.1
+port: 6379
+password: ~
+prefix: 'spp:'
+
+# Database Index Mapping
+db: 0         # Default DB
+cache_db: 1   # Override for cache
+audit_db: 2   # Override for audit logs
+session_db: 3 # Override for sessions

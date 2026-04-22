@@ -8,16 +8,17 @@
 -->
 
 <module>
-    <name>sppentity</name>
+    <name>schperson</name>
     <version>0.5</version>
-    <pubname>SPP Entity</pubname>
+    <pubname>School Person</pubname>
     <modgroup>SPP_Optional</modgroup>
-    <pubdesc>Defines an Entity.</pubdesc>
+    <pubdesc>Defines a Person.</pubdesc>
     <includes>
-        <include>class.sppentity.php</include>
-        <include>entityexceptions.php</include>
+        <include>class.schperson.php</include>
+        <include>personexceptions.php</include>
     </includes>
     <deps>
         <depends>sppconfig</depends>
+        <depends>schorg</depends>
     </deps>
 </module>

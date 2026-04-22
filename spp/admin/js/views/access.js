@@ -157,7 +157,18 @@ export default class AccessView extends BaseComponent {
                                     ${columns.map((col, i) => {
                                         const val = item[col.key];
                                         if (i === 0) return html`<td><code>${val}</code></td>`;
-                                        if (col.key === 'status') return html`<td><span class="status-badge ${val}">${val}</span></td>`;
+                                        if (col.key === 'status') {
+                                            if (activeTab === 'users') {
+                                                return html`
+                                                    <td>
+                                                        <button class="status-toggle-pill ${val}" 
+                                                            onclick="${() => this.toggleUserStatus(item.id, item.status)}">
+                                                            ${val.toUpperCase()}
+                                                        </button>
+                                                    </td>`;
+                                            }
+                                            return html`<td><span class="status-badge ${val}">${val}</span></td>`;
+                                        }
                                         return html`<td>${val}</td>`;
                                     })}
                                     <td class="text-right">
@@ -678,5 +689,41 @@ export default class AccessView extends BaseComponent {
             if (idSet.size === 0) container.innerHTML = '<span class="text-dim" style="font-size: 0.85rem;">No users selected yet.</span>';
         };
         container.appendChild(tag);
+    }
+
+    /**
+     * toggleUserStatus: Asynchronously updates account active/inactive state.
+     */
+    async toggleUserStatus(userId, currentStatus) {
+        const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+        
+        // 1. Optimistic Update in State
+        const updatedItems = this.state.items.map(user => {
+            if (user.id === userId) return { ...user, status: newStatus };
+            return user;
+        });
+        this.setState({ items: updatedItems });
+
+        try {
+            const fd = new FormData();
+            fd.append('action', 'toggle_user_status');
+            fd.append('id', userId);
+            fd.append('status', newStatus);
+
+            const res = await this.admin.apiPost(fd);
+            if (res.success) {
+                this.admin.notify(`User status updated to ${newStatus}.`, 'success');
+            } else {
+                throw new Error(res.message || 'Update failed');
+            }
+        } catch (err) {
+            // 2. Rollback on failure
+            this.admin.notify(`Failed to update status: ${err.message}`, 'error');
+            const rolledBackItems = this.state.items.map(user => {
+                if (user.id === userId) return { ...user, status: currentStatus };
+                return user;
+            });
+            this.setState({ items: rolledBackItems });
+        }
     }
 }

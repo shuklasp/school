@@ -11,50 +11,38 @@ if (php_sapi_name() !== 'cli') {
 define('SPP_APP_DIR', dirname(__DIR__, 1));
 
 if ($argc < 2) {
-    echo "Satya Portal Pack (SPP) Framework CLI\n\n";
-    echo "Usage:\n";
-    echo "  php spp.php [command] [arguments]\n\n";
-    echo "Available commands:\n";
-    echo "  ent:list                    List all registered entities.\n";
-    echo "  ent:show <Name>             Show the current YAML config of an entity.\n";
-    echo "  ent:create                  Interactive Entity creation wizard.\n";
-    echo "  ent:edit <Name>             Interactive Entity definition editor.\n";
-    echo "  ent:delete <Name>           Interactive Entity definition removal.\n";
-    echo "  ent:manage <Name>           Interactive record management REPL.\n";
-    echo "  auth:user:list              List all system users.\n";
-    echo "  auth:user:create            Interactive User creation wizard.\n";
-    echo "  auth:user:edit <userid>     Edit an existing user profile.\n";
-    echo "  auth:user:assign <userid> <roleid>\n";
-    echo "  auth:user:unassign <userid> <roleid>\n";
-    echo "  auth:role:list              List all system roles.\n";
-    echo "  auth:role:create            Interactive Role creation wizard.\n";
-    echo "  auth:role:edit <roleid>     Edit an existing role metadata.\n";
-    echo "  auth:role:assign <roleid> <rightid>\n";
-    echo "  auth:role:unassign <roleid> <rightid>\n";
-    echo "  auth:group:list             List all system groups (DB & YAML).\n";
-    echo "  auth:group:create           Interactive Group creation wizard.\n";
-    echo "  auth:group:edit <slug>      Edit an existing group.\n";
-    echo "  auth:group:assign <slug> <roleid>\n";
-    echo "  auth:group:unassign <slug> <roleid>\n";
-    echo "  auth:group:member:list <slug>\n";
-    echo "  auth:group:member:add <slug> <member_id> [member_class]\n";
-    echo "  auth:group:member:remove <slug> <member_id> [member_class]\n";
-    echo "  view:page:list              List all registered page routes.\n";
-    echo "  view:page:add [name]        Interactive Page route wizard (Upsert).\n";
-    echo "  view:page:remove <name>     Remove a page route.\n";
-    echo "  view:service:list           List all registered AJAX services.\n";
-    echo "  view:service:add [name]     Interactive Service registration (Upsert).\n";
-    echo "  view:service:remove <name>  Remove a service registry entry.\n";
-    echo "  sys:update                  Run incremental system-wide updates.\n";
-    echo "  sys:info                    Show system and framework information.\n";
-    echo "  sys:bridge:info             Detailed polyglot resource bridge status.\n";
-    echo "  sys:bridge:setup            Trigger polyglot discovery and bridge refresh.\n";
-    echo "  build:edge                  Compile framework into SPPNexus executable.\n";
-    echo "\n";
+    // Bootstrap for discovery
+    require_once __DIR__ . '/sppinit.php';
+    $commands = \SPP\CLI\CommandManager::discover();
+    if (isset($commands['list'])) {
+        $commands['list']->execute($argv);
+    } else {
+        echo "SPP CLI: Use 'php spp.php list' to see available commands.\n";
+    }
     exit(1);
 }
 
 $command = $argv[1];
+
+// Load Composer autoloader for Yaml support
+require_once __DIR__ . '/sppinit.php';
+
+// Load CLI settings
+$cliSettingsPath = __DIR__ . '/etc/cli-settings.yml';
+$cliSettings = file_exists($cliSettingsPath) 
+    ? \Symfony\Component\Yaml\Yaml::parseFile($cliSettingsPath) 
+    : [];
+$cliDefaultApp = $cliSettings['default_app'] ?? 'default';
+
+if ($cliDefaultApp !== 'default' && class_exists('\SPP\App')) {
+    try {
+        // Instantiating the App automatically registers it with the Scheduler
+        new \SPP\App($cliDefaultApp);
+        \SPP\Scheduler::setContext($cliDefaultApp);
+    } catch (\Exception $e) {
+        // Fallback silently if the app doesn't exist or loading fails
+    }
+}
 
 // Function to read interactive input
 function prompt($text, $default = '') {
@@ -96,6 +84,26 @@ function printTable($headers, $rows) {
     echo $line . "\n";
 }
 
+/**
+ * COMMAND DISCOVERY & EXECUTION (Evolution Phase 3)
+ */
+$discoveredCommands = \SPP\CLI\CommandManager::discover();
+
+// Execution logic
+if (isset($discoveredCommands[$command])) {
+    try {
+        $discoveredCommands[$command]->execute($argv);
+        exit(0);
+    } catch (\Exception $e) {
+        echo "Error: " . $e->getMessage() . "\n";
+        exit(1);
+    }
+}
+
+
+/**
+ * LEGACY COMMAND DISPATCHER (Refactoring target)
+ */
 switch ($command) {
     case 'make:entity':
     case 'ent:create':
@@ -779,6 +787,7 @@ switch ($command) {
 
     case 'view:page:add':
         $name = $argv[2] ?? null;
+        if ($argv[3] ?? null) \SPP\Scheduler::setContext($argv[3]);
         if (!$name) $name = prompt("Page Name");
         if (!$name) die("Name required.\n");
         require_once __DIR__ . '/sppinit.php';
@@ -834,6 +843,7 @@ switch ($command) {
 
     case 'view:service:add':
         $name = $argv[2] ?? null;
+        if ($argv[3] ?? null) \SPP\Scheduler::setContext($argv[3]);
         if (!$name) $name = prompt("Service Name");
         if (!$name) die("Name required.\n");
         require_once __DIR__ . '/sppinit.php';
@@ -1070,6 +1080,221 @@ switch ($command) {
              echo "\nError during setup: " . ($res['error'] ?? 'Unknown error') . "\n";
          }
          break;
+
+    case 'cli:app:default':
+        $appName = $argv[2] ?? prompt("Default Application Name", $cliDefaultApp);
+        
+        require_once __DIR__ . '/sppinit.php';
+        $globalSettingsPath = __DIR__ . '/etc/global-settings.yml';
+        $settings = \Symfony\Component\Yaml\Yaml::parseFile($globalSettingsPath);
+        
+        if (!isset($settings['apps'][$appName])) {
+            die("Error: Application '{$appName}' is not registered in global-settings.yml.\n");
+        }
+
+        $cliSettings['default_app'] = $appName;
+        file_put_contents($cliSettingsPath, \Symfony\Component\Yaml\Yaml::dump($cliSettings));
+        echo "Success: '{$appName}' set as the default CLI application context.\n";
+        break;
+
+    case 'app:create':
+        require_once __DIR__ . '/sppinit.php';
+        $appName = $argv[2] ?? prompt("Application Name (slug)");
+        $appType = prompt("Application Type (javascript/php)", "php");
+        $baseUrl = prompt("Base URL", "/" . $appName);
+        
+        $appDir = SPP_APP_DIR . "/etc/apps/{$appName}";
+        if (is_dir($appDir)) die("Error: Application '{$appName}' already exists.\n");
+
+        echo "Initializing directory structure for '{$appName}'...\n";
+        $app = new \SPP\App($appName, true, 1); // Level 1 init to create dirs
+        
+        // Define additional directories
+        $dirs = ['entities', 'forms', 'modsconf', 'pages'];
+        foreach ($dirs as $d) {
+            $path = "{$appDir}/{$d}";
+            if (!is_dir($path)) mkdir($path, 0777, true);
+        }
+
+        $srcDir = SPP_APP_DIR . "/src/{$appName}";
+        $subDirs = ($appType === 'php') ? ['pages', 'serv', 'components'] : ['comp', 'serv', 'store'];
+        foreach ($subDirs as $sd) {
+            $path = "{$srcDir}/{$sd}";
+            if (!is_dir($path)) mkdir($path, 0777, true);
+        }
+
+        // Create manifest.yml
+        $manifest = [
+            'app' => [
+                'name' => $appName,
+                'type' => $appType,
+                'version' => '1.0.0',
+                'description' => "Auto-generated {$appType}-SPA application."
+            ]
+        ];
+        file_put_contents("{$appDir}/manifest.yml", \Symfony\Component\Yaml\Yaml::dump($manifest));
+
+        // Create initial modules.yml
+        $modules = [
+            'modules' => [
+                ['name' => 'sppview', 'path' => 'spp/sppview'],
+                ['name' => 'sppajax', 'path' => 'spp/sppajax']
+            ]
+        ];
+        file_put_contents("{$appDir}/modules.yml", \Symfony\Component\Yaml\Yaml::dump($modules));
+
+        // Registry update
+        echo "Registering application in global-settings.yml...\n";
+        $globalSettingsPath = __DIR__ . '/etc/global-settings.yml';
+        $settings = \Symfony\Component\Yaml\Yaml::parseFile($globalSettingsPath);
+        $settings['apps'][$appName] = [
+            'base_url' => $baseUrl,
+            'table_prefix' => $appName . '_',
+            'shared_group' => 'core',
+            'etc_path' => "etc/apps/{$appName}",
+            'src_path' => "src/{$appName}"
+        ];
+        file_put_contents($globalSettingsPath, \Symfony\Component\Yaml\Yaml::dump($settings, 4, 2));
+
+        echo "Success: Application '{$appName}' created.\n";
+        break;
+
+    case 'ui:comp:php':
+        $name = $argv[2] ?? prompt("Component Name (e.g. UserProfile)");
+        $app = $argv[3] ?? $cliDefaultApp;
+        if ($app !== \SPP\Scheduler::getContext()) \SPP\Scheduler::setContext($app);
+        $targetDir = SPP_APP_DIR . "/src/{$app}/components";
+        if (!is_dir($targetDir)) mkdir($targetDir, 0777, true);
+        
+        $filename = "{$targetDir}/{$name}.php";
+        if (file_exists($filename)) die("Error: Component '{$name}' already exists in '{$app}'.\n");
+        
+        $tpl = "<?php\n\nnamespace App\\" . ucfirst($app) . "\\Components;\n\n";
+        $tpl .= "use SPPMod\\SPPView\\PHPComponent;\n\n";
+        $tpl .= "class {$name} extends PHPComponent {\n";
+        $tpl .= "    public \$state = [\n        'title' => 'Hello from {$name}'\n    ];\n\n";
+        $tpl .= "    public function render(): string {\n";
+        $tpl .= "        return \"<div>\\n            <h1>{\$title}</h1>\\n            <p>Ready to build.</p>\\n        </div>\";\n";
+        $tpl .= "    }\n}\n";
+        
+        file_put_contents($filename, $tpl);
+        echo "Success: Created PHP Component in {$filename}\n";
+        break;
+
+    case 'ui:build':
+        $appName = $argv[2] ?? $cliDefaultApp;
+        if ($appName !== \SPP\Scheduler::getContext()) \SPP\Scheduler::setContext($appName);
+        $compDir = SPP_APP_DIR . "/src/{$appName}/components";
+        $genDir = SPP_APP_DIR . "/res/apps/{$appName}/generated";
+        
+        if (!is_dir($compDir)) die("Error: Component directory not found for '{$appName}'.\n");
+        if (!is_dir($genDir)) mkdir($genDir, 0777, true);
+        
+        echo "Building components for '{$appName}'...\n";
+        $files = glob("{$compDir}/*.php");
+        foreach ($files as $file) {
+            $className = "App\\" . ucfirst($appName) . "\\Components\\" . basename($file, '.php');
+            echo "  Generating JS for {$className}...\n";
+            try {
+                $js = \SPPMod\SPPView\JSGenerator::generate($className);
+                file_put_contents("{$genDir}/" . basename($file, '.php') . ".js", $js);
+            } catch (\Exception $e) {
+                echo "  [ERROR] " . $e->getMessage() . "\n";
+            }
+        }
+        echo "Build completed.\n";
+        break;
+
+    case 'ui:watch':
+        $appName = $argv[2] ?? $cliDefaultApp;
+        if ($appName !== \SPP\Scheduler::getContext()) \SPP\Scheduler::setContext($appName);
+        $compDir = SPP_APP_DIR . "/src/{$appName}/components";
+        $genDir = SPP_APP_DIR . "/res/apps/{$appName}/generated";
+
+        echo "Starting watcher for '{$appName}' (Ctrl+C to stop)...\n";
+        $mtimes = [];
+        
+        while (true) {
+            $files = glob("{$compDir}/*.php");
+            foreach ($files as $file) {
+                $mtime = filemtime($file);
+                if (!isset($mtimes[$file]) || $mtimes[$file] != $mtime) {
+                    $className = "App\\" . ucfirst($appName) . "\\Components\\" . basename($file, '.php');
+                    echo "  [" . date('H:i:s') . "] Rebuilding {$className}...\n";
+                    try {
+                        if (!is_dir($genDir)) mkdir($genDir, 0777, true);
+                        $js = \SPPMod\SPPView\JSGenerator::generate($className);
+                        file_put_contents("{$genDir}/" . basename($file, '.php') . ".js", $js);
+                        $mtimes[$file] = $mtime;
+                    } catch (\Exception $e) {
+                        echo "    [ERROR] " . $e->getMessage() . "\n";
+                    }
+                }
+            }
+            usleep(500000); // 500ms
+        }
+        break;
+
+    case 'ui:view':
+        $name = $argv[2] ?? prompt("Component Name (e.g. Dashboard)");
+        $app = $argv[3] ?? $cliDefaultApp;
+        if ($app !== \SPP\Scheduler::getContext()) \SPP\Scheduler::setContext($app);
+        $targetDir = SPP_APP_DIR . "/src/{$app}/comp";
+        if (!is_dir($targetDir)) mkdir($targetDir, 0777, true);
+        
+        $filename = "{$targetDir}/" . strtolower($name) . ".js";
+        if (file_exists($filename)) die("Error: View '{$name}' already exists in '{$app}'.\n");
+        
+        $tpl = "/**\n * " . ucfirst($name) . " View Component\n */\n";
+        $tpl .= "export default class " . ucfirst($name) . "View extends BaseComponent {\n";
+        $tpl .= "    async onInit() {\n        this.state = { loading: true };\n        await this.loadData();\n    }\n\n";
+        $tpl .= "    async loadData() {\n        this.setState({ loading: false });\n    }\n\n";
+        $tpl .= "    render() {\n        return html`\n            <div class=\"" . strtolower($name) . "-view fade-in\">\n";
+        $tpl .= "                <h1>" . ucfirst($name) . "</h1>\n                <p>Auto-generated component template.</p>\n";
+        $tpl .= "            </div>\n        `;\n    }\n}\n";
+        
+        file_put_contents($filename, $tpl);
+        echo "Success: Created View Component in {$filename}\n";
+        break;
+
+    case 'ui:serv':
+        $name = $argv[2] ?? prompt("Service Name (e.g. list_stats)");
+        $app = $argv[3] ?? $cliDefaultApp;
+        if ($app !== \SPP\Scheduler::getContext()) \SPP\Scheduler::setContext($app);
+        $targetDir = SPP_APP_DIR . "/src/{$app}/serv";
+        if (!is_dir($targetDir)) mkdir($targetDir, 0777, true);
+        
+        $filename = "{$targetDir}/{$name}.php";
+        if (file_exists($filename)) die("Error: Service '{$name}' already exists in '{$app}'.\n");
+        
+        $tpl = "<?php\n/**\n * Service: {$name}\n * Application: {$app}\n */\n\n";
+        $tpl .= "try {\n    // Implementation logic here\n";
+        $tpl .= "    \$data = ['status' => 'success', 'timestamp' => time()];\n    \n";
+        $tpl .= "    echo json_encode(['success' => true, 'data' => \$data]);\n";
+        $tpl .= "} catch (\\Exception \$e) {\n";
+        $tpl .= "    echo json_encode(['success' => false, 'message' => \$e->getMessage()]);\n}\n";
+        
+        file_put_contents($filename, $tpl);
+        echo "Success: Created Backend Service in {$filename}\n";
+        break;
+
+    case 'ui:store':
+        $name = $argv[2] ?? prompt("Store Name (e.g. UserStore)");
+        $app = $argv[3] ?? $cliDefaultApp;
+        if ($app !== \SPP\Scheduler::getContext()) \SPP\Scheduler::setContext($app);
+        $targetDir = SPP_APP_DIR . "/src/{$app}/store";
+        if (!is_dir($targetDir)) mkdir($targetDir, 0777, true);
+        
+        $filename = "{$targetDir}/" . strtolower($name) . ".js";
+        if (file_exists($filename)) die("Error: Store '{$name}' already exists in '{$app}'.\n");
+        
+        $tpl = "/**\n * " . ucfirst($name) . " Store\n */\n";
+        $tpl .= "const " . ucfirst($name) . " = new SPPStore({\n    initialized: Date.now()\n});\n\n";
+        $tpl .= "export default " . ucfirst($name) . ";\n";
+        
+        file_put_contents($filename, $tpl);
+        echo "Success: Created Global Store in {$filename}\n";
+        break;
 
     default:
         echo "Command \"{$command}\" is not defined.\n";

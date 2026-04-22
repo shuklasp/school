@@ -1,0 +1,48 @@
+profile: dev
+shared_groups:
+  core:
+    table_prefix: spp_
+    entities:
+      - User
+      - Role
+      - Right
+admin_auth:
+  username: admin
+  password: admin123
+  academic:
+    extends: core
+    table_prefix: sch_
+    entities:
+      - Student
+      - Teacher
+      - Class
+  example_shared:
+    extends: core
+    table_prefix: example_
+    entities:
+      - User
+      - Right
+  test_reactivity:
+    extends: core
+    table_prefix: test_
+    entities: {  }
+apps:
+  default:
+    base_url: /
+    table_prefix: ''
+    shared_group: academic
+    etc_path: ''
+    src_path: ''
+  sppadmin:
+    base_url: /sppadmin
+    table_prefix: sppadmin_
+    shared_group: ''
+    etc_path: etc/apps/sppadmin
+    src_path: src/sppadmin
+  autodemo:
+    base_url: /autodemo
+    table_prefix: autodemo_
+    shared_group: core
+    etc_path: etc/apps/autodemo
+    src_path: src/autodemo
+base_app: default

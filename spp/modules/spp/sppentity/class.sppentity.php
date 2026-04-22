@@ -17,6 +17,9 @@ class SPPEntity implements \JsonSerializable
   protected static $_metadata = array();         /** Static registry for entity configuration */
 
   protected $_values = array();                      /** attribute-value pairs */
+  protected $_snapshot = array();                    /** data snapshot for auditing */
+  protected $_relatedCaches = array();               /** lazy-loaded relations cache */
+
 
   /**
    * public function __construct($id, $name)
@@ -29,7 +32,7 @@ class SPPEntity implements \JsonSerializable
     $class = static::class;
 
     if (!isset(self::$_metadata[$class])) {
-        self::loadEntityConfig($class);
+        static::loadEntityConfig($class);
     }
 
     $this->after_creation();
@@ -97,17 +100,61 @@ class SPPEntity implements \JsonSerializable
           }
 
           // Register relations (only for the current entity level to avoid duplicate registrations if parent also registered them)
-          // Wait, if $class is Child, and Parent had relations, we want Child to have those relations too.
-          // The relations registration logic uses $shortName which is the class being loaded.
           if (isset($ymlData['relations']) && is_array($ymlData['relations'])) {
               foreach ($ymlData['relations'] as $rel) {
                   \SPPMod\SPPEntity\SPPEntityRelations::registerEntityRelation(
+                      $rel['name'] ?? null,
                       $rel['parent_entity'] ?? $class,
                       $rel['parent_entity_field'] ?? 'id',
                       $rel['child_entity'] ?? $class,
                       $rel['child_entity_field'] ?? 'parent_id',
                       $rel['relation_type'] ?? 'OneToMany'
                   );
+              }
+          }
+
+          // Sugar support for modern keys
+          $sugar = [
+              'hasMany'   => 'OneToMany',
+              'hasOne'    => 'OneToOne',
+              'belongsTo' => 'ManyToOne'
+          ];
+          
+          foreach ($sugar as $key => $type) {
+              if (isset($ymlData[$key]) && is_array($ymlData[$key])) {
+                  foreach ($ymlData[$key] as $relName => $relData) {
+                      $childClass = is_array($relData) ? ($relData['entity'] ?? null) : $relData;
+                      if (!$childClass) continue;
+                      
+                      // Resolve Namespaced child class if needed
+                      if (strpos($childClass, '\\') === false) {
+                          $ns = $reflection->getNamespaceName();
+                          $childClass = $ns . '\\' . $childClass;
+                      }
+
+                      $pField = 'id';
+                      $cField = 'parent_id';
+
+                      if ($type === 'ManyToOne') {
+                          $pField = 'id';
+                          $cField = strtolower($reflection->getShortName()) . '_id'; // Default FK
+                      }
+
+                      if (is_array($relData)) {
+                          if (isset($relData['parent_field'])) $pField = $relData['parent_field'];
+                          if (isset($relData['child_field'])) $cField = $relData['child_field'];
+                          if (isset($relData['fk'])) $cField = $relData['fk'];
+                      }
+
+                      \SPPMod\SPPEntity\SPPEntityRelations::registerEntityRelation(
+                          $relName,
+                          $type === 'ManyToOne' ? $childClass : $class,
+                          $pField,
+                          $type === 'ManyToOne' ? $class : $childClass,
+                          $cField,
+                          $type
+                      );
+                  }
               }
           }
           
@@ -220,9 +267,31 @@ class SPPEntity implements \JsonSerializable
    * @param string $attribute
    * @return mixed
    */
+  /**
+   * Magic function to get attribute value
+   * @param string $attribute
+   * @return mixed
+   */
   public function __get($attribute)
   {
-      return $this->get($attribute);
+      try {
+          return $this->get($attribute);
+      } catch (AttributeNotFoundException $e) {
+          // Check for registered relations
+          if (!isset($this->_relatedCaches)) $this->_relatedCaches = [];
+          
+          if (isset($this->_relatedCaches[$attribute])) {
+              return $this->_relatedCaches[$attribute];
+          }
+
+          $related = \SPPMod\SPPEntity\SPPEntityRelations::getRelated($this, $attribute);
+          if ($related !== null) {
+              $this->_relatedCaches[$attribute] = $related;
+              return $related;
+          }
+
+          throw $e;
+      }
   }
 
   /**
@@ -672,9 +741,11 @@ class SPPEntity implements \JsonSerializable
     $this->before_save();
     if ($this->id == null) {
       $new_id = $this->insert();
+      \SPPMod\SPPAudit\SPPAudit::log(static::class, $new_id, 'create', null, $this->_values);
       $this->after_save();
       return $new_id;
     } else {
+      \SPPMod\SPPAudit\SPPAudit::log(static::class, $this->id, 'update', $this->_snapshot, $this->_values);
       $this->update();
       $this->after_save();
       return $this->id;
@@ -825,6 +896,7 @@ class SPPEntity implements \JsonSerializable
    */
   public function delete()
   {
+    \SPPMod\SPPAudit\SPPAudit::log(static::class, $this->id, 'delete', $this->_values, null);
     $db = new \SPPMod\SPPDB\SPPDB();
     $sql = 'delete from %tab% where ' . self::getMetadata('id_field') . '=?';
     $db->exec_squery($sql, $this->getTable(), array($this->id));
@@ -877,6 +949,7 @@ class SPPEntity implements \JsonSerializable
         $this->set($attribute, $value);
       }
       $this->after_load();
+      $this->_snapshot = $this->_values;
     } else {
       throw new EntityNotFoundException('Entity with ' . $attribute . '=' . $value . ' not found');
     }

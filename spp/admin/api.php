@@ -110,6 +110,224 @@ function sendResponse($success, $data = [], $message = '')
 }
 
 /**
+ * Path Transformation Helpers
+ */
+
+function normalizePath($p) {
+    return str_replace('\\', '/', $p);
+}
+
+function relativizePath($path) {
+    if (empty($path)) return '';
+    $path = normalizePath($path);
+    $root = normalizePath(SPP_APP_DIR);
+    
+    if (str_starts_with($path, $root)) {
+        return ltrim(substr($path, strlen($root)), '/');
+    }
+    return $path;
+}
+
+function absolutizePath($path) {
+    if (empty($path)) return '';
+    $path = normalizePath($path);
+    
+    // Check if already absolute (Windows drive or root slash or WSL root)
+    if (preg_match('/^([a-zA-Z]:|\/)/', $path)) {
+        return $path;
+    }
+    
+    return normalizePath(SPP_APP_DIR) . '/' . $path;
+}
+
+/**
+ * withContext
+ * 
+ * Temporarily switches the framework context to perform application-specific
+ * operations (like listing entities or pages) and then restores the admin context.
+ */
+function withContext($targetApp, $callback) {
+    $current = \SPP\Scheduler::getContext();
+    if ($current === $targetApp) return $callback();
+    
+    try {
+        // Ensure the target application is registered
+        try {
+            \SPP\Scheduler::getProcObj($targetApp);
+        } catch (\Exception $e) {
+            new \SPP\App($targetApp, false, 1); 
+        }
+        
+        \SPP\Scheduler::setContext($targetApp);
+        $result = $callback();
+        \SPP\Scheduler::setContext($current);
+        return $result;
+    } catch (\Throwable $e) {
+        \SPP\Scheduler::setContext($current);
+        throw $e;
+    }
+}
+
+/**
+ * getGlobalSettings
+ * 
+ * Helper to read spp/etc/global-settings.yml.
+ */
+function getGlobalSettings()
+{
+    $path = SPP_BASE_DIR . '/etc/global-settings.yml';
+    if (!file_exists($path)) {
+        return ['apps' => [], 'shared_groups' => []];
+    }
+    try {
+        $data = \Symfony\Component\Yaml\Yaml::parseFile($path);
+        return is_array($data) ? $data : ['apps' => [], 'shared_groups' => []];
+    } catch (\Exception $e) {
+        return ['apps' => [], 'shared_groups' => []];
+    }
+}
+
+/**
+ * saveGlobalSettings
+ * 
+ * Helper to write spp/etc/global-settings.yml.
+ */
+function saveGlobalSettings($settings)
+{
+    $path = SPP_BASE_DIR . '/etc/global-settings.yml';
+    try {
+        $yml = \Symfony\Component\Yaml\Yaml::dump($settings, 10, 2);
+        return file_put_contents($path, $yml);
+    } catch (\Exception $e) {
+        return false;
+    }
+}
+
+/**
+ * Health Check Helper functions
+ */
+
+function getKMBInBytes($val) {
+    $val = trim($val);
+    if (empty($val)) return 0;
+    $last = strtolower($val[strlen($val)-1]);
+    $res = (int)$val;
+    switch($last) {
+        case 'g': $res *= 1024;
+        case 'm': $res *= 1024;
+        case 'k': $res *= 1024;
+    }
+    return $res;
+}
+
+function runAllHealthChecks($appname) {
+    $checks = [];
+
+    // 1. PHP Version
+    $checks[] = [
+        'name' => 'PHP Version (' . PHP_VERSION . ')',
+        'status' => version_compare(PHP_VERSION, '8.0.0', '>=') ? 'OK' : 'WARN',
+        'detail' => version_compare(PHP_VERSION, '8.0.0', '>=') ? 'Supported.' : 'Recommended: 8.0+'
+    ];
+
+    // 2. Memory Limit
+    $memoryLimit = ini_get('memory_limit');
+    $memoryBytes = getKMBInBytes($memoryLimit);
+    $checks[] = [
+        'name' => 'Memory Limit (' . $memoryLimit . ')',
+        'status' => $memoryBytes >= 134217728 ? 'OK' : 'WARN',
+        'detail' => $memoryBytes >= 134217728 ? 'Sufficient.' : 'Recommended: 128M+'
+    ];
+
+    // 3. Required Extensions
+    $requiredExts = ['pdo', 'json', 'mbstring', 'openssl'];
+    foreach ($requiredExts as $ext) {
+        $checks[] = [
+            'name' => 'Extension: ' . $ext,
+            'status' => extension_loaded($ext) ? 'OK' : 'FAIL',
+            'detail' => extension_loaded($ext) ? 'Loaded.' : 'Missing!'
+        ];
+    }
+
+    // 4. Filesystem Writable
+    $dirChecks = [
+        'Logs' => SPP_LOG_DIR,
+        'Cache' => SPP_APP_DIR . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'cache'
+    ];
+    foreach ($dirChecks as $label => $path) {
+        $status = 'OK';
+        $detail = 'Writable.';
+        if (!is_dir($path)) {
+            $status = 'WARN';
+            $detail = 'Not found.';
+        } elseif (!is_writable($path)) {
+            $status = 'FAIL';
+            $detail = 'Not writable!';
+        }
+        $checks[] = [
+            'name' => 'Directory: ' . $label,
+            'status' => $status,
+            'detail' => $detail
+        ];
+    }
+
+    // 5. Database Connection (Context Aware)
+    $dbOk = withContext($appname, function() {
+        try {
+            if (class_exists('\SPPMod\SPPDB\SPPDB')) {
+                new \SPPMod\SPPDB\SPPDB(null, null, null, null, false); // Force new connection check
+                return true;
+            }
+        } catch (\Exception $e) {}
+        return false;
+    });
+
+    $checks[] = [
+        'name' => 'Database Connectivity',
+        'status' => $dbOk ? 'OK' : 'FAIL',
+        'detail' => $dbOk ? 'Connected (' . $appname . ').' : 'Failed to connect (' . $appname . ')!'
+    ];
+
+    // 6. Redis Connectivity (If enabled)
+    $redisEnabled = \SPP\Module::getConfig('enabled', 'redis');
+    if ($redisEnabled === true || $redisEnabled === '1' || $redisEnabled === 'true') {
+        $redisOk = false;
+        $redisDetail = 'Failed to connect!';
+        try {
+            if (class_exists('\SPP\RedisCache')) {
+                if (!extension_loaded('redis')) {
+                    $redisDetail = 'Extension missing!';
+                } else {
+                    $redisOk = \SPP\RedisCache::isAvailable();
+                    $redisDetail = $redisOk ? 'Connected.' : 'Server unreachable.';
+                }
+            }
+        } catch (\Exception $e) {
+            $redisDetail = $e->getMessage();
+        }
+        $checks[] = [
+            'name' => 'Redis Connectivity',
+            'status' => $redisOk ? 'OK' : 'FAIL',
+            'detail' => $redisDetail
+        ];
+    }
+
+    // Calculate score
+    $score = 0;
+    foreach ($checks as $c) {
+        if ($c['status'] === 'OK') $score += 100;
+        elseif ($c['status'] === 'WARN') $score += 50;
+    }
+    $finalScore = round($score / (count($checks) * 100) * 100);
+
+    return [
+        'appname' => $appname,
+        'score' => $finalScore,
+        'checks' => $checks
+    ];
+}
+
+/**
  * getModuleStatusFromManifests
  * 
  * Reads the status of a module directly from modules.xml files,
@@ -237,13 +455,8 @@ function repairNamespace($class)
 function checkDevMode()
 {
     try {
-        $settingsPath = SPP_BASE_DIR . '/etc/settings.xml';
-        if (!file_exists($settingsPath))
-            return false;
-
-        $xml = simplexml_load_file($settingsPath);
-        $profile = (string) $xml->profile;
-
+        $settings = getGlobalSettings();
+        $profile = $settings['profile'] ?? '';
         return strtolower($profile) === 'dev';
     } catch (Exception $e) {
         return false;
@@ -272,6 +485,16 @@ try {
             sendResponse(false, [], "Username and password are required.");
         }
 
+        // 1. Try Local System Auth (admin fallback)
+        $settings = getGlobalSettings();
+        if ($username === 'admin' && isset($settings['admin_auth']['password'])) {
+            if ($password === $settings['admin_auth']['password']) {
+                $_SESSION['spp_admin_fallback'] = 'admin';
+                sendResponse(true, ['user' => 'admin'], "System Login successful.");
+            }
+        }
+
+        // 2. Fallback to standard DB Auth
         try {
             $session = SPPAuth::login($username, $password);
             sendResponse(true, ['user' => $username], "Login successful.");
@@ -302,9 +525,9 @@ try {
     // All remaining actions require authentication
     $isAuthenticated = false;
     try {
-        $isAuthenticated = SPPAuth::authSessionExists();
+        $isAuthenticated = SPPAuth::authSessionExists() || isset($_SESSION['spp_admin_fallback']);
     } catch (\Exception $e) {
-        sendResponse(false, [], "Session exception: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
+        $isAuthenticated = isset($_SESSION['spp_admin_fallback']);
     }
 
     if (!$isAuthenticated) {
@@ -312,6 +535,9 @@ try {
     }
 
     if ($action === 'logout') {
+        if (isset($_SESSION['spp_admin_fallback'])) {
+            unset($_SESSION['spp_admin_fallback']);
+        }
         SPPAuth::logout();
         sendResponse(true, [], "You have been logged out.");
     }
@@ -321,6 +547,16 @@ try {
      */
     if ($action === 'get_profile') {
         try {
+            // Check fallback first for System Admin identity
+            if (isset($_SESSION['spp_admin_fallback'])) {
+                sendResponse(true, [
+                    'id' => 0,
+                    'username' => 'admin',
+                    'email' => 'system@spp.local',
+                    'role' => 'System Administrator'
+                ]);
+            }
+
             $username = SPPAuth::get('UserName');
             if (!$username) {
                 sendResponse(false, [], "Session data missing.");
@@ -337,33 +573,34 @@ try {
                 'role' => $role
             ]);
         } catch (\Exception $e) {
+            // If DB is down and we aren't in fallback, this might fail gracefully
             sendResponse(false, [], "Profile fetch failed: " . $e->getMessage());
         }
     }
 
-    // 3. Resolve App Context
-    $appname = $_REQUEST['appname'] ?? $_GET['appname'] ?? $_REQUEST['context'] ?? \SPP\Scheduler::getContext();
-    if (empty($appname) || $appname === 'undefined')
-        $appname = 'default';
-
-    // Explicitly set context for the duration of the request
+    // 3. Context Management
+    // Auth context is always __sppadmin__ for security and isolation
+    $authContext = '__sppadmin__';
+    
+    // App context is the application the user is currently managing (from sidebar)
+    $appContext = $_REQUEST['appname'] ?? $_REQUEST['context'] ?? 'default';
+    if ($appContext === '__sppadmin__') $appContext = 'default';
+    
+    // Ensure authContext is registered and globally active
     try {
-        // Check if context is already registered, if not, instantiate it
         try {
-            \SPP\Scheduler::getProcObj($appname);
+            \SPP\Scheduler::getProcObj($authContext);
         } catch (\Exception $e) {
-            // Register it on the fly if folder exists
-            $appDir = SPP_APP_DIR . SPP_DS . 'etc' . SPP_DS . 'apps' . SPP_DS . $appname;
-            if (is_dir($appDir) || $appname === 'default') {
-                new \SPP\App($appname, false, 1); // Minimized init to register it
-            }
+            new \SPP\App($authContext, false, 1); 
         }
-        \SPP\Scheduler::setContext($appname);
-    } catch (\Throwable $e) {
-        // Fallback only if registration failed completely
-        $appname = 'default';
-        \SPP\Scheduler::setContext($appname);
+        \SPP\Scheduler::setContext($authContext);
+    } catch (\Exception $e) {
+        error_log("Critical: Could not establish __sppadmin__ context: " . $e->getMessage());
     }
+
+    // Capture the target app in a variable for handlers to use
+    $appname = $appContext; 
+    
 
     // 4. Resource Management Logic
     switch ($action) {
@@ -371,20 +608,63 @@ try {
          * list_apps: Returns a list of all registered applications in etc/apps.
          */
         case 'list_apps':
+            $settings = getGlobalSettings();
+            $registry = $settings['apps'] ?? [];
             $apps = [];
-            $appsDir = APP_ETC_DIR;
+            
+            $appsDir = normalizePath(APP_ETC_DIR);
+            $srcDir = normalizePath(SPP_APP_DIR) . '/src';
+
             if (is_dir($appsDir)) {
                 $dirs = scandir($appsDir);
                 foreach ($dirs as $d) {
-                    if ($d !== '.' && $d !== '..' && is_dir($appsDir . DIRECTORY_SEPARATOR . $d)) {
-                        $apps[] = [
-                            'name' => $d,
-                            'path' => $appsDir . DIRECTORY_SEPARATOR . $d
+                    if ($d !== '.' && $d !== '..' && $d !== 'rc.d' && is_dir($appsDir . '/' . $d)) {
+                        $meta = $registry[$d] ?? [
+                            'base_url' => '/' . ($d === 'default' ? '' : $d),
+                            'table_prefix' => ($d === 'default' ? '' : $d . '_'),
+                            'shared_group' => '',
+                            'etc_path' => '',
+                            'src_path' => ''
                         ];
+
+                        // Resolve Base App status from root setting
+                        $baseApp = $settings['base_app'] ?? 'default';
+                        $meta['is_base_app'] = ($d === $baseApp);
+
+                        // Resolve absolute locations for internal logic, then relativize for UI
+                        $etcAbs = !empty($meta['etc_path']) ? absolutizePath($meta['etc_path']) : $appsDir . '/' . $d;
+                        $srcAbs = !empty($meta['src_path']) ? absolutizePath($meta['src_path']) : $srcDir . '/' . $d;
+
+                        $apps[] = array_merge($meta, [
+                            'name' => $d,
+                            'etc_path' => relativizePath($etcAbs),
+                            'src_path' => relativizePath($srcAbs)
+                        ]);
                     }
                 }
             }
-            sendResponse(true, ['apps' => $apps]);
+            sendResponse(true, ['apps' => $apps, 'shared_groups' => $settings['shared_groups'] ?? []]);
+            break;
+
+        case 'set_base_app':
+            $target = trim($_POST['target_app'] ?? '');
+            if (!$target) sendResponse(false, [], "Target application name is required.");
+            
+            $settings = getGlobalSettings();
+            $settings['base_app'] = $target;
+            
+            // Cleanup legacy flags from individual apps
+            if (isset($settings['apps']) && is_array($settings['apps'])) {
+                foreach ($settings['apps'] as $name => &$cfg) {
+                    unset($cfg['is_base_app']);
+                }
+            }
+            
+            if (saveGlobalSettings($settings)) {
+                sendResponse(true, [], "Base application changed to '$target'.");
+            } else {
+                sendResponse(false, [], "Failed to update global settings.");
+            }
             break;
 
         case 'list_modules':
@@ -500,7 +780,9 @@ try {
          * list_entities: Returns metadata for all entity definitions.
          */
         case 'list_entities':
-            $entities = \SPPMod\SPPEntity\SPPEntity::listAvailableEntities();
+            $entities = withContext($appname, function() {
+                return \SPPMod\SPPEntity\SPPEntity::listAvailableEntities();
+            });
             sendResponse(true, ['entities' => array_values($entities)]);
             break;
 
@@ -572,29 +854,31 @@ try {
          * list_forms: Scans the application's etc/forms directory for YAML form definitions.
          */
         case 'list_forms':
-            $formsDir = APP_ETC_DIR . '/' . $appname . '/forms';
-            $formMap = []; // Dedup map: [name => file_data]
-            if (is_dir($formsDir)) {
-                $ymlFiles = glob($formsDir . '/*.yml');
-                $xmlFiles = glob($formsDir . '/*.xml');
-                $allFiles = array_merge($ymlFiles, $xmlFiles);
-                foreach ($allFiles as $file) {
-                    $name = pathinfo($file, PATHINFO_FILENAME);
-                    $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-                    
-                    // YAML priority: Only add if not seen, or if this is .yml and we previously saw .xml
-                    if (!isset($formMap[$name]) || $ext === 'yml') {
-                        $formMap[$name] = [
-                            'name' => $name,
-                            'type' => strtoupper($ext),
-                            'content' => file_get_contents($file),
-                            'size' => filesize($file),
-                            'modified' => date('Y-m-d H:i', filemtime($file))
-                        ];
+            $forms = withContext($appname, function() use ($appname) {
+                $formsDir = APP_ETC_DIR . '/' . $appname . '/forms';
+                $formMap = [];
+                if (is_dir($formsDir)) {
+                    $ymlFiles = glob($formsDir . '/*.yml');
+                    $xmlFiles = glob($formsDir . '/*.xml');
+                    $allFiles = array_merge($ymlFiles, $xmlFiles);
+                    foreach ($allFiles as $file) {
+                        $name = pathinfo($file, PATHINFO_FILENAME);
+                        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                        
+                        if (!isset($formMap[$name]) || $ext === 'yml') {
+                            $formMap[$name] = [
+                                'name' => $name,
+                                'type' => strtoupper($ext),
+                                'content' => file_get_contents($file),
+                                'size' => filesize($file),
+                                'modified' => date('Y-m-d H:i', filemtime($file))
+                            ];
+                        }
                     }
                 }
-            }
-            sendResponse(true, ['forms' => array_values($formMap)]);
+                return array_values($formMap);
+            });
+            sendResponse(true, ['forms' => $forms]);
             break;
 
         /**
@@ -746,40 +1030,32 @@ try {
         case 'list_groups':
             $context = $appname;
             try {
-                // Ensure context is registered for SPPBase::sppTable/config to work
-                try {
-                    \SPP\Scheduler::getProcObj($context);
-                } catch (\Exception $e) {
-                    if (is_dir(SPP_APP_DIR . '/etc/apps/' . $context) || $context === 'default') {
-                        new \SPP\App($context, false, 1);
+                $groups = withContext($context, function() use ($context) {
+                    require_once(SPP_BASE_DIR . '/modules/spp/sppgroup/class.sppgrouploader.php');
+                    require_once(SPP_BASE_DIR . '/modules/spp/sppgroup/class.sppgroup.php');
+
+                    $discovered = \SPPMod\SPPGroup\SPPGroupLoader::listAllGroups($context);
+                    $groupsList = [];
+
+                    foreach ($discovered as $g) {
+                        try {
+                            $group = new \SPPMod\SPPGroup\SPPGroup();
+                            $group->load($g['name']);
+
+                            $groupsList[] = [
+                                'id' => $group->getId(),
+                                'name' => $group->get('name') ?: $g['name'],
+                                'description' => $group->get('description'),
+                                'member_count' => count($group->getMembers(true)),
+                                'source' => $g['source']
+                            ];
+                        } catch (\Exception $e) {
+                        }
                     }
-                }
-
-                require_once(SPP_BASE_DIR . '/modules/spp/sppgroup/class.sppgrouploader.php');
-                require_once(SPP_BASE_DIR . '/modules/spp/sppgroup/class.sppgroup.php');
-
-                $discovered = \SPPMod\SPPGroup\SPPGroupLoader::listAllGroups($context);
-                $groups = [];
-
-                foreach ($discovered as $g) {
-                    try {
-                        $group = new \SPPMod\SPPGroup\SPPGroup();
-                        $group->load($g['name']);
-
-                        $groups[] = [
-                            'id' => $group->getId(),
-                            'name' => $group->get('name') ?: $g['name'],
-                            'description' => $group->get('description'),
-                            'member_count' => count($group->getMembers(true)),
-                            'source' => $g['source']
-                        ];
-                    } catch (\Exception $e) {
-                        // Skip individual corrupted groups
-                    }
-                }
+                    return $groupsList;
+                });
                 sendResponse(true, ['groups' => $groups]);
             } catch (\Exception $e) {
-                // Return success anyway to avoid UI "Failed to Load" crash
                 sendResponse(true, ['groups' => []], "Group discovery limited for context: " . $e->getMessage());
             }
             break;
@@ -859,34 +1135,36 @@ try {
                 sendResponse(false, [], "Group ID is required.");
 
             try {
-                require_once(SPP_BASE_DIR . '/modules/spp/sppgroup/class.sppgrouploader.php');
-                require_once(SPP_BASE_DIR . '/modules/spp/sppgroup/class.sppgroup.php');
+                $members = withContext($appname, function() use ($groupId) {
+                    require_once(SPP_BASE_DIR . '/modules/spp/sppgroup/class.sppgrouploader.php');
+                    require_once(SPP_BASE_DIR . '/modules/spp/sppgroup/class.sppgroup.php');
 
-                $group = new \SPPMod\SPPGroup\SPPGroup();
-                $group->load($groupId);
+                    $group = new \SPPMod\SPPGroup\SPPGroup();
+                    $group->load($groupId);
 
-                $results = $group->getMembers(true);
-                $members = [];
+                    $results = $group->getMembers(true);
+                    $list = [];
 
-                foreach ($results as $m) {
-                    $entity = $m['entity'];
-                    // We need a human-readable identifier for the entity
-                    $name = $entity->getId();
-                    if ($entity instanceof \SPPMod\SPPAuth\SPPUser) {
-                        $name = $entity->get('username') ?: $entity->get('uname');
-                    } elseif ($entity instanceof \SPPMod\SPPGroup\SPPGroup) {
-                        $name = $entity->get('name');
+                    foreach ($results as $m) {
+                        $entity = $m['entity'];
+                        $name = $entity->getId();
+                        if ($entity instanceof \SPPMod\SPPAuth\SPPUser) {
+                            $name = $entity->get('username') ?: $entity->get('uname');
+                        } elseif ($entity instanceof \SPPMod\SPPGroup\SPPGroup) {
+                            $name = $entity->get('name');
+                        }
+
+                        $list[] = [
+                            'entity' => get_class($entity),
+                            'id' => $entity->getId(),
+                            'name' => $name,
+                            'role' => $m['role'],
+                            'direct' => $m['direct'],
+                            'inherited_via' => $m['inherited_via'] ?? null
+                        ];
                     }
-
-                    $members[] = [
-                        'entity' => get_class($entity),
-                        'id' => $entity->getId(),
-                        'name' => $name,
-                        'role' => $m['role'],
-                        'direct' => $m['direct'],
-                        'inherited_via' => $m['inherited_via'] ?? null
-                    ];
-                }
+                    return $list;
+                });
                 sendResponse(true, ['members' => $members]);
             } catch (\Exception $e) {
                 sendResponse(false, [], "Failed to load members: " . $e->getMessage());
@@ -970,99 +1248,95 @@ try {
             }
 
             try {
-                $db = new \SPPMod\SPPDB\SPPDB();
-                $results = [];
+                $results = withContext($appname, function() use ($appname, $query, $requestedType) {
+                    $db = new \SPPMod\SPPDB\SPPDB();
+                    $list = [];
 
-                // 1. Search Users
-                if ($requestedType === 'all' || $requestedType === 'user' || $requestedType === 'SPPMod\\SPPAuth\\SPPUser') {
-                    $table = \SPPMod\SPPDB\SPPDB::sppTable('users');
-                    $sql = "SELECT id, username as name FROM {$table} WHERE username LIKE ? OR email LIKE ? LIMIT 10";
-                    $data = $db->execute_query($sql, ["%{$query}%", "%{$query}%"]);
-                    foreach ($data as $r) {
-                        $results[] = [
-                            'id' => $r['id'],
-                            'name' => $r['name'],
-                            'label' => $r['name'],
-                            'type' => 'user',
-                            'is_custom' => false,
-                            'class' => '\\SPPMod\\SPPAuth\\SPPUser'
-                        ];
+                    // 1. Search Users
+                    if ($requestedType === 'all' || $requestedType === 'user' || $requestedType === 'SPPMod\\SPPAuth\\SPPUser') {
+                        $table = \SPPMod\SPPDB\SPPDB::sppTable('users');
+                        $sql = "SELECT id, username as name FROM {$table} WHERE username LIKE ? OR email LIKE ? LIMIT 10";
+                        $data = $db->execute_query($sql, ["%{$query}%", "%{$query}%"]);
+                        foreach ($data as $r) {
+                            $list[] = [
+                                'id' => $r['id'],
+                                'name' => $r['name'],
+                                'label' => $r['name'],
+                                'type' => 'user',
+                                'is_custom' => false,
+                                'class' => '\\SPPMod\\SPPAuth\\SPPUser'
+                            ];
+                        }
                     }
-                }
 
-                // 2. Search Groups
-                if ($requestedType === 'all' || $requestedType === 'group' || $requestedType === 'SPPMod\\SPPEntity\\SPPGroup') {
-                    $table = \SPPMod\SPPDB\SPPDB::sppTable('sppgroups');
-                    $sql = "SELECT id, name FROM {$table} WHERE name LIKE ? LIMIT 10";
-                    $data = $db->execute_query($sql, ["%{$query}%"]);
-                    foreach ($data as $r) {
-                        $results[] = [
-                            'id' => $r['id'],
-                            'name' => $r['name'],
-                            'label' => $r['name'],
-                            'type' => 'group',
-                            'is_custom' => false,
-                            'class' => '\\SPPMod\\SPPEntity\\SPPGroup'
-                        ];
+                    // 2. Search Groups
+                    if ($requestedType === 'all' || $requestedType === 'group' || $requestedType === 'SPPMod\\SPPEntity\\SPPGroup') {
+                        $table = \SPPMod\SPPDB\SPPDB::sppTable('sppgroups');
+                        $sql = "SELECT id, name FROM {$table} WHERE name LIKE ? LIMIT 10";
+                        $data = $db->execute_query($sql, ["%{$query}%"]);
+                        foreach ($data as $r) {
+                            $list[] = [
+                                'id' => $r['id'],
+                                'name' => $r['name'],
+                                'label' => $r['name'],
+                                'type' => 'group',
+                                'is_custom' => false,
+                                'class' => '\\SPPMod\\SPPEntity\\SPPGroup'
+                            ];
+                        }
                     }
-                }
 
-                // 3. Search Login-Enabled Custom Entities
-                if ($requestedType === 'all' || (!in_array($requestedType, ['user', 'group']) && !strpos($requestedType, 'SPPMod'))) {
-                    $entitiesDir = APP_ETC_DIR . '/' . $appname . '/entities';
-                    if (is_dir($entitiesDir)) {
-                        $files = glob($entitiesDir . '/*.yml');
-                        foreach ($files as $file) {
-                            $name = basename($file, '.yml');
-                            $config = \Symfony\Component\Yaml\Yaml::parse(file_get_contents($file));
-                            
-                            // Only include login-enabled entities
-                            if (empty($config['login_enabled'])) continue;
+                    // 3. Search Login-Enabled Custom Entities
+                    if ($requestedType === 'all' || (!in_array($requestedType, ['user', 'group']) && !strpos($requestedType, 'SPPMod'))) {
+                        $entitiesDir = APP_ETC_DIR . '/' . $appname . '/entities';
+                        if (is_dir($entitiesDir)) {
+                            $files = glob($entitiesDir . '/*.yml');
+                            foreach ($files as $file) {
+                                $name = basename($file, '.yml');
+                                $config = \Symfony\Component\Yaml\Yaml::parse(file_get_contents($file));
+                                
+                                if (empty($config['login_enabled'])) continue;
 
-                            $table = $config['table'] ?? '';
-                            if (empty($table)) continue;
+                                $table = $config['table'] ?? '';
+                                if (empty($table)) continue;
 
-                            // Dynamic check for name-like columns
-                            $searchCol = 'name';
-                            $columns = $db->execute_query("SHOW COLUMNS FROM {$table}");
-                            $found = false;
-                            foreach (['name', 'title', 'label', 'username', 'id'] as $candidate) {
-                                foreach ($columns as $col) {
-                                    if ($col['Field'] === $candidate) {
-                                        $searchCol = $candidate;
-                                        $found = true;
-                                        break 2;
+                                $searchCol = 'name';
+                                $columns = $db->execute_query("SHOW COLUMNS FROM {$table}");
+                                foreach (['name', 'title', 'label', 'username', 'id'] as $candidate) {
+                                    foreach ($columns as $col) {
+                                        if ($col['Field'] === $candidate) {
+                                            $searchCol = $candidate;
+                                            break 2;
+                                        }
                                     }
                                 }
-                            }
 
-                            $sql = "SELECT id, {$searchCol} as display_name FROM {$table} WHERE {$searchCol} LIKE ? LIMIT 5";
-                            $data = $db->execute_query($sql, ["%{$query}%"]);
-                            
-                            $namespace = "App\\" . ucfirst($appname) . "\\Entities";
-                            $className = $namespace . "\\" . ucfirst($name);
+                                $sql = "SELECT id, {$searchCol} as display_name FROM {$table} WHERE {$searchCol} LIKE ? LIMIT 5";
+                                $data = $db->execute_query($sql, ["%{$query}%"]);
+                                
+                                $namespace = "App\\" . ucfirst($appname) . "\\Entities";
+                                $className = $namespace . "\\" . ucfirst($name);
 
-                            foreach ($data as $r) {
-                                $results[] = [
-                                    'id' => $r['id'],
-                                    'name' => $r['display_name'],
-                                    'label' => $r['display_name'] . " (" . ucfirst($name) . ")",
-                                    'type' => ucfirst($name),
-                                    'is_custom' => true,
-                                    'entity_name' => ucfirst($name),
-                                    'class' => $className
-                                ];
+                                foreach ($data as $r) {
+                                    $list[] = [
+                                        'id' => $r['id'],
+                                        'name' => $r['display_name'],
+                                        'label' => $r['display_name'] . " (" . ucfirst($name) . ")",
+                                        'type' => ucfirst($name),
+                                        'is_custom' => true,
+                                        'entity_name' => ucfirst($name),
+                                        'class' => $className
+                                    ];
+                                }
                             }
                         }
                     }
-                }
-
+                    return $list;
+                });
                 sendResponse(true, ['results' => $results]);
             } catch (\Exception $e) {
                 sendResponse(false, [], "Search failed: " . $e->getMessage());
             }
-            break;
-            
             break;
 
         /**
@@ -1091,13 +1365,19 @@ try {
          * get_system_info: Returns diagnostic and telemetry data about the SPP environment.
          */
         case 'get_system_info':
-            $db_info = "Unknown";
+            $db_info = "Disconnected";
             try {
-                if (class_exists('\\SPP\\SPPDB') && \SPP\Registry::get('db')) {
-                    $db = \SPP\Registry::get('db');
-                    $db_info = "Connected (MySQL/MariaDB)";
-                }
+                $db_info = withContext($appname, function() {
+                    try {
+                        if (class_exists('\\SPPMod\\SPPDB\\SPPDB')) {
+                            new \SPPMod\SPPDB\SPPDB();
+                            return "Connected";
+                        }
+                    } catch (\Throwable $e) {}
+                    return "Disconnected";
+                });
             } catch (\Throwable $e) {
+                $db_info = "Error";
             }
 
             $info = [
@@ -1116,21 +1396,21 @@ try {
                 ]
             ];
 
-            // Calculate stats
+            // Calculate stats for the selected app context
             if (defined('APP_ETC_DIR') && is_dir(APP_ETC_DIR)) {
                 $apps = array_filter(scandir(APP_ETC_DIR), function ($d) {
                     return $d !== '.' && $d !== '..' && is_dir(APP_ETC_DIR . DIRECTORY_SEPARATOR . $d);
                 });
                 $info['stats']['apps'] = count($apps);
 
-                // Count entities and forms in default app
-                $entDir = APP_ETC_DIR . '/default/entities';
+                // Count entities and forms in CURRENT app context ($appname)
+                $entDir = APP_ETC_DIR . '/' . $appname . '/entities';
                 if (is_dir($entDir)) {
                     $ents = glob($entDir . '/*.yml');
                     $info['stats']['entities'] = is_array($ents) ? count($ents) : 0;
                 }
 
-                $formDir = APP_ETC_DIR . '/default/forms';
+                $formDir = APP_ETC_DIR . '/' . $appname . '/forms';
                 if (is_dir($formDir)) {
                     $forms = glob($formDir . '/*.{yml,xml}', GLOB_BRACE);
                     $info['stats']['forms'] = is_array($forms) ? count($forms) : 0;
@@ -1138,11 +1418,15 @@ try {
             }
 
             if (class_exists('\\SPP\\Module')) {
-                // This might be expensive, but fine for a dashboard load
-                \SPP\Module::loadAllModules();
+                withContext($appname, function() {
+                    \SPP\Module::loadAllModules();
+                });
                 $mods = \SPP\Registry::get('__mods');
                 $info['stats']['modules'] = is_array($mods) ? count($mods) : 0;
             }
+
+            // Add Health Report Card data
+            $info['health_report'] = runAllHealthChecks($appname);
 
             sendResponse(true, $info);
             break;
@@ -1151,73 +1435,88 @@ try {
          * system_update_list: Scans all modules and entities for installation deltas (Dry Run).
          */
         case 'system_update_list':
-            $summary = \SPP\Module::getSystemUpdateDeltas();
+            $summary = withContext($appname, function() {
+                return \SPP\Module::getSystemUpdateDeltas();
+            });
             sendResponse(true, ['deltas' => $summary]);
             break;
 
-         /**
-          * system_update_run: Applies all pending system-wide updates.
-          */
         case 'system_update_run':
-            $log = \SPP\Module::runSystemUpdate();
+            $log = withContext($appname, function() {
+                return \SPP\Module::runSystemUpdate();
+            });
             sendResponse(true, ['log' => $log]);
             break;
 
         /**
-         * list_apps: Returns list of registered applications from the apps config directory.
+         * get_global_settings: Returns the content of global-settings.yml.
          */
-        case 'list_apps':
-            $apps = [];
-            if (defined('APP_ETC_DIR')) {
-                $appsDir = APP_ETC_DIR;
-                if (is_dir($appsDir)) {
-                    foreach (scandir($appsDir) as $entry) {
-                        if ($entry === '.' || $entry === '..' || !is_dir($appsDir . DIRECTORY_SEPARATOR . $entry))
-                            continue;
-                        if ($entry === 'rc.d')
-                            continue; // Skip rc.d if at root etc
+        case 'get_global_settings':
+            sendResponse(true, getGlobalSettings());
+            break;
 
-                        $appInfo = ['name' => $entry];
-                        $appPath = $appsDir . DIRECTORY_SEPARATOR . $entry;
-                        $modsConfPath = $appPath . DIRECTORY_SEPARATOR . 'modsconf';
+        /**
+         * save_global_settings: Updates the whole global-settings.yml.
+         */
+        case 'save_global_settings':
+            $data = json_decode($_POST['settings'] ?? '{}', true);
+            if (empty($data)) {
+                sendResponse(false, [], "Invalid settings data.");
+            }
+            if (saveGlobalSettings($data)) {
+                sendResponse(true, [], "Global settings saved.");
+            } else {
+                sendResponse(false, [], "Failed to save global settings.");
+            }
+            break;
 
-                        $hasModules = file_exists($modsConfPath . DIRECTORY_SEPARATOR . 'modules.yml')
-                            || file_exists($modsConfPath . DIRECTORY_SEPARATOR . 'modules.xml');
-                        $hasSettings = file_exists($appPath . DIRECTORY_SEPARATOR . 'settings.yml')
-                            || file_exists($appPath . DIRECTORY_SEPARATOR . 'settings.xml');
+        /**
+         * save_app_config: Updates metadata for a single app in the registry.
+         */
+        case 'save_app_config':
+            $targetApp = $_POST['target_app'] ?? '';
+            $config = json_decode($_POST['config'] ?? '{}', true);
 
-                        $configCount = 0;
-                        if (is_dir($modsConfPath)) {
-                            $configCount = count(array_filter(scandir($modsConfPath), function ($d) use ($modsConfPath) {
-                                return $d !== '.' && $d !== '..' && is_dir($modsConfPath . DIRECTORY_SEPARATOR . $d);
-                            }));
-                        }
+            if (!$targetApp) {
+                sendResponse(false, [], "Target application is missing.");
+            }
 
-                        $appInfo['has_modules'] = $hasModules;
-                        $appInfo['has_settings'] = $hasSettings;
-                        $appInfo['config_count'] = $configCount;
-                        $apps[] = $appInfo;
-                    }
+            if ($targetApp === '__sppadmin__') {
+                sendResponse(false, [], "Context name '__sppadmin__' is reserved for system use.");
+            }
+
+            if (empty($config)) {
+                sendResponse(false, [], "App name and config required.");
+            }
+
+            $settings = getGlobalSettings();
+            if (!isset($settings['apps']))
+                $settings['apps'] = [];
+
+            // Prevent collision: base_url must be unique (except for the current app)
+            foreach ($settings['apps'] as $name => $meta) {
+                if ($name !== $targetApp && ($meta['base_url'] ?? '') === ($config['base_url'] ?? '')) {
+                    sendResponse(false, [], "Base URL collision with application: {$name}");
                 }
             }
 
-            // Still check legacy location for backward compatibility list
-            if (defined('SPP_ETC_DIR')) {
-                $legacyAppsDir = SPP_ETC_DIR . DIRECTORY_SEPARATOR . 'apps';
-                if (is_dir($legacyAppsDir)) {
-                    foreach (scandir($legacyAppsDir) as $entry) {
-                        if ($entry === '.' || $entry === '..' || !is_dir($legacyAppsDir . DIRECTORY_SEPARATOR . $entry))
-                            continue;
-                        $alreadyListed = array_filter($apps, function ($a) use ($entry) {
-                            return $a['name'] === $entry;
-                        });
-                        if (!$alreadyListed) {
-                            $apps[] = ['name' => $entry, 'legacy' => true];
-                        }
-                    }
-                }
+            // Portable Registry: Convert incoming paths to relative before storage if they are within SPP_APP_DIR
+            if (!empty($config['etc_path'])) {
+                $config['etc_path'] = relativizePath($config['etc_path']);
             }
-            sendResponse(true, ['apps' => $apps]);
+            if (!empty($config['src_path'])) {
+                $config['src_path'] = relativizePath($config['src_path']);
+            }
+
+            // Ensure is_base_app is NOT stored in individual app config (moved to root key)
+            unset($config['is_base_app']);
+
+            $settings['apps'][$targetApp] = $config;
+            if (saveGlobalSettings($settings)) {
+                sendResponse(true, [], "Application configuration updated.");
+            } else {
+                sendResponse(false, [], "Failed to save configuration.");
+            }
             break;
 
         /**
@@ -1405,7 +1704,9 @@ try {
          */
         case 'list_users':
             try {
-                $users = \SPPMod\SPPAuth\SPPUser::find_all();
+                $users = withContext($appname, function() {
+                    return \SPPMod\SPPAuth\SPPUser::find_all();
+                });
                 sendResponse(true, ['users' => $users]);
             } catch (\Exception $e) {
                 sendResponse(false, [], "Failed to list users: " . $e->getMessage());
@@ -1417,10 +1718,29 @@ try {
          */
         case 'save_user':
             try {
-                $id = \SPPMod\SPPAuth\SPPUser::saveUserInfo($_POST);
+                $id = withContext($appname, function() {
+                    return \SPPMod\SPPAuth\SPPUser::saveUserInfo($_POST);
+                });
                 sendResponse(true, ['id' => $id], "User saved successfully.");
             } catch (\Exception $e) {
                 sendResponse(false, [], "Failed to save user: " . $e->getMessage());
+            }
+            break;
+
+        case 'toggle_user_status':
+            $id = $_POST['id'] ?? null;
+            $newStatus = $_POST['status'] ?? null;
+            if (!$id || !$newStatus) sendResponse(false, [], "User ID and Status required.");
+            
+            try {
+                withContext($appname, function() use ($id, $newStatus) {
+                    $user = new \SPPMod\SPPAuth\SPPUser($id);
+                    $user->status = $newStatus;
+                    $user->save();
+                });
+                sendResponse(true, ['id' => $id, 'status' => $newStatus], "User status updated to '{$newStatus}'.");
+            } catch (\Exception $e) {
+                sendResponse(false, [], "Failed to toggle status: " . $e->getMessage());
             }
             break;
 
@@ -1429,7 +1749,9 @@ try {
          */
         case 'list_roles':
             try {
-                $roles = \SPPMod\SPPAuth\SPPRole::find_all();
+                $roles = withContext($appname, function() {
+                    return \SPPMod\SPPAuth\SPPRole::find_all();
+                });
                 sendResponse(true, ['roles' => $roles]);
             } catch (\Exception $e) {
                 sendResponse(false, [], "Failed to list roles: " . $e->getMessage());
@@ -1441,7 +1763,9 @@ try {
          */
         case 'save_role':
             try {
-                $id = \SPPMod\SPPAuth\SPPRole::saveRoleInfo($_POST);
+                $id = withContext($appname, function() {
+                    return \SPPMod\SPPAuth\SPPRole::saveRoleInfo($_POST);
+                });
                 sendResponse(true, ['id' => $id], "Role saved successfully.");
             } catch (\Exception $e) {
                 sendResponse(false, [], "Failed to save role: " . $e->getMessage());
@@ -1453,7 +1777,9 @@ try {
          */
         case 'list_rights':
             try {
-                $rights = \SPPMod\SPPAuth\SPPRight::find_all();
+                $rights = withContext($appname, function() {
+                    return \SPPMod\SPPAuth\SPPRight::find_all();
+                });
                 sendResponse(true, ['rights' => $rights]);
             } catch (\Exception $e) {
                 sendResponse(false, [], "Failed to list rights: " . $e->getMessage());
@@ -1470,7 +1796,9 @@ try {
 
             if (empty($name) && !empty($id)) {
                 try {
-                    $existingRight = new \SPPMod\SPPAuth\SPPRight($id);
+                    $existingRight = withContext($appname, function() use ($id) {
+                        return new \SPPMod\SPPAuth\SPPRight($id);
+                    });
                     $name = $existingRight->name;
                 } catch (\Exception $e) {}
             }
@@ -1479,11 +1807,13 @@ try {
 
 
             try {
-                $right = new \SPPMod\SPPAuth\SPPRight($id);
-                $right->name = $name;
-                $right->description = $desc;
-                $right->save();
-                sendResponse(true, ['id' => $right->id], "Right '{$name}' saved successfully.");
+                withContext($appname, function() use ($id, $name, $desc) {
+                    $right = new \SPPMod\SPPAuth\SPPRight($id);
+                    $right->name = $name;
+                    $right->description = $desc;
+                    $right->save();
+                });
+                sendResponse(true, ['id' => $id], "Right '{$name}' saved successfully.");
             } catch (\Exception $e) {
                 sendResponse(false, [], "Failed to save right: " . $e->getMessage());
             }
@@ -1506,26 +1836,28 @@ try {
             }
 
             try {
-                $db = new \SPPMod\SPPDB\SPPDB();
-                foreach ($roleIds as $roleId) {
-                    // 1. Update polymorphic entity_roles
-                    $check = $db->execute_query("SELECT 1 FROM " . \SPPMod\SPPDB\SPPDB::sppTable('entity_roles') . " WHERE target_class=? AND target_id=? AND role_id=?", [$targetClass, $targetId, $roleId]);
-                    if (empty($check)) {
-                        $db->insertValues('entity_roles', [
-                            'target_class' => $targetClass,
-                            'target_id' => $targetId,
-                            'role_id' => $roleId
-                        ]);
-                    }
+                withContext($appname, function() use ($targetClass, $targetId, $roleIds) {
+                    $db = new \SPPMod\SPPDB\SPPDB();
+                    foreach ($roleIds as $roleId) {
+                        // 1. Update polymorphic entity_roles
+                        $check = $db->execute_query("SELECT 1 FROM " . \SPPMod\SPPDB\SPPDB::sppTable('entity_roles') . " WHERE target_class=? AND target_id=? AND role_id=?", [$targetClass, $targetId, $roleId]);
+                        if (empty($check)) {
+                            $db->insertValues('entity_roles', [
+                                'target_class' => $targetClass,
+                                'target_id' => $targetId,
+                                'role_id' => $roleId
+                            ]);
+                        }
 
-                    // 2. Sync with userroles if target is a user
-                    if (strpos($targetClass, 'SPPUser') !== false) {
-                        $checkUser = $db->execute_query("SELECT 1 FROM " . \SPPMod\SPPDB\SPPDB::sppTable('userroles') . " WHERE userid=? AND roleid=?", [$targetId, $roleId]);
-                        if (empty($checkUser)) {
-                            $db->insertValues('userroles', ['userid' => $targetId, 'roleid' => $roleId]);
+                        // 2. Sync with userroles if target is a user
+                        if (strpos($targetClass, 'SPPUser') !== false) {
+                            $checkUser = $db->execute_query("SELECT 1 FROM " . \SPPMod\SPPDB\SPPDB::sppTable('userroles') . " WHERE userid=? AND roleid=?", [$targetId, $roleId]);
+                            if (empty($checkUser)) {
+                                $db->insertValues('userroles', ['userid' => $targetId, 'roleid' => $roleId]);
+                            }
                         }
                     }
-                }
+                });
                 sendResponse(true, [], "Role(s) assigned successfully.");
             } catch (\Exception $e) {
                 sendResponse(false, [], "Assignment failed: " . $e->getMessage());
@@ -1534,12 +1866,15 @@ try {
 
         case 'list_entity_assignments':
             try {
-                $db = new \SPPMod\SPPDB\SPPDB();
-                $sql = "SELECT er.target_class, er.target_id, er.role_id, r.role_name 
-                        FROM " . \SPPMod\SPPDB\SPPDB::sppTable('entity_roles') . " er 
-                        JOIN " . \SPPMod\SPPDB\SPPDB::sppTable('roles') . " r ON er.role_id = r.id 
-                        ORDER BY er.target_class, er.target_id";
-                $res = $db->execute_query($sql);
+                $app = $_REQUEST['appname'] ?? 'default';
+                $res = withContext($app, function() {
+                    $db = new \SPPMod\SPPDB\SPPDB();
+                    $sql = "SELECT er.target_class, er.target_id, er.role_id, r.role_name 
+                            FROM " . \SPPMod\SPPDB\SPPDB::sppTable('entity_roles') . " er 
+                            JOIN " . \SPPMod\SPPDB\SPPDB::sppTable('roles') . " r ON er.role_id = r.id 
+                            ORDER BY er.target_class, er.target_id";
+                    return $db->execute_query($sql);
+                });
                 
                 $grouped = [];
                 foreach ($res as $row) {
@@ -1572,15 +1907,17 @@ try {
             $roleId = $_POST['role_id'] ?? '';
 
             try {
-                $db = new \SPPMod\SPPDB\SPPDB();
-                $db->execute_query("DELETE FROM " . \SPPMod\SPPDB\SPPDB::sppTable('entity_roles') . " WHERE target_class=? AND target_id=? AND role_id=?", 
-                    [$targetClass, $targetId, $roleId]);
-                
-                // Sync with userroles if target is a user
-                if (strpos($targetClass, 'SPPUser') !== false) {
-                    $db->execute_query("DELETE FROM " . \SPPMod\SPPDB\SPPDB::sppTable('userroles') . " WHERE userid=? AND roleid=?", 
-                        [$targetId, $roleId]);
-                }
+                withContext($appname, function() use ($targetClass, $targetId, $roleId) {
+                    $db = new \SPPMod\SPPDB\SPPDB();
+                    $db->execute_query("DELETE FROM " . \SPPMod\SPPDB\SPPDB::sppTable('entity_roles') . " WHERE target_class=? AND target_id=? AND role_id=?", 
+                        [$targetClass, $targetId, $roleId]);
+                    
+                    // Sync with userroles if target is a user
+                    if (strpos($targetClass, 'SPPUser') !== false) {
+                        $db->execute_query("DELETE FROM " . \SPPMod\SPPDB\SPPDB::sppTable('userroles') . " WHERE userid=? AND roleid=?", 
+                            [$targetId, $roleId]);
+                    }
+                });
 
                 sendResponse(true, [], "Role removed from entity.");
             } catch (\Exception $e) {
@@ -1597,23 +1934,26 @@ try {
             if (!$type || !$id) sendResponse(false, [], "Type and ID required.");
 
             try {
-                if ($type === 'users') {
-                    $user = new \SPPMod\SPPAuth\SPPUser($id);
-                    $roles = \SPPMod\SPPAuth\SPPRole::find_all();
-                    sendResponse(true, [
-                        'assigned_ids' => $user->getRoles(),
-                        'available' => $roles
-                    ]);
-                } else if ($type === 'roles') {
-                    $role = new \SPPMod\SPPAuth\SPPRole($id);
-                    $rights = \SPPMod\SPPAuth\SPPRight::find_all();
-                    sendResponse(true, [
-                        'assigned_ids' => $role->getRights(),
-                        'available' => $rights
-                    ]);
-                } else {
-                    sendResponse(false, [], "Unsupported IAM type for details.");
-                }
+                $details = withContext($appname, function() use ($type, $id) {
+                    if ($type === 'users') {
+                        $user = new \SPPMod\SPPAuth\SPPUser($id);
+                        $roles = \SPPMod\SPPAuth\SPPRole::find_all();
+                        return [
+                            'assigned_ids' => $user->getRoles(),
+                            'available' => $roles
+                        ];
+                    } else if ($type === 'roles') {
+                        $role = new \SPPMod\SPPAuth\SPPRole($id);
+                        $rights = \SPPMod\SPPAuth\SPPRight::find_all();
+                        return [
+                            'assigned_ids' => $role->getRights(),
+                            'available' => $rights
+                        ];
+                    } else {
+                        throw new \Exception("Unsupported IAM type for details.");
+                    }
+                });
+                sendResponse(true, $details);
             } catch (\Exception $e) {
                 sendResponse(false, [], "Fetch failed: " . $e->getMessage());
             }
@@ -1627,7 +1967,9 @@ try {
             $rightId = $_POST['right_id'] ?? '';
             if (!$roleId || !$rightId) sendResponse(false, [], "Role ID and Right ID required.");
             try {
-                \SPPMod\SPPAuth\SPPRole::assignRight($roleId, $rightId);
+                withContext($appname, function() use ($roleId, $rightId) {
+                    \SPPMod\SPPAuth\SPPRole::assignRight($roleId, $rightId);
+                });
                 sendResponse(true, [], "Right assigned to role.");
             } catch (\Exception $e) {
                 sendResponse(false, [], "Assignment failed: " . $e->getMessage());
@@ -1642,7 +1984,9 @@ try {
             $rightId = $_POST['right_id'] ?? '';
             if (!$roleId || !$rightId) sendResponse(false, [], "Role ID and Right ID required.");
             try {
-                \SPPMod\SPPAuth\SPPRole::unassignRight($roleId, $rightId);
+                withContext($appname, function() use ($roleId, $rightId) {
+                    \SPPMod\SPPAuth\SPPRole::unassignRight($roleId, $rightId);
+                });
                 sendResponse(true, [], "Right removed from role.");
             } catch (\Exception $e) {
                 sendResponse(false, [], "Removal failed: " . $e->getMessage());
@@ -1660,30 +2004,34 @@ try {
             if (empty($formName)) sendResponse(false, [], "Form name required.");
 
             try {
-                // Resolving Admin specific forms first
-                $adminFormPath = SPP_BASE_DIR . SPP_DS . 'etc' . SPP_DS . 'apps' . SPP_DS . 'admin' . SPP_DS . 'forms' . SPP_DS . $formName . '.yml';
-                $fullPath = file_exists($adminFormPath) ? $adminFormPath : $formName;
+                $response = withContext($appname, function() use ($formName, $entityId) {
+                     // Resolving Admin specific forms first
+                    $adminFormPath = SPP_BASE_DIR . SPP_DS . 'etc' . SPP_DS . 'apps' . SPP_DS . 'admin' . SPP_DS . 'forms' . SPP_DS . $formName . '.yml';
+                    $fullPath = file_exists($adminFormPath) ? $adminFormPath : $formName;
 
-                // Support raw YAML for live preview
-                if (strpos($formName, 'form:') !== false) {
-                    $form = \SPPMod\SPPView\ViewFormBuilder::fromString($formName);
-                } else {
-                    $form = \SPPMod\SPPView\ViewFormBuilder::fromYaml($fullPath);
-                }
-                
-                // If ID is provided, bind data
-                if ($entityId !== null && $form->getEntityClass()) {
-                    $class = $form->getEntityClass();
-                    if (class_exists($class)) {
-                        $entity = new $class($entityId);
-                        $form->bind($entity);
+                    // Support raw YAML for live preview
+                    if (strpos($formName, 'form:') !== false) {
+                        $form = \SPPMod\SPPView\ViewFormBuilder::fromString($formName);
+                    } else {
+                        $form = \SPPMod\SPPView\ViewFormBuilder::fromYaml($fullPath);
                     }
-                }
+                    
+                    // If ID is provided, bind data
+                    if ($entityId !== null && $form->getEntityClass()) {
+                        $class = $form->getEntityClass();
+                        if (class_exists($class)) {
+                            $entity = new $class($entityId);
+                            $form->bind($entity);
+                        }
+                    }
 
-                sendResponse(true, [
-                    'html' => $form->getHTML(), 
-                    'title' => $form->getMatter() ?: "Edit " . $formName
-                ]);
+                    return [
+                        'html' => $form->getHTML(), 
+                        'title' => $form->getMatter() ?: "Edit " . $formName
+                    ];
+                });
+
+                sendResponse(true, $response);
             } catch (\Exception $e) {
                 sendResponse(false, [], "Form rendering failed: " . $e->getMessage());
             }
@@ -1694,7 +2042,9 @@ try {
          */
         case 'list_pages':
             require_once SPP_BASE_DIR . '/modules/spp/sppview/class.pages.php';
-            $pages = \SPPMod\SPPView\Pages::listPages();
+            $pages = withContext($appname, function() {
+                return \SPPMod\SPPView\Pages::listPages();
+            });
             sendResponse(true, ['pages' => $pages]);
             break;
 
@@ -1724,7 +2074,9 @@ try {
          */
         case 'list_services':
             require_once SPP_BASE_DIR . '/modules/spp/sppajax/class.sppajax.php';
-            $services = \SPPMod\SPPAjax\SPPAjax::listServices();
+            $services = withContext($appname, function() {
+                return \SPPMod\SPPAjax\SPPAjax::listServices();
+            });
             sendResponse(true, ['services' => $services]);
             break;
 
@@ -1755,25 +2107,30 @@ try {
          */
         case 'get_bridge_info':
             if (!class_exists('\SPP\PolyglotBridge')) sendResponse(false, [], "PolyglotBridge core not found.");
-            $runtimes = \SPP\PolyglotBridge::discoverRuntimes();
             
-            $sharedDir = \SPP\Module::getConfig('shared_dir', 'bridge') ?: 'var/shared';
-            if (!str_starts_with($sharedDir, '/') && !str_contains($sharedDir, ':')) {
-                $sharedDir = SPP_BASE_DIR . SPP_DS . '..' . SPP_DS . $sharedDir;
-            }
-            $bridgeFile = $sharedDir . SPP_DS . 'bridge_config.json';
+            $info = withContext($appname, function() use ($appname) {
+                $runtimes = \SPP\PolyglotBridge::discoverRuntimes();
+                $sharedDir = \SPP\Module::getConfig('shared_dir', 'bridge') ?: 'var/shared';
+                
+                $absSharedDir = normalizePath(absolutizePath($sharedDir));
+                $bridgeFile = $absSharedDir . '/bridge_config.json';
+                
+                return [
+                    'runtimes' => $runtimes,
+                    'shared_dir' => $absSharedDir,
+                    'config_exists' => file_exists($bridgeFile),
+                    'last_sync' => file_exists($bridgeFile) ? date("Y-m-d H:i:s", filemtime($bridgeFile)) : null
+                ];
+            });
             
-            sendResponse(true, [
-                'runtimes' => $runtimes,
-                'shared_dir' => realpath($sharedDir),
-                'config_exists' => file_exists($bridgeFile),
-                'last_sync' => file_exists($bridgeFile) ? date("Y-m-d H:i:s", filemtime($bridgeFile)) : null
-            ]);
+            sendResponse(true, $info);
             break;
 
         case 'setup_bridge':
             if (!class_exists('\SPP\PolyglotBridge')) sendResponse(false, [], "PolyglotBridge core not found.");
-            $res = \SPP\PolyglotBridge::setup();
+            $res = withContext($appname, function() {
+                return \SPP\PolyglotBridge::setup();
+            });
             sendResponse($res['success'], $res, $res['success'] ? "Bridge environment refreshed successfully." : "Bridge setup failed.");
             break;
 

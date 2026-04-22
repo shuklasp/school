@@ -275,4 +275,20 @@ class SPPSession extends \SPP\SPPObject
         }
     }
 
+    public static function getCsrfToken(): string
+    {
+        try {
+            return self::getSessionVar('__csrf_token__');
+        } catch (UnknownSessionVarException $e) {
+            return self::generateCsrfToken();
+        }
+    }
+
+    public static function generateCsrfToken(): string
+    {
+        $token = bin2hex(random_bytes(32));
+        self::setSessionVar('__csrf_token__', $token);
+        return $token;
+    }
+
 }

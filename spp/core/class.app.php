@@ -34,6 +34,8 @@ class App extends \SPP\SPPObject
     private string $tmp_dir = '';
     private string $conf_dir = '';
     private string $mod_dir = '';
+    protected \SPP\Core\Container $container;
+
 
     /** @var array<string, \SPP\App> */
     private static array $instances = [];
@@ -58,6 +60,7 @@ class App extends \SPP\SPPObject
         }
 
         $this->appname = $appname;
+        $this->container = new \SPP\Core\Container();
         $this->initializeDirs($appname);
 
         if (\SPP\Registry::isRegistered('__apps=>' . $appname . '=>status')) {
@@ -107,6 +110,10 @@ class App extends \SPP\SPPObject
      */
     private function makeAppPath(string $appname, string $subdir): string
     {
+        // Virtual contexts starting with __ don't have physical app directories
+        if (str_starts_with($appname, '__')) {
+            return '';
+        }
         return APP_ETC_DIR . SPP_DS . $appname . SPP_DS . $subdir . SPP_DS;
     }
 
@@ -245,5 +252,23 @@ class App extends \SPP\SPPObject
             \SPP\Scheduler::setContext($oldcontext);
             $this->modsloaded = true;
         }
+    }
+
+    /**
+     * Resolve a service from the application container.
+     */
+    public function make(string $abstract, array $parameters = [])
+    {
+        return $this->container->make($abstract, $parameters);
+    }
+
+    public function bind(string $abstract, $concrete = null, bool $shared = false)
+    {
+        $this->container->bind($abstract, $concrete, $shared);
+    }
+
+    public function singleton(string $abstract, $concrete = null)
+    {
+        $this->container->singleton($abstract, $concrete);
     }
 }

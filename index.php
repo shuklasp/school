@@ -14,19 +14,21 @@ require_once('global.php');
 \SPPMod\SPPView\ViewPage::addJsIncludeFile('res/spp/js/spp.js');
 \SPPMod\SPPView\ViewPage::addJsIncludeFile('res/spp/js/spp-router.js');
 
-if (\SPP\Module::isEnabled('sppapi') && class_exists('\SPPMod\SPPAPI\SPPAPI') && \SPPMod\SPPAPI\SPPAPI::isApiRequest()) {
-    \SPPMod\SPPAPI\SPPAPI::handle();
-    exit;
-}
+\SPP\Core\MiddlewareKernel::run(function($request) {
+    if (\SPP\Module::isEnabled('sppapi') && class_exists('\SPPMod\SPPAPI\SPPAPI') && \SPPMod\SPPAPI\SPPAPI::isApiRequest()) {
+        \SPPMod\SPPAPI\SPPAPI::handle();
+        return;
+    }
 
-// SPA dispatch: handle AJAX fragment/service requests before full HTML render
-if (\SPP\Module::isEnabled('sppajax') && \SPPMod\SPPAjax\SPPAjax::isAjaxRequest()) {
-    \SPPMod\SPPAjax\SPPAjax::handle();
-    exit;
-}
+    // SPA dispatch: handle AJAX fragment/service requests before full HTML render
+    if (\SPP\Module::isEnabled('sppajax') && \SPPMod\SPPAjax\SPPAjax::isAjaxRequest()) {
+        \SPPMod\SPPAjax\SPPAjax::handle();
+        return;
+    }
 
-\SPPMod\SPPView\ViewPage::processForms();
-\SPPMod\SPPView\ViewPage::showPage();
+    \SPPMod\SPPView\ViewPage::processForms();
+    \SPPMod\SPPView\ViewPage::showPage();
+});
 // $q = $_GET['q'];
 // $page=array();
 // if ($q == null) {

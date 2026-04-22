@@ -256,6 +256,9 @@ class Module extends \SPP\SPPObject
                 case 'bridge':
                     $this->RuntimeBridgeConfig = (array) $val;
                     break;
+                case 'services':
+                    $this->registerServices((array) $val);
+                    break;
                 default:
                     // Ignore unknown keys (keep robust)
                     break;
@@ -265,6 +268,24 @@ class Module extends \SPP\SPPObject
         // Basic validation: internal name must be set
         if (empty($this->_attributes['InternalName'])) {
             throw new \SPP\SPPException('Module manifest missing "name" (InternalName).');
+        }
+    }
+
+    /**
+     * Registers services into the current application container.
+     */
+    private function registerServices(array $services): void
+    {
+        $app = \SPP\App::getApp();
+        foreach ($services as $abstract => $concrete) {
+            $shared = true; // Default to singleton for services
+            if (is_array($concrete)) {
+                $shared = $concrete['shared'] ?? true;
+                $concrete = $concrete['class'] ?? $concrete['concrete'] ?? null;
+            }
+            if ($concrete) {
+                $app->bind($abstract, $concrete, $shared);
+            }
         }
     }
 
@@ -290,9 +311,10 @@ class Module extends \SPP\SPPObject
         $varname = str_replace(["'", '"'], '', $varname);
         $modname = preg_replace('/[^a-zA-Z0-9_\-]/', '', $modname);
         $appname = $appname ? preg_replace('/[^a-zA-Z0-9_\-]/', '', $appname) : \SPP\Scheduler::getContext();
+        $cacheKey = $appname . '::' . $modname . '::' . $varname;
 
-        if (isset(self::$configCache[$modname][$varname])) {
-            return self::$configCache[$modname][$varname];
+        if (isset(self::$configCache[$cacheKey])) {
+            return self::$configCache[$cacheKey];
         }
 
         // --- Step 1: Check isolated per-app YAML config (Modern TOP priority) ---
@@ -304,7 +326,7 @@ class Module extends \SPP\SPPObject
                 $val = $yamlData['variables'][$varname] ?? ($yamlData[$varname] ?? null);
                 if ($val !== null) {
                     $result = (string) $val;
-                    self::$configCache[$modname][$varname] = $result;
+                    self::$configCache[$cacheKey] = $result;
                     return $result;
                 }
             }
@@ -312,16 +334,19 @@ class Module extends \SPP\SPPObject
 
         // --- Step 2: Check canonical per-app YAML config (Framework priority) ---
         // Path: spp/etc/apps/<app>/modsconf/<modname>/config.yml
-        $proc = \SPP\Scheduler::getActiveProc();
-        $yamlConfFile = $proc->getModsConfDir() . SPP_DS . $modname . SPP_DS . 'config.yml';
-        if (file_exists($yamlConfFile)) {
-            $yamlData = Yaml::parseFile($yamlConfFile);
-            // Convention: variables are stored under a 'variables' key
-            $val = $yamlData['variables'][$varname] ?? ($yamlData[$varname] ?? null);
-            if ($val !== null) {
-                $result = (string) $val;
-                self::$configCache[$modname][$varname] = $result;
-                return $result;
+        $proc = null;
+        if (\SPP\Scheduler::hasContext()) {
+            $proc = \SPP\Scheduler::getActiveProc();
+            $yamlConfFile = $proc->getModsConfDir() . SPP_DS . $modname . SPP_DS . 'config.yml';
+            if (file_exists($yamlConfFile)) {
+                $yamlData = Yaml::parseFile($yamlConfFile);
+                // Convention: variables are stored under a 'variables' key
+                $val = $yamlData['variables'][$varname] ?? ($yamlData[$varname] ?? null);
+                if ($val !== null) {
+                    $result = (string) $val;
+                    self::$configCache[$cacheKey] = $result;
+                    return $result;
+                }
             }
         }
 
@@ -333,13 +358,25 @@ class Module extends \SPP\SPPObject
                 $appYaml = Yaml::parseFile($appGlobalConf);
                 if (isset($appYaml[$modname]['variables'][$varname])) {
                     $val = (string) $appYaml[$modname]['variables'][$varname];
-                    self::$configCache[$modname][$varname] = $val;
+                    self::$configCache[$cacheKey] = $val;
                     return $val;
                 } elseif (isset($appYaml[$modname][$varname])) {
                     $val = (string) $appYaml[$modname][$varname];
-                    self::$configCache[$modname][$varname] = $val;
+                    self::$configCache[$cacheKey] = $val;
                     return $val;
                 }
+            }
+        }
+
+        // --- Step 2.5: Try global system etc directory for <modname>.yml (Service Fallback) ---
+        $globalServiceConf = SPP_ETC_DIR . SPP_DS . $modname . '.yml';
+        if (file_exists($globalServiceConf)) {
+            $serviceYaml = Yaml::parseFile($globalServiceConf);
+            $val = $serviceYaml['variables'][$varname] ?? ($serviceYaml[$varname] ?? null);
+            if ($val !== null) {
+                $result = (string) $val;
+                self::$configCache[$cacheKey] = $result;
+                return $result;
             }
         }
 
@@ -398,7 +435,7 @@ class Module extends \SPP\SPPObject
         }
 
         if ($result !== false) {
-            self::$configCache[$modname][$varname] = $result;
+            self::$configCache[$cacheKey] = $result;
             return $result;
         }
 
@@ -408,20 +445,22 @@ class Module extends \SPP\SPPObject
         if (file_exists($yaml_file)) {
             $result = \SPP\Settings::getSetting($varname, 'variables', 'config.yml', $yaml_dir);
             if ($result !== false) {
-                self::$configCache[$modname][$varname] = $result;
+                self::$configCache[$cacheKey] = $result;
                 return $result;
             }
         }
 
         // --- Step 4: Final fallback — app-level modsconf config.xml ---
-        $confdir = $proc->getModsConfDir() . SPP_DS . $modname;
-        $confXmlFile = $confdir . SPP_DS . 'config.xml';
-        if (file_exists($confXmlFile)) {
-            $xml = simplexml_load_file($confXmlFile);
-            if ($xml !== false) {
-                $valueNodes = $xml->xpath('/config/variables/variable[name=\'' . $varname . '\']/value');
-                if (!empty($valueNodes) && isset($valueNodes[0])) {
-                    $result = (string) $valueNodes[0];
+        if ($proc) {
+            $confdir = $proc->getModsConfDir() . SPP_DS . $modname;
+            $confXmlFile = $confdir . SPP_DS . 'config.xml';
+            if (file_exists($confXmlFile)) {
+                $xml = simplexml_load_file($confXmlFile);
+                if ($xml !== false) {
+                    $valueNodes = $xml->xpath('/config/variables/variable[name=\'' . $varname . '\']/value');
+                    if (!empty($valueNodes) && isset($valueNodes[0])) {
+                        $result = (string) $valueNodes[0];
+                    }
                 }
             }
         }
@@ -437,7 +476,7 @@ class Module extends \SPP\SPPObject
             }
         }
 
-        self::$configCache[$modname][$varname] = $result;
+        self::$configCache[$cacheKey] = $result;
         return $result;
     }
 
@@ -485,7 +524,9 @@ class Module extends \SPP\SPPObject
         file_put_contents($yamlConfFile, Yaml::dump($yamlData, 4, 4));
 
         // Invalidate cache so next getConfig() reflects the new value
-        self::$configCache[$modname][$varname] = (string) $value;
+        $appname = $appname ? preg_replace('/[^a-zA-Z0-9_\-]/', '', $appname) : \SPP\Scheduler::getContext();
+        $cacheKey = $appname . '::' . $modname . '::' . $varname;
+        self::$configCache[$cacheKey] = (string) $value;
     }
 
     /**
@@ -500,6 +541,19 @@ class Module extends \SPP\SPPObject
         $dir = \SPP\Scheduler::getModsConfDir();
         $dir .= SPP_DS . $modname;
         return $dir;
+    }
+
+    /**
+     * Returns the expected path for a module's YAML configuration file.
+     * 
+     * @param string $modname
+     * @param string|null $appname
+     * @return string
+     */
+    public static function getExpectedConfigPath(string $modname, ?string $appname = null): string
+    {
+        $appname = $appname ?: \SPP\Scheduler::getContext();
+        return APP_ETC_DIR . SPP_DS . $appname . SPP_DS . 'modsconf' . SPP_DS . $modname . SPP_DS . 'config.yml';
     }
 
     /**
@@ -1560,7 +1614,9 @@ class Module extends \SPP\SPPObject
         file_put_contents($yamlConfFile, Yaml::dump($yamlData, 4, 4));
 
         // Invalidate cache
-        self::$configCache[$modname][$varname] = (string) $value;
+        $appname = $appname ? preg_replace('/[^a-zA-Z0-9_\-]/', '', $appname) : \SPP\Scheduler::getContext();
+        $cacheKey = $appname . '::' . $modname . '::' . $varname;
+        self::$configCache[$cacheKey] = (string) $value;
     }
 
     /**

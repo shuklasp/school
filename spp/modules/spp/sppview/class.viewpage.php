@@ -96,45 +96,70 @@ class ViewPage extends \SPP\SPPObject
             include($filename);
 
             if ($doAugment) {
+                $html = ob_get_clean();
+                $appName = \SPP\Scheduler::getContext();
+
+                // 1. Scan for <php-comp name="X" ... /> tags
+                $html = preg_replace_callback('/<php-comp\s+name="([^"]+)"([^>]*)\/?>/i', function($matches) use ($appName) {
+                    $compName = $matches[1];
+                    $attrs = $matches[2];
+                    
+                    // Parse attributes into a state object
+                    $state = [];
+                    if (preg_match_all('/([a-zA-Z0-9_-]+)="([^"]+)"/', $attrs, $attrMatches)) {
+                        for ($i = 0; $i < count($attrMatches[0]); $i++) {
+                            $state[$attrMatches[1][$i]] = $attrMatches[2][$i];
+                        }
+                    }
+
+                    // Resolve JS Inclusion
+                    self::resolveTieredJS($appName, $compName);
+
+                    $jsonState = htmlspecialchars(json_encode($state), ENT_QUOTES, 'UTF-8');
+                    return "<div data-spp-component=\"{$compName}\" data-state='{$jsonState}'></div>";
+                }, $html);
+
                 if ($doInjectJs) {
                     self::addJsIncludeFile('res/spp/js/spp-router.js');
                     self::addJsIncludeFile('res/spp/js/sppvalidations.js');
                     self::addJsIncludeFile('res/spp/js/spp-autoinit.js');
                 }
                 
-                $html = ob_get_clean();
+                // 4. Inject Debug Bar (Phase 5 Evolution)
+                if (\SPP\Module::isEnabled('sppdebug') || (defined('SPP_DEBUG') && SPP_DEBUG)) {
+                    $debugData = \SPP\Core\Debug::getData();
+                    $debugJson = htmlspecialchars(json_encode($debugData), ENT_QUOTES, 'UTF-8');
+                    $html .= "<div id='spp-debug-bar' data-metrics='{$debugJson}'></div>";
+                    self::addJsIncludeFile('res/spp/js/spp-debug.js');
+                    self::addCssIncludeFile('res/spp/css/spp-debug.css');
+                }
+
                 // Pass the accumulated script list to the augmentor for internal DOM injection
                 echo FormAugmentor::augment($html, self::$jsincludelist);
                 
                 self::includeJqueryDynamic();
-                // We've already handled the script list via the augmentor
                 self::includeCSSFilesDynamic();
                 return true;
             }
 
             self::includeJqueryDynamic();
-            
-            if ($doInjectJs) {
-                self::addJsIncludeFile('res/spp/js/spp-router.js');
-                self::addJsIncludeFile('res/spp/js/sppvalidations.js');
-                self::addJsIncludeFile('res/spp/js/spp-autoinit.js');
-            }
+            // ... rest of method
+        }
+    }
 
-            self::includeJSFilesDynamic();
-            self::includeCSSFilesDynamic();
-            return true;
+    /**
+     * Tiered JS Resolution Logic:
+     * 1. Static: Check if pre-built JS exists.
+     * 2. Fallback: Use dynamic generator route via SPPAjax.
+     */
+    public static function resolveTieredJS(string $appName, string $compName): void
+    {
+        $staticPath = "res/apps/{$appName}/generated/{$compName}.js";
+        if (file_exists(SPP_APP_DIR . '/' . $staticPath)) {
+            self::addJsIncludeFile($staticPath);
         } else {
-            $err = Pages::getDefault('error');
-            if ($err != null) {
-                $pageData = Pages::getPage($err);
-                if ($pageData != null) {
-                    include(SPP_APP_DIR . $src . SPP_US . trim($pageData['url']));
-                } else {
-                    throw new SPPException('Error page not found');
-                }
-            } else {
-                throw new SPPException('Page not found');
-            }
+            // Priority 3: Fallback - Dynamic generation route
+            self::addJsIncludeFile("?__js_comp={$compName}");
         }
     }
 

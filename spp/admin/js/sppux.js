@@ -22,12 +22,10 @@ class TrustedHTML {
  * 
  * Tagged template to parse HTML strings and return a TrustedHTML object.
  * Handles automatic escaping of interpolated values UNLESS they are TrustedHTML.
- */
-/**
- * html helper
  * 
- * Tagged template to parse HTML strings and return a TrustedHTML object.
- * Handles automatic escaping of interpolated values UNLESS they are TrustedHTML.
+ * @param {TemplateStringsArray} strings 
+ * @param {...any} values 
+ * @returns {TrustedHTML}
  */
 const html = (strings, ...values) => {
     const escape = (str) => {
@@ -66,18 +64,54 @@ const html = (strings, ...values) => {
     }, '');
 
     // Post-process: handle ?attr="truthy" lit-html-style boolean directives
-    // e.g. ?checked="true" => checked,  ?checked="false" => (removed)
     raw = raw.replace(/\?([a-zA-Z-]+)="([^"]*)"/g, (match, attr, val) => {
-        // Values that are falsy strings: "false", "", "0", "null", "undefined"
         const isFalsy = val === 'false' || val === '' || val === '0' || val === 'null' || val === 'undefined';
         return isFalsy ? '' : attr;
     });
     
     return new TrustedHTML(raw);
-};
+}
 
 // Global Exposure
 window.html = html;
+
+/**
+ * Fragment constant for cleaner template semantics.
+ */
+const Fragment = new TrustedHTML('');
+window.Fragment = Fragment;
+
+/**
+ * SPPStore Class
+ * 
+ * A reactive state container for global synchronization.
+ */
+class SPPStore {
+    constructor(initialState = {}) {
+        this.state = initialState;
+        this.listeners = new Set();
+    }
+
+    get() {
+        return this.state;
+    }
+
+    set(newState) {
+        this.state = { ...this.state, ...newState };
+        this.notify();
+    }
+
+    subscribe(callback) {
+        this.listeners.add(callback);
+        // Return unsubscribe function
+        return () => this.listeners.delete(callback);
+    }
+
+    notify() {
+        this.listeners.forEach(cb => cb(this.state));
+    }
+}
+window.SPPStore = SPPStore;
 
 /**
  * BaseComponent Class
@@ -90,6 +124,52 @@ class BaseComponent {
         this.container = container;
         this.state = {};
         this._initialized = false;
+        
+        /** @type {any} Global Root Store (Convenience access) */
+        this.root = window.spp_root_store || null;
+
+        // Internal Global API Proxy (Direct to api.php)
+        this.api = new Proxy({}, {
+            get: (target, prop) => {
+                if (typeof prop !== 'string' || prop in this) return target[prop];
+                const action = prop.replace(/[A-Z]/g, l => `_${l.toLowerCase()}`);
+                
+                return (data = {}) => {
+                    if (data instanceof FormData) {
+                        data.append('action', action);
+                        return this.admin.apiPost(data);
+                    }
+                    return this.admin.api(action, data);
+                };
+            }
+        });
+
+        // Internal Service Proxy (Direct to App Services)
+        this.serv = new Proxy({}, {
+            get: (target, prop) => {
+                if (typeof prop !== 'string' || prop in this) return target[prop];
+                const action = prop.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+                return (params = {}) => this.service(action, params);
+            }
+        });
+    }
+
+    /**
+     * bindStore
+     * 
+     * Explicitly syncs a store's state to a key in this component's state.
+     * @param {SPPStore} store 
+     * @param {string} keyOrCallback - Key to set in this.state, or custom callback.
+     */
+    bindStore(store, keyOrCallback) {
+        if (!store) return;
+        const cb = typeof keyOrCallback === 'string' 
+            ? (state) => this.setState({ [keyOrCallback]: state }) 
+            : keyOrCallback;
+        
+        // Initial sync
+        cb(store.get());
+        return store.subscribe(cb);
     }
 
     /**
@@ -108,9 +188,9 @@ class BaseComponent {
      * Internal render trigger.
      */
     update() {
-        const html = this.render();
-        if (this.container) {
-            this.container.innerHTML = html;
+        const template = this.render();
+        if (this.container && template instanceof TrustedHTML) {
+            this.container.innerHTML = template.toString();
         }
     }
 
@@ -123,9 +203,31 @@ class BaseComponent {
         return await this.admin.callAppService(name, params);
     }
 
+    /**
+     * callServer
+     * 
+     * Direct bridge to PHPComponent methods via SPPAjax.
+     */
+    async callServer(method, data = {}) {
+        const res = await fetch(`?__spa=1&__svc=component_action`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-SPP-Ajax': '1' },
+            body: JSON.stringify({
+                component: this.constructor.name,
+                method: method,
+                data: data
+            })
+        });
+        const result = await res.json();
+        if (result.status === 'ok' && result.state) {
+            this.setState(result.state);
+        }
+        return result;
+    }
+
     // Lifecycle hooks to be overridden
     async onInit() {}
-    render() { return ''; }
+    render() { return Fragment; }
 }
 
 // Global Exposure

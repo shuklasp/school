@@ -73,6 +73,14 @@ class Scheduler extends \SPP\SPPObject
     }
 
     /**
+     * Check if an application context has been set.
+     */
+    public static function hasContext(): bool
+    {
+        return self::$AppContext !== '';
+    }
+
+    /**
      * Get module configuration directory for current process.
      */
     public static function getModsConfDir(): string
@@ -114,5 +122,54 @@ class Scheduler extends \SPP\SPPObject
     public static function getActiveErrorObj(): ?\SPP\SPPError
     {
         return self::getActiveProc()->getErrorObj();
+    }
+
+    /**
+     * Detects the app context based on Request URI and base_url in global registry.
+     * Enforces strict prefixing.
+     */
+    public static function detectAndEnforceContext(): void
+    {
+        $uri = $_SERVER['REQUEST_URI'] ?? '/';
+        
+        // Load Global Settings
+        $settings = [];
+        $path = (defined('SPP_BASE_DIR') ? SPP_BASE_DIR : dirname(__DIR__, 2)) . '/etc/global-settings.yml';
+        if (file_exists($path) && class_exists('\\Symfony\\Component\\Yaml\\Yaml')) {
+            try {
+                $settings = \Symfony\Component\Yaml\Yaml::parseFile($path);
+            } catch (\Exception $e) {}
+        }
+        
+        $apps = $settings['apps'] ?? [];
+        $matchedApp = null;
+        $maxLen = -1;
+
+        // Sort apps by base_url length descending to match most specific first
+        foreach ($apps as $name => $meta) {
+            $baseUrl = $meta['base_url'] ?? '';
+            if ($baseUrl === '' || $baseUrl === '/') continue;
+            
+            // Check if URI starts with base_url
+            if (strpos($uri, $baseUrl) !== false) {
+                 if (strlen($baseUrl) > $maxLen) {
+                     $maxLen = strlen($baseUrl);
+                     $matchedApp = $name;
+                 }
+            }
+        }
+
+        if (!$matchedApp) {
+            // Find explicit base app or fallback to 'default'
+            foreach ($apps as $name => $meta) {
+                if (!empty($meta['is_base_app'])) {
+                    $matchedApp = $name;
+                    break;
+                }
+            }
+            if (!$matchedApp) $matchedApp = 'default';
+        }
+
+        self::$AppContext = $matchedApp;
     }
 }

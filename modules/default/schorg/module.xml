@@ -8,14 +8,14 @@
 -->
 
 <module>
-    <name>sppentity</name>
+    <name>schorg</name>
     <version>0.5</version>
-    <pubname>SPP Entity</pubname>
+    <pubname>School Organization</pubname>
     <modgroup>SPP_Optional</modgroup>
     <pubdesc>Defines an Entity.</pubdesc>
     <includes>
-        <include>class.sppentity.php</include>
-        <include>entityexceptions.php</include>
+        <include>class.schorg.php</include>
+        <include>orgexceptions.php</include>
     </includes>
     <deps>
         <depends>sppconfig</depends>

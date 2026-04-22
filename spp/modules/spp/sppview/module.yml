@@ -9,6 +9,8 @@ module:
     includes:
         - class.viewtag.php
         - class.sppformelement.php
+        - class.phpcomponent.php
+        - class.jsgenerator.php
         - class.viewvalidator.php
         - class.viewpage.php
         - class.viewform.php

@@ -107,6 +107,9 @@ if (!checkDevMode()) {
                     <li><a href="#system" class="nav-item active" data-view="system">
                             <span class="icon">🖥️</span> System Info
                         </a></li>
+                    <li><a href="#apps" class="nav-item" data-view="apps">
+                            <span class="icon">📱</span> Applications
+                        </a></li>
                     <li><a href="#modules" class="nav-item" data-view="modules">
                             <span class="icon">📦</span> Modules
                         </a></li>
@@ -132,7 +135,7 @@ if (!checkDevMode()) {
                     <div class="user-avatar" id="user-avatar">A</div>
                     <div>
                         <div class="user-name" id="user-display-name">Admin</div>
-                        <div class="user-role">Developer</div>
+                        <div class="user-role" id="user-display-role">Developer</div>
                     </div>
                 </div>
 
@@ -186,6 +189,11 @@ if (!checkDevMode()) {
     <!-- Framework Infrastructure (Standard Scripts for maximum compatibility) -->
     <script src="js/sppux.js?v=<?php echo time(); ?>"></script>
     <script src="js/admin.js?v=<?php echo time(); ?>"></script>
+
+    <!-- CSRF Token for Frontend -->
+    <script>
+        window.SPP_CSRF_TOKEN = '<?php echo \SPP\SPPSession::getCsrfToken(); ?>';
+    </script>
 
     <!-- Inline Override for stale caches -->
     <script>

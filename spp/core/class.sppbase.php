@@ -98,5 +98,14 @@ class SPPBase extends \SPP\SPPObject {
     {
         return \SPPMod\SPPDB\SPPDB::sppTable($tname);
     }
+
+    /**
+     * Access the framework's resilient cache layer.
+     * @return \SPP\Core\CacheInterface
+     */
+    public function cache()
+    {
+        return \SPP\Cache::driver();
+    }
 }
 ?>

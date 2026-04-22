@@ -41,14 +41,82 @@ class SPPAjax extends \SPP\SPPObject
             self::respond('error', ['message' => 'SPA mode is disabled.'], 503);
         }
 
+        // Component Action: ?__svc=component_action
+        if (isset($_GET['__svc']) && $_GET['__svc'] === 'component_action') {
+            self::dispatchComponentAction();
+            return;
+        }
+
         // Service call: ?__svc=service_name
         if (isset($_GET['__svc'])) {
             self::dispatchService(trim($_GET['__svc']));
             return;
         }
 
+        // Component JS: ?__js_comp=ComponentName
+        if (isset($_GET['__js_comp'])) {
+            self::dispatchComponentJS(trim($_GET['__js_comp']));
+            return;
+        }
+
         // Page fragment request: ?q=page_name&__spa=1
         self::dispatchPage();
+    }
+
+    /**
+     * Handles an AJAX action from a generated JS component by routing it
+     * back to the corresponding PHPComponent class and method.
+     */
+    public static function dispatchComponentAction(): void
+    {
+        $input = json_decode(file_get_contents('php://input'), true);
+        $compName = $input['component'] ?? null;
+        $method = $input['method'] ?? null;
+        $data = $input['data'] ?? [];
+
+        if (!$compName || !$method) {
+            self::respond('error', ['message' => 'Invalid component action request.']);
+        }
+
+        try {
+            $app = \SPP\Scheduler::getContext();
+            $className = "App\\" . ucfirst($app) . "\\Components\\" . $compName;
+            
+            if (!class_exists($className)) {
+                self::respond('error', ['message' => "Component '{$compName}' not found."]);
+            }
+
+            $component = new $className();
+            if (!method_exists($component, $method)) {
+                self::respond('error', ['message' => "Method '{$method}' not found in component '{$compName}'."]);
+            }
+
+            // Execute the action
+            $result = $component->$method($data);
+            
+            self::respond('ok', [
+                'result' => $result,
+                'state' => $component->getState()
+            ]);
+        } catch (\Throwable $e) {
+            self::respond('error', ['message' => 'Component Action Error: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Dynamically generates and serves the JS for a PHP component.
+     */
+    public static function dispatchComponentJS(string $name): void
+    {
+        header('Content-Type: application/javascript; charset=utf-8');
+        try {
+            $app = \SPP\Scheduler::getContext();
+            $className = "App\\" . ucfirst($app) . "\\Components\\" . $name;
+            echo \SPPMod\SPPView\JSGenerator::generate($className);
+        } catch (\Exception $e) {
+            echo "// Error generating component JS: " . $e->getMessage();
+        }
+        exit;
     }
 
     /**

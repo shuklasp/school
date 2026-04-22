@@ -58,6 +58,7 @@ class SPPEntityRelations
      * @throws \SPP\SPPException
      */
     public static function registerEntityRelation(
+        ?string $relation_name,
         string $parent_entity,
         string $parent_entity_field,
         string $child_entity,
@@ -65,6 +66,7 @@ class SPPEntityRelations
         string $relation_type
     ) {
         $rel_array = array(
+            'name' => $relation_name,
             'parent_entity' => $parent_entity,
             'parent_entity_field' => $parent_entity_field,
             'child_entity' => $child_entity,
@@ -143,6 +145,56 @@ class SPPEntityRelations
     public static function getRelations()
     {
         return self::$parent_to_child;
+    }
+
+    /**
+     * Resolves and fetches related entities for a given instance and relation name.
+     */
+    public static function getRelated($entity, string $name)
+    {
+        $class = get_class($entity);
+        $rels = \SPP\Registry::get('EntityRelations');
+        if (!is_array($rels)) return null;
+
+        foreach ($rels as $rel) {
+            if ($rel['name'] === $name && ($rel['parent_entity'] === $class || $rel['child_entity'] === $class)) {
+                
+                // If it's a OneToMany where we are the parent
+                if ($rel['relation_type'] === 'OneToMany' && $rel['parent_entity'] === $class) {
+                    return self::getRelatedEntitiesByParent(
+                        $rel['parent_entity'] . '=>' . $rel['child_entity'],
+                        $entity->getId()
+                    );
+                }
+
+                // If it's a ManyToOne (belongsTo) where we are the child
+                if ($rel['relation_type'] === 'ManyToOne' && $rel['child_entity'] === $class) {
+                    $results = self::getRelatedEntitiesByChild(
+                        $rel['parent_entity'] . '=>' . $rel['child_entity'],
+                        $entity->getId()
+                    );
+                    return count($results) > 0 ? $results[0] : null;
+                }
+
+                // If it's a OneToOne
+                if ($rel['relation_type'] === 'OneToOne') {
+                    if ($rel['parent_entity'] === $class) {
+                        $results = self::getRelatedEntitiesByParent(
+                            $rel['parent_entity'] . '=>' . $rel['child_entity'],
+                            $entity->getId()
+                        );
+                    } else {
+                        $results = self::getRelatedEntitiesByChild(
+                            $rel['parent_entity'] . '=>' . $rel['child_entity'],
+                            $entity->getId()
+                        );
+                    }
+                    return count($results) > 0 ? $results[0] : null;
+                }
+            }
+        }
+
+        return null;
     }
 
     /****

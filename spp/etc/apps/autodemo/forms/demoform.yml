@@ -1,0 +1,13 @@
+form:
+  name: DemoForm
+  service: submit_demo
+  on_response:
+    ok: alert('Success!')
+
+fields:
+  username:
+    name: username
+    label: Your Name
+    validations:
+      - type: required
+        message: Name is required.

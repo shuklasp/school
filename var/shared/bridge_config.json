@@ -1,13 +1,13 @@
 {
-    "timestamp": 1776581238,
+    "timestamp": 1776819695,
     "spp_version": "0.5",
     "base_dir": "\/mnt\/c\/projects\/apache\/school1\/spp",
     "database": {
         "dbtype": "mysql",
         "dbhost": "localhost",
-        "dbname": "school",
+        "dbname": "spp",
         "dbuser": "root",
-        "dbpasswd": "hello123"
+        "dbpasswd": ""
     },
     "modules": [],
     "runtimes": {

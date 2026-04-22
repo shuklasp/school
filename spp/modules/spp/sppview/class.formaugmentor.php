@@ -34,15 +34,29 @@ class FormAugmentor extends \SPP\SPPObject
         $forms = $dom->getElementsByTagName('form');
         $modified = false;
 
+        $ctxPage = \SPP\SPPGlobal::get('page')['name'] ?? 'index';
+
         foreach ($forms as $formNode) {
             /** @var \DOMElement $formNode */
             $formId = $formNode->getAttribute('id') ?: $formNode->getAttribute('name');
-            if (!$formId) continue;
-
+            
             try {
-                // Try to find a matching YAML definition in the root etc/forms directory
-                $yamlPath = APP_ETC_DIR . SPP_DS . 'forms' . SPP_DS . "{$formId}.yml";
-                if (!file_exists($yamlPath)) continue;
+                $yamlPath = null;
+                $candidatePaths = [];
+                
+                if ($formId) {
+                    $candidatePaths[] = APP_ETC_DIR . SPP_DS . 'forms' . SPP_DS . "{$formId}.yml";
+                }
+                $candidatePaths[] = APP_ETC_DIR . SPP_DS . 'forms' . SPP_DS . "{$ctxPage}.yml";
+
+                foreach ($candidatePaths as $path) {
+                    if (file_exists($path)) {
+                        $yamlPath = $path;
+                        break;
+                    }
+                }
+
+                if (!$yamlPath) continue;
                 
                 $config = ViewFormBuilder::loadConfig($yamlPath);
                 if (!empty($config)) {

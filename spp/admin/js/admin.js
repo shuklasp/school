@@ -11,9 +11,18 @@ class SPPAdmin {
         console.log("SPP Admin Workbench v1.1 Loaded");
         this.apiEndpoint = 'api.php';
         this.user = null;
+        
+        // Initialize Global Root Store
+        window.spp_root_store = new SPPStore({
+            user: null,
+            selectedApp: this.selectedApp,
+            theme: this.theme
+        });
+        
         this.currentView = 'system';
         this.viewIcons = {
             'system': '🖥️',
+            'apps': '📱',
             'modules': '📦',
             'entities': '🏗️',
             'forms': '📝',
@@ -23,6 +32,7 @@ class SPPAdmin {
         };
         this.viewTitles = {
             'system': 'System Information',
+            'apps': 'Applications & Sharing',
             'modules': 'System Modules',
             'entities': 'Application Entities',
             'forms': 'Form Configurations',
@@ -133,13 +143,31 @@ class SPPAdmin {
             const res = await this.api('check_auth');
             if (res.success) {
                 this.user = res.data;
+                window.spp_root_store.set({ user: this.user });
                 this.showWorkspace();
+                
+                // Update Sidebar Profile
+                const profileRes = await this.api('get_profile');
+                if (profileRes.success) {
+                    this.updateUserDisplay(profileRes.data);
+                }
             } else {
                 this.showLogin();
             }
         } catch (e) {
             this.showLogin();
         }
+    }
+
+    updateUserDisplay(profile) {
+        const nameDisplay = document.getElementById('user-display-name');
+        if (nameDisplay) nameDisplay.textContent = profile.username || 'System';
+        
+        const avatarDisplay = document.getElementById('user-avatar');
+        if (avatarDisplay) avatarDisplay.textContent = (profile.username || 'S').charAt(0).toUpperCase();
+
+        const roleDisplay = document.getElementById('user-display-role');
+        if (roleDisplay) roleDisplay.textContent = profile.role || 'Developer';
     }
 
     async handleLogin(e) {
@@ -178,8 +206,15 @@ class SPPAdmin {
             
             if (res.success) {
                 this.user = { username };
+                window.spp_root_store.set({ user: this.user });
                 this.showWorkspace();
                 this.notify(`Welcome back, ${username}`, 'success');
+
+                // Update Sidebar Profile
+                const profileRes = await this.api('get_profile');
+                if (profileRes.success) {
+                    this.updateUserDisplay(profileRes.data);
+                }
             } else {
                 this.handleApiErrors(res);
                 this.notify(res.message || 'Invalid username or password.', 'error');
@@ -198,6 +233,7 @@ class SPPAdmin {
     async handleLogout() {
         await this.api('logout');
         this.user = null;
+        window.spp_root_store.set({ user: null });
         this.showLogin();
         this.notify('Successfully logged out.');
     }
@@ -331,14 +367,13 @@ class SPPAdmin {
 
             try {
                 const ts = Date.now();
-                // 1. Try App-Specific Component fallback
-                // We use a silent check first to avoid console noise if it doesn't exist
-                const appPath = `../../src/${this.selectedApp}/comp/${view}.js?v=${ts}`;
+                // 1. Document-Relative Component paths (Base: /admin/js/)
                 const corePath = `./views/${view}.js?v=${ts}`;
+                const appPath = `../../src/${this.selectedApp}/comp/${view}.js?v=${ts}`;
                 
                 let module;
                 try {
-                    // Try to load core component first for stability
+                    // Try to load core component first
                     module = await import(corePath);
                     console.log(`Loaded core component: ${view}`);
                 } catch (e) {
@@ -361,9 +396,9 @@ class SPPAdmin {
 
             // 3. Render SPP-UX Component
             if (module.default) {
-                const component = new module.default(this, container);
-                await component.onInit();
-                component.update();
+                this.viewInstance = new module.default(this, container);
+                await this.viewInstance.onInit();
+                this.viewInstance.update();
             }
 
         } catch (err) {
@@ -385,7 +420,7 @@ class SPPAdmin {
         switch (view) {
             case 'system':
                 const [sysRes, bridgeRes] = await Promise.all([this.api('get_system_info'), this.api('get_bridge_info')]);
-                if (sysRes.success) this.renderSystemInfo(sysRes.data, bridgeRes.data || null);
+                if (sysRes.success) this.renderSystem(sysRes.data, bridgeRes.data || null);
                 break;
             default:
                 console.warn(`Legacy logic for view "${view}" has been deprecated or removed.`);
@@ -597,6 +632,11 @@ class SPPAdmin {
             url += '&appname=' + encodeURIComponent(this.selectedApp);
         }
 
+        // Add CSRF token
+        if (window.SPP_CSRF_TOKEN) {
+            url += '&csrf_token=' + encodeURIComponent(window.SPP_CSRF_TOKEN);
+        }
+
         const response = await fetch(url, { credentials: 'same-origin' });
         return response.json();
     }
@@ -617,6 +657,11 @@ class SPPAdmin {
         // Inject app context into POST data if not present
         if (!formData.has('appname') && !formData.has('context')) {
             formData.append('appname', this.selectedApp);
+        }
+
+        // Inject CSRF token
+        if (window.SPP_CSRF_TOKEN && !formData.has('csrf_token')) {
+            formData.append('csrf_token', window.SPP_CSRF_TOKEN);
         }
 
         const response = await fetch(this.apiEndpoint, {
@@ -749,7 +794,7 @@ class SPPAdmin {
         document.getElementById('modal-container').classList.remove('active');
     }
 
-    renderSystemInfo(data, bridge) {
+    renderSystem(data, bridge) {
         const container = document.getElementById('view-container');
 
         let bridgeHtml = '';
@@ -835,7 +880,7 @@ class SPPAdmin {
                     <div class="card-icon">💾</div>
                     <div class="card-content">
                         <h3>Database</h3>
-                        <div class="status-badge">${this.escapeHtml(data.db_status)}</div>
+                        <div class="status-badge ${data.db_status === 'Connected' ? 'active' : (data.db_status === 'Disconnected' ? 'danger' : 'warning')}">${this.escapeHtml(data.db_status)}</div>
                         <p>Runtime: <strong>PHP ${this.escapeHtml(data.php_version)}</strong></p>
                     </div>
                 </div>
@@ -852,18 +897,20 @@ class SPPAdmin {
                 </table>
             </div>
 
-            <div class="action-banner glass-panel">
+            ${bridgeHtml}
+
+            <div class="action-banner glass-panel" style="margin-top: 2rem;">
                 <div class="banner-content">
-                    <h4>Pinnacle Desktop Environment</h4>
-                    <p>Developer workbench is configured for application context: <strong>${this.selectedApp}</strong></p>
+                    <h4>SPP Developer Workbench</h4>
+                    <p>Developer workbench is configured for application context: <strong>${this.escapeHtml(this.selectedApp)}</strong></p>
                 </div>
                 <div style="display:flex; gap:12px;">
-                    <button class="btn accent-btn" onclick="admin.runSystemUpdate()" style="background: var(--accent-gradient); color: white; border: none;">🚀 Update System</button>
-                    <button class="btn primary-btn" onclick="location.hash='modules'">Manage Modules</button>
+                    <button class="btn accent-btn" onclick="location.hash = 'apps'" style="background: var(--accent-gradient); color: white; border: none;">📱 Manage Applications</button>
+                    <button class="btn primary-btn" onclick="admin.runSystemUpdate()">🚀 Update System</button>
                 </div>
             </div>
         `;
-        container.innerHTML = html + bridgeHtml;
+        container.innerHTML = html;
     }
 
     async refreshBridge() {

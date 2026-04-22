@@ -54,8 +54,16 @@ if (file_exists($composer_autoload)) {
   spl_autoload_register(function ($class_name) {
     $path = explode('\\', $class_name);
     $class = array_pop($path);
-    if (file_exists(SPP_CORE_DIR . SPP_DS . 'class.' . strtolower($class) . '.php')) {
-      require_once SPP_CORE_DIR . SPP_DS . 'class.' . strtolower($class) . '.php';
+    $search_paths = [
+        SPP_CORE_DIR . SPP_DS . 'class.' . strtolower($class) . '.php',
+        SPP_CORE_DIR . SPP_DS . 'int.' . strtolower($class) . '.php',
+        SPP_CORE_DIR . SPP_DS . 'middleware' . SPP_DS . 'class.' . strtolower($class) . '.php'
+    ];
+    foreach ($search_paths as $file) {
+        if (file_exists($file)) {
+            require_once $file;
+            return;
+        }
     }
   });
 
@@ -101,11 +109,19 @@ if (file_exists($composer_autoload)) {
   spl_autoload_register(function ($class_name) {
     if (strpos($class_name, 'App\\') === 0) {
       $parts = explode('\\', $class_name);
-      if (count($parts) >= 4 && $parts[2] === 'Entities') {
+      if (count($parts) >= 4) {
         $appName = strtolower($parts[1]);
-        $entityName = strtolower($parts[3]);
-        $file = SPP_APP_DIR . SPP_DS . 'src' . SPP_DS . $appName . SPP_DS . 'entities' . SPP_DS . 'entity.' . $entityName . '.php';
-        if (file_exists($file)) {
+        $type = strtolower($parts[2]);
+        $name = strtolower($parts[3]);
+        
+        $file = '';
+        if ($type === 'entities') {
+            $file = SPP_APP_DIR . SPP_DS . 'src' . SPP_DS . $appName . SPP_DS . 'entities' . SPP_DS . 'entity.' . $name . '.php';
+        } elseif ($type === 'components') {
+            $file = SPP_APP_DIR . SPP_DS . 'src' . SPP_DS . $appName . SPP_DS . 'components' . SPP_DS . $parts[3] . '.php';
+        }
+
+        if ($file && file_exists($file)) {
           require_once $file;
         }
       }
@@ -115,6 +131,11 @@ if (file_exists($composer_autoload)) {
 
   if (php_sapi_name() !== 'cli') {
     if (session_status() === PHP_SESSION_NONE) {
+      // 1. Check for Redis Session Driver
+      $redisEnabled = \SPP\Module::getConfig('enabled', 'redis');
+      if (($redisEnabled === true || $redisEnabled === '1' || $redisEnabled === 'true') && \SPP\RedisCache::isAvailable()) {
+          session_set_save_handler(new \SPP\Core\RedisSessionHandler(), true);
+      }
       session_start();
     }
   } else {
@@ -169,7 +190,8 @@ if (file_exists($composer_autoload)) {
   /**
    * Initiate SPPSession and SPPError
    */
-  $app = new \SPP\App('');
+  \SPP\Scheduler::detectAndEnforceContext();
+  $app = new \SPP\App(\SPP\Scheduler::getContext());
 
   // Redundant call removed here as App::__construct already handles loadAllModules()
   

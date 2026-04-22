@@ -1,0 +1,6 @@
+# Global Middleware Stack
+# These run on every request before any dispatching occurs.
+global:
+  - SPP\Core\Middleware\CSRFMiddleware
+  - SPP\Middleware\RequestLogger
+
