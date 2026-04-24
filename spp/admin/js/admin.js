@@ -636,8 +636,9 @@ class SPPAdmin {
         if (window.SPP_CSRF_TOKEN) {
             url += '&csrf_token=' + encodeURIComponent(window.SPP_CSRF_TOKEN);
         }
+        url += '&_ts=' + Date.now();
 
-        const response = await fetch(url, { credentials: 'same-origin' });
+        const response = await fetch(url, { credentials: 'same-origin', cache: 'no-store' });
         return response.json();
     }
 

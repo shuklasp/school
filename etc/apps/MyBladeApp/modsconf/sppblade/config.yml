@@ -1,0 +1,4 @@
+variables:
+  views_path: resources/MyBladeApp/views
+  cache_path: var/cache/MyBladeApp/blade
+  mode: 0

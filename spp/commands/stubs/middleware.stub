@@ -1,0 +1,31 @@
+<?php
+
+namespace {{namespace}};
+
+use Closure;
+use SPP\Core\MiddlewareInterface;
+
+/**
+ * Class {{className}}
+ * Auto-generated middleware class.
+ */
+class {{className}} implements MiddlewareInterface
+{
+    /**
+     * Handle an incoming request.
+     *
+     * @param array $request
+     * @param Closure $next
+     * @return mixed
+     */
+    public function handle(array $request, Closure $next)
+    {
+        // Pre-processing logic here
+
+        $response = $next($request);
+
+        // Post-processing logic here
+
+        return $response;
+    }
+}

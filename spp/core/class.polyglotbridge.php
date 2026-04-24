@@ -61,6 +61,7 @@ class PolyglotBridge extends \SPP\SPPObject
             'perl'     => ['name' => 'Perl',   'path' => '', 'version' => ''],
             'java'     => ['name' => 'Java',   'path' => '', 'version' => ''],
             'dotnet'   => ['name' => '.NET',   'path' => '', 'version' => ''],
+            'go'       => ['name' => 'Go',     'path' => '', 'version' => ''],
             'compiler' => ['name' => 'C++ Compiler', 'path' => '', 'version' => '']
         ];
 
@@ -105,6 +106,14 @@ class PolyglotBridge extends \SPP\SPPObject
             if ($ver && !str_contains($ver, 'is not recognized')) {
                 $runtimes['dotnet']['version'] = trim($ver);
             }
+        }
+
+        // Go
+        $goPath = self::findBinary('go');
+        if ($goPath) {
+            $runtimes['go']['path'] = $goPath;
+            $ver = @shell_exec("\"$goPath\" version 2>&1");
+            if (preg_match('/go(\d+\.\d+\.\d+)/', $ver, $m)) $runtimes['go']['version'] = $m[1];
         }
 
         // C++ Compiler
@@ -203,6 +212,10 @@ class PolyglotBridge extends \SPP\SPPObject
         } elseif ($lang === 'dotnet') {
             // .NET expects: dotnet <DLL> <args>
             $command = "\"{$binary}\" \"{$module}\"";
+        } elseif ($lang === 'go') {
+            // Go expects: go run <file> <args>
+            // For now we assume the module is a .go file path
+            $command = "\"{$binary}\" run \"{$module}\" \"{$func}\"";
         } else {
             $dispatchScript = $sharedDir . SPP_DS . 'bridge' . SPP_DS . 'dispatch.' . ($lang === 'python' ? 'py' : ($lang === 'perl' ? 'pl' : ''));
             if (!file_exists($dispatchScript)) {

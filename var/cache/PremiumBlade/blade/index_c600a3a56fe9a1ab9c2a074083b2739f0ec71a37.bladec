@@ -1,0 +1,181 @@
+<?php $_shouldextend[1]=1; ?>
+
+<?php $this->startSection('title', 'Welcome to ' . $appName); ?>
+
+<?php $this->startSection('content'); ?>
+ <div class='hero'>
+ <div class='glass-panel' style='display:inline-block; padding: 8px 20px; border-radius: 50px; font-size: 0.8rem; font-weight: 700; margin-bottom: 2rem;'>
+ 🚀 NOW POWERED BY BLADE ENGINE
+ </div>
+ <h1>Expressive. Fast. <br> Seamlessly Integrated.</h1>
+ <p>Your new SPP application <strong><?php echo \htmlentities($appName??'', ENT_QUOTES, 'UTF-8', false); ?></strong> is ready. Experience the perfect harmony of Blade templates and SPP core services.</p>
+ 
+ <div style='margin-top: 3rem;'>
+ <a href='#workflow' class='btn primary-btn'>Explore Workflow</a>
+ <a href='#demo' class='btn' style='margin-left: 1rem; border: 1px solid var(--glass-border);'>Try Interactive Demo</a>
+ </div>
+ </div>
+
+ <div class='grid'>
+ <div class='glass-panel feature-card'>
+ <span class='icon'>🏗️</span>
+ <h3>Native Directives</h3>
+ <p>Use <code>@sppform</code>, <code>@sppauth</code>, and <code>@sppbind</code> to bridge your templates with SPP modules effortlessly.</p>
+ </div>
+ <div class='glass-panel feature-card'>
+ <span class='icon'>⚡</span>
+ <h3>Zero Latency</h3>
+ <p>Blade templates are compiled to plain PHP and cached, ensuring your enterprise apps run at peak performance.</p>
+ </div>
+ <div class='glass-panel feature-card'>
+ <span class='icon'>📂</span>
+ <h3>Structured Data</h3>
+ <p>Built-in support for YAML forms and Entities means you spend less time on boilerplate and more on features.</p>
+ </div>
+ </div>
+
+ <div class='workflow' id='workflow'>
+ <h2>The SPP Workflow Advantage</h2>
+ <p>Go from idea to implementation in three simple steps.</p>
+ 
+ <div class='workflow-steps'>
+ <div class='step'>
+ <div class='step-num'>1</div>
+ <h4>Define</h4>
+ <p>Create your entity or form in simple YAML.</p>
+ <div class='code-block'># login.yml
+form:
+ name: login_form
+ controls:
+ - username
+ - password</div>
+ </div>
+ <div class='step'>
+ <div class='step-num'>2</div>
+ <h4>Scaffold</h4>
+ <p>Generate full-stack logic with a single CLI command.</p>
+ <div class='code-block' style='background: #1a202c;'>php spp.php make:blade-scaffold Login</div>
+ </div>
+ <div class='step'>
+ <div class='step-num'>3</div>
+ <h4>Render</h4>
+ <p>Drop the component into your Blade view.</p>
+ <div class='code-block'>@sppform('login')</div>
+ </div>
+ </div>
+ </div>
+
+ <div id='demo' style='margin-top: 8rem; text-align: center;'>
+ <div class='glass-panel' style='max-width: 500px; margin: 0 auto; text-align: left;'>
+ <h2 style='text-align: center;'>Interactive Login Demo</h2>
+ <p style='text-align: center; font-size: 0.9rem; margin-bottom: 2rem;'>This form is controlled via <code>etc/apps/<?php echo \htmlentities($appName??'', ENT_QUOTES, 'UTF-8', false); ?>/forms/login.yml</code></p>
+ 
+ <?php if (!\SPPMod\SPPAuth\SPPAuth::authSessionExists()): ?>
+ <?php 
+ $appName = \SPP\Scheduler::getContext();
+ $fname = str_replace(['\'', '"'], '', 'login');
+ $baseDir = SPP_APP_DIR . '/etc/apps/' . $appName . '/forms/';
+ 
+ $formFile = null;
+ foreach (['yml', 'yaml', 'xml'] as $ext) {
+ if (file_exists($baseDir . $fname . '.' . $ext)) {
+ $formFile = $baseDir . $fname . '.' . $ext;
+ break;
+ }
+ }
+
+ if ($formFile) {
+ \SPPMod\SPPView\ViewPage::readFormFile($formFile);
+ }
+ ?>
+ <?php 
+ $forms = \SPPMod\SPPView\ViewPage::getFormsList();
+ $fname = str_replace(['\'', '"'], '', 'login_form');
+ if (isset($forms[$fname])) {
+ $forms[$fname]->startForm();
+ }
+ ?>
+ <div style='margin-bottom: 1.5rem;'>
+ <label>Username</label>
+ <?php 
+ $args = ['username', ['class' => 'form-input', 'style' => 'width:100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: inherit;']];
+ $elemId = $args[0];
+ $attrs = $args[1] ?? [];
+ 
+ $forms = \SPPMod\SPPView\ViewPage::getFormsList();
+ foreach ($forms as $form) {
+ $elements = $form->get('element');
+ if (isset($elements[$elemId])) {
+ $el = $elements[$elemId];
+ // If attributes are passed, try to apply them if the element supports it
+ if (!empty($attrs) && method_exists($el, 'setAttributes')) {
+ $el->setAttributes($attrs);
+ }
+ echo $el->getHTML();
+ break;
+ }
+ }
+ ?>
+ </div>
+ <div style='margin-bottom: 1.5rem;'>
+ <label>Password</label>
+ <?php 
+ $args = ['password', ['class' => 'form-input', 'style' => 'width:100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: inherit;']];
+ $elemId = $args[0];
+ $attrs = $args[1] ?? [];
+ 
+ $forms = \SPPMod\SPPView\ViewPage::getFormsList();
+ foreach ($forms as $form) {
+ $elements = $form->get('element');
+ if (isset($elements[$elemId])) {
+ $el = $elements[$elemId];
+ // If attributes are passed, try to apply them if the element supports it
+ if (!empty($attrs) && method_exists($el, 'setAttributes')) {
+ $el->setAttributes($attrs);
+ }
+ echo $el->getHTML();
+ break;
+ }
+ }
+ ?>
+ </div>
+ <div style='margin-top: 2rem;'>
+ <?php 
+ $args = ['submit', ['class' => 'btn primary-btn', 'style' => 'width: 100%;']];
+ $elemId = $args[0];
+ $attrs = $args[1] ?? [];
+ 
+ $forms = \SPPMod\SPPView\ViewPage::getFormsList();
+ foreach ($forms as $form) {
+ $elements = $form->get('element');
+ if (isset($elements[$elemId])) {
+ $el = $elements[$elemId];
+ // If attributes are passed, try to apply them if the element supports it
+ if (!empty($attrs) && method_exists($el, 'setAttributes')) {
+ $el->setAttributes($attrs);
+ }
+ echo $el->getHTML();
+ break;
+ }
+ }
+ ?>
+ </div>
+ <?php 
+ $forms = \SPPMod\SPPView\ViewPage::getFormsList();
+ $activeForm = end($forms); // Simplification: get last registered form
+ if ($activeForm) $activeForm->endForm();
+ ?>
+ <?php endif; ?>
+
+ <?php if (\SPPMod\SPPAuth\SPPAuth::authSessionExists()): ?>
+ <div style='text-align: center; padding: 2rem;'>
+ <div style='font-size: 3rem; margin-bottom: 1rem;'>👋</div>
+ <h3>Welcome back, <?php echo \htmlentities(\SPPMod\SPPAuth\SPPAuth::getUser()->username??'', ENT_QUOTES, 'UTF-8', false); ?>!</h3>
+ <p>You have accessed this restricted area via <code>@sppauth</code>.</p>
+ <a href='?logout=1' class='btn' style='margin-top: 1rem; color: var(--accent); font-weight: 600;'>Logout</a>
+ </div>
+ <?php endif; ?>
+ </div>
+ </div>
+<?php $this->stopSection(); ?>
+<?php if (isset($_shouldextend[1])) { echo $this->runChild('layouts.app'); } ?>

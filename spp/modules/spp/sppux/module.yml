@@ -1,0 +1,43 @@
+module:
+    name: sppux
+    version: '1.0'
+    pubname: 'SPP UX'
+    modgroup: SPP_Core
+    pubdesc: 'Native lightweight SPP frontend runtime for reactive application components.'
+    includes:
+        - class.sppux.php
+    deps:
+        - sppview
+        - sppajax
+    services:
+        sppux:
+            class: \SPPMod\SPPUX\SPPUX
+            shared: true
+    config_variables:
+        runtime_path: 'spp/modules/spp/sppux/js/sppux.js'
+        loader_path: 'spp/modules/spp/sppux/js/spp-loader.js'
+        component_base: 'src/{app}/comp'
+        auto_mount: true
+        expose_bridge: true
+    settings:
+        runtime_path:
+            type: text
+            label: 'Runtime Script Path'
+            default: 'spp/modules/spp/sppux/js/sppux.js'
+        loader_path:
+            type: text
+            label: 'Loader Script Path'
+            default: 'spp/modules/spp/sppux/js/spp-loader.js'
+        component_base:
+            type: text
+            label: 'Component Base Path'
+            default: 'src/{app}/comp'
+        auto_mount:
+            type: boolean
+            label: 'Auto Mount Components'
+            default: true
+        expose_bridge:
+            type: boolean
+            label: 'Expose App Service Bridge'
+            default: true
+            default: true

@@ -11,13 +11,13 @@ use Symfony\Component\Yaml\Yaml;
  */
 class Settings extends \SPP\SPPObject {
     private $setxml;
-    private $yamlfile = 'settings.yml';
+    private $yamlfile = 'global-settings.yml';
     private $settings;
     
     private function __construct()
     {
-        $dir=SPP_BASE_DIR;
-        $this->settings=Yaml::parseFile($dir.$this->yamlfile);
+        $dir = defined('SPP_ETC_DIR') ? SPP_ETC_DIR : SPP_BASE_DIR . '/etc';
+        $this->settings = Yaml::parseFile($dir . '/' . $this->yamlfile);
         //$this->setxml=simplexml_load_file($dir.'/settings.xml');
     }
 
@@ -61,7 +61,7 @@ class Settings extends \SPP\SPPObject {
      * @param mixed $dir
      * @throws \SPP\SPPException
      */
-    private static function getSettingFromYaml($sval, $dir, $filename='settings.yml', $root='settings')
+    private static function getSettingFromYaml($sval, $dir, $filename='global-settings.yml', $root='settings')
     {
         //echo '<br />'.$sval.' '.$dir.'<br />';
         $allset = Yaml::parseFile($dir . '/' . $filename);
@@ -89,12 +89,12 @@ class Settings extends \SPP\SPPObject {
      * @param mixed $sval           The setting to get
      * @return mixed                The setting value
      */
-    public static function getSetting($sval, $root = 'settings', $ref='settings.yml', $dir=null)
+    public static function getSetting($sval, $root = 'settings', $ref='global-settings.yml', $dir=null)
     {
         //echo 'Returning settings';
         $defdir=$dir;
         $filename=$ref;
-        $dir= $dir==null ? SPP_BASE_DIR: $dir;
+        $dir= $dir==null ? (defined('SPP_ETC_DIR') ? SPP_ETC_DIR : SPP_BASE_DIR . '/etc') : $dir;
         $sformat=null;
         $sref=null;
         $mode=null;
@@ -153,7 +153,7 @@ class Settings extends \SPP\SPPObject {
      * @param mixed $dir
      * @throws \SPP\SPPException
      */
-    private static function putSettingToYaml($sval, $dir, $value, $filename='settings.yml', $root='settings')
+    private static function putSettingToYaml($sval, $dir, $value, $filename='global-settings.yml', $root='settings')
     {
         $fullset = Yaml::parseFile($dir .'/'. $filename);
         $allset = $root==null?$fullset :$fullset['settings'];
@@ -200,12 +200,12 @@ class Settings extends \SPP\SPPObject {
      * @param mixed $stype          Type of the setting 'app|sys|mod|umod'
      * @return mixed                The setting value
      */
-    public static function putSetting($sval,  $value, $root = 'settings', $ref='settings.yml', $dir=null)
+    public static function putSetting($sval,  $value, $root = 'settings', $ref='global-settings.yml', $dir=null)
     {
         //echo 'Returning settings';
         $filename=$ref;
         $defdir=$dir;
-        $dir = $dir == null ? SPP_BASE_DIR : $dir;
+        $dir = $dir == null ? (defined('SPP_ETC_DIR') ? SPP_ETC_DIR : SPP_BASE_DIR . '/etc') : $dir;
         $sformat = null;
         $sref = null;
         $mode = null;

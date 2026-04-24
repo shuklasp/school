@@ -56,10 +56,10 @@ class SPPConfig extends \SPP\SPPObject
         } elseif ($parts[0] === 'spp') {
             // spp.* -> SPP_ETC_DIR/settings.yml
             if (count($parts) < 2) return null;
-            $filePath = SPP_ETC_DIR . '/settings.yml';
+            $filePath = SPP_ETC_DIR . '/global-settings.yml';
             $ymlKeys = array_slice($parts, 1);
         } else {
-            $filePath = SPP_ETC_DIR . '/settings.yml';
+            $filePath = SPP_ETC_DIR . '/global-settings.yml';
             $ymlKeys = $parts; 
         }
         

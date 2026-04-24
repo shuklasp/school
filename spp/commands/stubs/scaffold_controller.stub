@@ -1,0 +1,15 @@
+<?php
+namespace App\{{appname}}\Controllers;
+
+use SPP\Core\ResourceController;
+
+/**
+ * Class {{controllerName}}
+ * Scaffolded by SPP Rapid Engine
+ */
+class {{controllerName}} extends ResourceController
+{
+    protected string $entityClass = \App\{{appname}}\Entities\{{entityName}}::class;
+
+    // Custom controller logic can be added here
+}

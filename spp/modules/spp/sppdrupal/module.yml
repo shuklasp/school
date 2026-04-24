@@ -1,0 +1,17 @@
+# SPP Drupal Integration Module
+
+module:
+    name: sppdrupal
+    version: "1.0"
+    pubname: SPP Drupal Bridge
+    modgroup: SPP_Optional
+    pubdesc: Integrates Drupal (Content & Auth) into SPP.
+    includes:
+        - class.sppdrupal.php
+    services:
+        drupal:
+            class: \SPPMod\SPPDrupal\SPPDrupal
+            shared: true
+    config_variables:
+        drupal_root: "../drupal" # Path to Drupal root relative to SPP root
+        api_url: "" # JSON:API URL for headless mode

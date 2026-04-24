@@ -68,3 +68,7 @@ modules:
         name: sppxdb
         path: spp/sppxdb
         status: inactive
+    14:
+        name: sppux
+        path: spp/sppux
+        status: active

@@ -1,11 +1,9 @@
-# SPP Ajax / SPA Router Module Manifest
-
 module:
     name: sppajax
-    version: "1.0"
-    pubname: SPP Ajax / SPA Router
+    version: '1.0'
+    pubname: 'SPP Ajax / SPA Router'
     modgroup: SPP_Core
-    pubdesc: Single Page Application engine. Handles page fragment and service dispatch via AJAX.
+    pubdesc: 'Single Page Application engine. Handles page fragment and service dispatch via AJAX.'
     includes:
         - class.sppajax.php
     deps:
@@ -21,3 +19,40 @@ module:
         - spa_page_dir
         - spa_service_dir
         - spa_services_registry
+    settings:
+        spa_enabled:
+            type: boolean
+            label: 'Spa Enabled'
+            default: true
+        spa_container:
+            type: text
+            label: 'Spa Container'
+            default: spp-content
+        spa_default_mode:
+            type: text
+            label: 'Spa Default Mode'
+            default: async
+        spa_loading_indicator:
+            type: boolean
+            label: 'Spa Loading Indicator'
+            default: true
+        spa_push_state:
+            type: boolean
+            label: 'Spa Push State'
+            default: true
+        spa_transition:
+            type: text
+            label: 'Spa Transition'
+            default: fade
+        spa_page_dir:
+            type: text
+            label: 'Spa Page Dir'
+            default: /src/pages
+        spa_service_dir:
+            type: text
+            label: 'Spa Service Dir'
+            default: /src/serv
+        spa_services_registry:
+            type: text
+            label: 'Spa Services Registry'
+            default: /etc/services.yml

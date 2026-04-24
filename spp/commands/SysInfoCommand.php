@@ -14,14 +14,20 @@ class SysInfoCommand extends Command
 
     public function execute(array $args): void
     {
-        echo "\nSPP Framework Diagnostic Info\n";
-        echo "=============================\n";
-        echo "Framework Version : " . (defined('SPP_VER') ? SPP_VER : 'Unknown') . "\n";
-        echo "PHP Version       : " . PHP_VERSION . "\n";
-        echo "OS                : " . PHP_OS . "\n";
-        echo "Base Directory    : " . (defined('SPP_BASE_DIR') ? SPP_BASE_DIR : 'N/A') . "\n";
-        echo "App Directory     : " . (defined('SPP_APP_DIR') ? SPP_APP_DIR : 'N/A') . "\n";
-        echo "Context           : " . \SPP\Scheduler::getContext() . "\n";
+        echo "Framework Root    : " . SPP_BASE_DIR . "\n";
+        echo "Framework Config  : " . SPP_ETC_DIR . "\n";
+        echo "Apps Directory    : " . APP_ETC_DIR . "\n";
+        echo "Active Context    : " . \SPP\Scheduler::getContext() . "\n";
+        
+        $context = \SPP\Scheduler::getContext();
+        if ($context) {
+            $settings = \SPP\App::getGlobalSettings();
+            $appCfg = $settings['apps'][$context] ?? null;
+            if ($appCfg) {
+                echo "  -> etc dir      : " . SPP_APP_DIR . SPP_DS . ($appCfg['etc_path'] ?? "etc/apps/{$context}") . "\n";
+                echo "  -> src dir      : " . SPP_APP_DIR . SPP_DS . ($appCfg['src_path'] ?? "src/{$context}") . "\n";
+            }
+        }
         
         $dbStatus = "Disconnected";
         if (class_exists('\SPPMod\SPPPEntity\SPPPEntity')) {
@@ -37,6 +43,25 @@ class SysInfoCommand extends Command
         $appsCount = count(glob(APP_ETC_DIR . '/*', GLOB_ONLYDIR));
         echo "Registered Apps   : $appsCount\n";
         echo "Active Middlewares: " . count(\SPP\Registry::get('EntityRelations') ?: []) . " (ORM Relations registered)\n";
+        
+        echo "\nPolyglot Bridge Status\n";
+        echo "----------------------\n";
+        if (class_exists('\SPP\PolyglotBridge')) {
+            $runtimes = \SPP\PolyglotBridge::discoverRuntimes();
+            $foundAny = false;
+            foreach ($runtimes as $lang => $info) {
+                if ($info['path']) {
+                    $foundAny = true;
+                    $status = "[  OK  ]";
+                    printf("%-10s %-15s %s\n", $status, $info['name'], $info['version'] ?: 'N/A');
+                } else {
+                    printf("%-10s %-15s %s\n", "[ MISS ]", $info['name'], 'Not Found');
+                }
+            }
+            if (!$foundAny) echo "No active runtimes discovered.\n";
+        } else {
+            echo "PolyglotBridge core not found.\n";
+        }
 
         echo "\nSystem Health Report Card\n";
         echo "-------------------------\n";
@@ -133,6 +158,17 @@ class SysInfoCommand extends Command
                 'name' => 'Redis Connectivity',
                 'status' => $redisOk ? 'OK' : 'FAIL',
                 'detail' => $redisDetail
+            ];
+        }
+
+        // 7. Polyglot Runtimes
+        if (class_exists('\SPP\PolyglotBridge')) {
+            $runtimes = \SPP\PolyglotBridge::discoverRuntimes();
+            $activeCount = count(array_filter($runtimes, fn($r) => !empty($r['path'])));
+            $checks[] = [
+                'name' => 'Polyglot Runtimes (' . $activeCount . ' found)',
+                'status' => $activeCount > 0 ? 'OK' : 'WARN',
+                'detail' => $activeCount > 0 ? 'Integrated.' : 'No runtimes found.'
             ];
         }
 

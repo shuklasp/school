@@ -20,10 +20,21 @@ class Debug
     }
 
     /**
+     * Internal check to ensure startTime is initialized.
+     */
+    private static function ensureStarted()
+    {
+        if (!isset(self::$startTime)) {
+            self::start();
+        }
+    }
+
+    /**
      * Log a message for debugging.
      */
     public static function log(string $message, string $type = 'info')
     {
+        self::ensureStarted();
         self::$logs[] = [
             'time' => microtime(true) - self::$startTime,
             'message' => $message,
@@ -47,6 +58,7 @@ class Debug
      */
     public static function getData(): array
     {
+        self::ensureStarted();
         return [
             'execution_time' => microtime(true) - self::$startTime,
             'memory_usage' => memory_get_usage(true),

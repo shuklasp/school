@@ -1,0 +1,9 @@
+variables:
+    dbtype: mysql
+    dbhost: localhost
+    dbport: 3306
+    dbuser: root
+    dbpasswd: null
+    dbname: school
+    sqlite_path: var/db/school.sqlite
+    table_prefix: null

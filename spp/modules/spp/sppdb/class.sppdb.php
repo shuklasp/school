@@ -191,6 +191,17 @@ class SPPDB
     }
 
     /**
+     * Entry point for the fluent Query Builder.
+     *
+     * @param string $table The table name (will be prefixed automatically)
+     * @return QueryBuilder
+     */
+    public function table(string $table): QueryBuilder
+    {
+        return new QueryBuilder($this, $table);
+    }
+
+    /**
      * Proxy unknown method calls to the underlying PDO instance.
      */
     public function __call($name, $arguments)
@@ -415,6 +426,9 @@ class SPPDB
      */
     public function updateValues(string $table, array $columns, string $where, array $values = array())
     {
+        if (empty($columns)) {
+            return;
+        }
         $sql = 'update %tab% set ';
         
         // Properly identify if the provided columns array is an associative mapping

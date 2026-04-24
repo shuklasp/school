@@ -1,0 +1,6 @@
+home: index
+pages:
+  index:
+    url: MyBladeApp_index.php
+    title: My Blade App
+    special: 1

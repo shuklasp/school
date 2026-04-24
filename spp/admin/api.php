@@ -18,6 +18,16 @@ ini_set('display_errors', '0');
 if (!defined('SPP_BASE_DIR')) {
     define('SPP_BASE_DIR', dirname(__DIR__));
 }
+
+// Support for JSON payloads
+if (strpos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== false) {
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
+    if (is_array($data)) {
+        $_POST = array_merge($_POST, $data);
+        $_REQUEST = array_merge($_REQUEST, $data);
+    }
+}
 /* 
 // Pre-load classes required for session deserialization BEFORE session_start()
 // sppinit.php calls session_start() which unserializes SPPUserSession objects.
@@ -83,7 +93,8 @@ function sendResponse($success, $data = [], $message = '')
         SPPError::destroyErrors();
     }
 
-    header('Content-Type: application/json');
+    $debugEnabled = \SPP\Module::getGlobalConfig('settings', 'debug', false);
+
     $response = [
         'success' => $success,
         'message' => $message,
@@ -91,11 +102,36 @@ function sendResponse($success, $data = [], $message = '')
         'errors_html' => $errorsHtml
     ];
 
+    if ($debugEnabled) {
+        $response['_debug'] = [
+            'performance' => [
+                'time_ms' => round((microtime(true) - $_SERVER['REQUEST_TIME_FLOAT']) * 1000, 2),
+                'memory_kb' => round(memory_get_usage() / 1024, 2),
+                'peak_memory_kb' => round(memory_get_peak_usage() / 1024, 2)
+            ],
+            'request' => [
+                'method' => $_SERVER['REQUEST_METHOD'],
+                'content_type' => $_SERVER['CONTENT_TYPE'] ?? 'N/A',
+                'action' => $_REQUEST['action'] ?? 'unknown'
+            ],
+            'php_errors' => []
+        ];
+        
+        if (class_exists('SPP\\SPPError')) {
+            $response['_debug']['php_errors'] = SPPError::getUlErrors() ?: null;
+        }
+    }
+
     // Attach PHP errors as debug info (only in dev — useful for diagnostics)
     if (!empty($phpOutput)) {
         // Convert to UTF-8 to prevent json_encode from failing
         $response['_debug_output'] = mb_convert_encoding($phpOutput, 'UTF-8', 'auto');
     }
+
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('Expires: 0');
 
     $json = json_encode($response);
     if ($json === false) {
@@ -175,15 +211,19 @@ function withContext($targetApp, $callback) {
  */
 function getGlobalSettings()
 {
-    $path = SPP_BASE_DIR . '/etc/global-settings.yml';
+    if (isset($GLOBALS['__spp_global_settings_cache'])) return $GLOBALS['__spp_global_settings_cache'];
+    
+    $path = (defined('SPP_ETC_DIR') ? SPP_ETC_DIR : SPP_BASE_DIR . '/etc') . '/global-settings.yml';
     if (!file_exists($path)) {
-        return ['apps' => [], 'shared_groups' => []];
+        return ['apps' => [], 'shared_groups' => [], 'settings' => [], 'formats' => [], 'modes' => []];
     }
     try {
         $data = \Symfony\Component\Yaml\Yaml::parseFile($path);
-        return is_array($data) ? $data : ['apps' => [], 'shared_groups' => []];
+        $result = is_array($data) ? $data : ['apps' => [], 'shared_groups' => [], 'settings' => [], 'formats' => [], 'modes' => []];
+        $GLOBALS['__spp_global_settings_cache'] = $result;
+        return $result;
     } catch (\Exception $e) {
-        return ['apps' => [], 'shared_groups' => []];
+        return ['apps' => [], 'shared_groups' => [], 'settings' => [], 'formats' => [], 'modes' => []];
     }
 }
 
@@ -194,10 +234,14 @@ function getGlobalSettings()
  */
 function saveGlobalSettings($settings)
 {
-    $path = SPP_BASE_DIR . '/etc/global-settings.yml';
+    $path = (defined('SPP_ETC_DIR') ? SPP_ETC_DIR : SPP_BASE_DIR . '/etc') . '/global-settings.yml';
     try {
         $yml = \Symfony\Component\Yaml\Yaml::dump($settings, 10, 2);
-        return file_put_contents($path, $yml);
+        $res = file_put_contents($path, $yml);
+        if ($res !== false) {
+             unset($GLOBALS['__spp_global_settings_cache']);
+        }
+        return $res;
     } catch (\Exception $e) {
         return false;
     }
@@ -309,6 +353,17 @@ function runAllHealthChecks($appname) {
             'name' => 'Redis Connectivity',
             'status' => $redisOk ? 'OK' : 'FAIL',
             'detail' => $redisDetail
+        ];
+    }
+
+    // 7. Polyglot Runtimes
+    if (class_exists('\SPP\PolyglotBridge')) {
+        $runtimes = \SPP\PolyglotBridge::discoverRuntimes();
+        $activeCount = count(array_filter($runtimes, fn($r) => !empty($r['path'])));
+        $checks[] = [
+            'name' => 'Polyglot Runtimes (' . $activeCount . ' found)',
+            'status' => $activeCount > 0 ? 'OK' : 'WARN',
+            'detail' => $activeCount > 0 ? 'Ready.' : 'No runtimes found.'
         ];
     }
 
@@ -605,6 +660,26 @@ try {
     // 4. Resource Management Logic
     switch ($action) {
         /**
+         * run_command: Bridges CLI logic into the Admin UI.
+         */
+        case 'run_command':
+            $commandName = $_POST['command'] ?? null;
+            $commandArgs = $_POST['args'] ?? [];
+            if (!$commandName) sendResponse(false, [], "Command name required.");
+
+            // Temporarily switch context if appname is provided
+            $result = withContext($appname, function() use ($commandName, $commandArgs) {
+                return \SPP\CLI\CommandManager::execute($commandName, $commandArgs);
+            });
+
+            if ($result['success']) {
+                sendResponse(true, ['output' => $result['output']], "Command '{$commandName}' executed successfully.");
+            } else {
+                sendResponse(false, [], "Command failed: " . ($result['error'] ?? 'Unknown error'));
+            }
+            break;
+
+        /**
          * list_apps: Returns a list of all registered applications in etc/apps.
          */
         case 'list_apps':
@@ -701,8 +776,8 @@ try {
                         $type = $mInfo['type'];
                         $mod = new \SPP\Module($file);
 
-                        // Check if module has config variables
-                        $hasConfig = !empty($mod->ConfigVariables);
+                        // Check if module has config variables or settings definition
+                        $hasConfig = !empty($mod->ConfigVariables) || !empty($mod->Settings);
                         if (!$hasConfig) {
                             // Check filesystem for config file
                             $confDir = ($type === 'system')
@@ -1428,7 +1503,58 @@ try {
             // Add Health Report Card data
             $info['health_report'] = runAllHealthChecks($appname);
 
-            sendResponse(true, $info);
+            sendResponse(true, $info, "System info retrieved");
+            break;
+
+        case 'get_global_settings':
+            $path = SPP_ETC_DIR . '/global-settings.yml';
+            if (!file_exists($path)) {
+                sendResponse(false, [], "Global settings file not found.");
+                break;
+            }
+            $raw = file_get_contents($path);
+            $parsed = [];
+            try {
+                if (class_exists('\Symfony\Component\Yaml\Yaml')) {
+                    $parsed = \Symfony\Component\Yaml\Yaml::parse($raw);
+                }
+            } catch (\Exception $e) {}
+
+            sendResponse(true, [
+                'raw' => $raw,
+                'parsed' => $parsed
+            ], "Settings retrieved");
+            break;
+
+        case 'save_global_settings':
+            $path = SPP_ETC_DIR . '/global-settings.yml';
+            $mode = $_REQUEST['mode'] ?? 'yaml'; // yaml or form
+            
+            try {
+                if ($mode === 'yaml') {
+                    $yaml = $_REQUEST['yaml'] ?? null;
+                    if ($yaml === null) {
+                        throw new \Exception("Missing 'yaml' parameter (Action: save_global_settings)");
+                    }
+                    // Basic validation
+                    \Symfony\Component\Yaml\Yaml::parse($yaml);
+                    file_put_contents($path, $yaml);
+                } else {
+                    $rawJson = $_REQUEST['data'] ?? null;
+                    if ($rawJson === null) {
+                        $get = implode(', ', array_keys($_GET));
+                        $post = implode(', ', array_keys($_POST));
+                        $ct = $_SERVER['CONTENT_TYPE'] ?? 'N/A';
+                        throw new \Exception("Missing 'data' (CT: $ct, GET: [$get], POST: [$post])");
+                    }
+                    $data = json_decode($rawJson, true);
+                    $yaml = \Symfony\Component\Yaml\Yaml::dump($data, 10, 2);
+                    file_put_contents($path, $yaml);
+                }
+                sendResponse(true, [], "Global settings saved successfully.");
+            } catch (\Exception $e) {
+                sendResponse(false, [], "Failed to save settings: " . $e->getMessage());
+            }
             break;
 
         /**
@@ -1446,28 +1572,6 @@ try {
                 return \SPP\Module::runSystemUpdate();
             });
             sendResponse(true, ['log' => $log]);
-            break;
-
-        /**
-         * get_global_settings: Returns the content of global-settings.yml.
-         */
-        case 'get_global_settings':
-            sendResponse(true, getGlobalSettings());
-            break;
-
-        /**
-         * save_global_settings: Updates the whole global-settings.yml.
-         */
-        case 'save_global_settings':
-            $data = json_decode($_POST['settings'] ?? '{}', true);
-            if (empty($data)) {
-                sendResponse(false, [], "Invalid settings data.");
-            }
-            if (saveGlobalSettings($data)) {
-                sendResponse(true, [], "Global settings saved.");
-            } else {
-                sendResponse(false, [], "Failed to save global settings.");
-            }
             break;
 
         /**
@@ -1520,8 +1624,33 @@ try {
             break;
 
         /**
+         * run_auto_tests: Triggers the evolutionary testing engine.
+         */
+        case 'run_auto_tests':
+            $targetApp = $_POST['appname'] ?? \SPP\Scheduler::getContext() ?? 'default';
+            if ($targetApp === 'undefined') $targetApp = 'default';
+            
+            try {
+                // Feature Toggle Check
+                if (!\SPP\Module::getConfig('active', 'parikshak')) {
+                    sendResponse(false, [], "Parikshak (Evaluation) module is currently inactive. Please enable it in module configuration.");
+                    break;
+                }
+
+                $results = withContext($targetApp, function() use ($targetApp) {
+                    $tester = new \SPPMod\Parikshak\Parikshak();
+                    return $tester->runSuite($targetApp);
+                });
+                
+                sendResponse(true, $results, "Automated tests completed for '{$targetApp}'.");
+            } catch (\Exception $e) {
+                sendResponse(false, [], "Auto-testing failed: " . $e->getMessage());
+            }
+            break;
+
+        /**
          * toggle_module: Activates or deactivates a module by updating both
-         * modules.xml and modules.yml at all levels.
+         * YAML manifests and module config defaults.
          */
         case 'toggle_module':
             $modname = trim($_POST['modname'] ?? '');
@@ -1567,8 +1696,25 @@ try {
             }
 
             try {
+                \SPP\Module::ensureConfigForApp($modname, $appname);
                 $config = \SPP\Module::getAllConfigForApp($modname, $appname);
-                sendResponse(true, $config);
+                
+                // Fetch module settings definition from manifest
+                $settingsDef = [];
+                try {
+                    $manifest = \SPP\Module::findManifestPath($modname, 'system') ?: \SPP\Module::findManifestPath($modname, 'user', $appname);
+                    if ($manifest) {
+                        $modObj = new \SPP\Module($manifest);
+                        $settingsDef = $modObj->Settings ?: [];
+                    }
+                } catch (\Exception $e) {
+                    // Fallback to empty if manifest is missing or invalid
+                }
+
+                sendResponse(true, [
+                    'variables' => $config['variables'] ?? $config,
+                    'settings_definition' => $settingsDef
+                ]);
             } catch (\Throwable $e) {
                 sendResponse(false, [], "Failed to read config: " . $e->getMessage());
             }
@@ -1683,12 +1829,13 @@ try {
             $path = dirname(SPP_BASE_DIR) . "/src/$app/serv/$service.php";
             if (file_exists($path)) {
                 $params = json_decode($_REQUEST['params'] ?? '{}', true);
-                $db = new \SPPMod\SPPDB\SPPDB();
                 
-                // Expose context to the script
-                $input = $params;
-                
-                require $path;
+                withContext($app, function() use ($path, $params, &$response) {
+                    $db = new \SPPMod\SPPDB\SPPDB();
+                    // Expose context to the script
+                    $input = $params;
+                    require $path;
+                });
                 
                 if (isset($response)) {
                     sendResponse(true, $response);
@@ -2132,6 +2279,62 @@ try {
                 return \SPP\PolyglotBridge::setup();
             });
             sendResponse($res['success'], $res, $res['success'] ? "Bridge environment refreshed successfully." : "Bridge setup failed.");
+            break;
+
+        /**
+         * Automated Diagnostics
+         */
+        case 'get_diagnostics':
+            $diagnostics = [
+                'environment' => [
+                    'php_version' => PHP_VERSION,
+                    'sapi' => PHP_SAPI,
+                    'os' => PHP_OS,
+                    'extensions' => [
+                        'yaml' => extension_loaded('yaml') || class_exists('\\Symfony\\Component\\Yaml\\Yaml'),
+                        'mysqli' => extension_loaded('mysqli'),
+                        'pdo_mysql' => extension_loaded('pdo_mysql'),
+                        'mbstring' => extension_loaded('mbstring'),
+                        'curl' => extension_loaded('curl')
+                    ]
+                ],
+                'filesystem' => [],
+                'database' => 'unchecked'
+            ];
+ 
+            // Check key write paths using framework constants
+            $paths = [
+                'etc' => defined('SPP_ETC_DIR') ? SPP_ETC_DIR : SPP_BASE_DIR . '/etc',
+                'var' => defined('SPP_LOG_DIR') ? SPP_LOG_DIR : SPP_BASE_DIR . '/var/logs',
+                'apps' => defined('APP_ETC_DIR') ? APP_ETC_DIR : dirname(SPP_BASE_DIR) . '/etc/apps'
+            ];
+            foreach ($paths as $key => $path) {
+                $diagnostics['filesystem'][$key] = [
+                    'path' => $path,
+                    'exists' => file_exists($path),
+                    'writable' => is_writable($path)
+                ];
+            }
+
+            // Check DB (Context Aware)
+            try {
+                $diagnostics['database'] = withContext($appname, function() {
+                    try {
+                        if (class_exists('SPPMod\\SPPDB\\SPPDB')) {
+                            // Force a fresh connection check for the target context
+                            new \SPPMod\SPPDB\SPPDB(null, null, null, null, false);
+                            return 'connected';
+                        }
+                        return 'unavailable';
+                    } catch (\Exception $e) {
+                        return 'failed: ' . $e->getMessage();
+                    }
+                });
+            } catch (\Exception $e) {
+                $diagnostics['database'] = 'failed: ' . $e->getMessage();
+            }
+
+            sendResponse(true, $diagnostics);
             break;
 
         default:

@@ -1,0 +1,6 @@
+home: index
+pages:
+  index:
+    url: IntegratedApp_index.php
+    title: Integrated App
+    special: 1

@@ -93,3 +93,8 @@ class SPP_Validator_OneRequiredValidator extends SPP_Multiple_Validator {
         return true;
     }
 }
+
+// Class Aliases for common validators used in scaffolding
+class SPPRequiredValidator extends SPP_Validator_RequiredValidator {}
+class SPPNumericValidator extends SPP_Validator_NumericValidator {}
+class SPPOneRequiredValidator extends SPP_Validator_OneRequiredValidator {}

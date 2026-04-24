@@ -1,15 +1,56 @@
 module:
     name: sppdb
-    pubname: SPP Database Core
+    pubname: 'SPP Database Core'
     version: 1.2
-    author: Satya Prakash Shukla
-    pubdesc: Core database abstraction layer providing prefixed table mapping, transaction management, and incremental schema synchronization.
+    author: 'Satya Prakash Shukla'
+    pubdesc: 'Core database abstraction layer providing prefixed table mapping, transaction management, and incremental schema synchronization.'
     modgroup: Core
     installation:
         tables:
-            sequences:
-                seqname: "VARCHAR(255) PRIMARY KEY"
-                initval: "INT"
-                seqval: "INT"
-                incval: "INT"
-                lastaccess: "INT"
+            sequences: { seqname: 'VARCHAR(255) PRIMARY KEY', initval: INT, seqval: INT, incval: INT, lastaccess: INT }
+    settings:
+        dbtype:
+            type: select
+            label: 'Database Engine'
+            options:
+                mysql: 'MySQL / MariaDB'
+                sqlite: 'SQLite'
+                pgsql: 'PostgreSQL'
+                mssql: 'Microsoft SQL Server'
+                oracledb: 'Oracle Database'
+                msaccess: 'MS Access'
+            default: mysql
+        dbhost:
+            type: text
+            label: 'Host / Server'
+            depends_on: { dbtype: [mysql, pgsql, mssql, oracledb] }
+            default: localhost
+        dbport:
+            type: number
+            label: 'Port'
+            depends_on: { dbtype: [mysql, pgsql, mssql, oracledb] }
+            default: 3306
+        dbuser:
+            type: text
+            label: 'Username'
+            depends_on: { dbtype: [mysql, pgsql, mssql, oracledb] }
+            default: root
+        dbpasswd:
+            type: password
+            label: 'Password'
+            depends_on: { dbtype: [mysql, pgsql, mssql, oracledb] }
+            default: null
+        dbname:
+            type: text
+            label: 'Database / SID / Service'
+            depends_on: { dbtype: [mysql, pgsql, mssql, oracledb] }
+            default: school
+        sqlite_path:
+            type: text
+            label: 'Database File Path (SQLite / MS Access)'
+            depends_on: { dbtype: [sqlite, msaccess] }
+            default: 'var/db/school.sqlite'
+        table_prefix:
+            type: text
+            label: 'Table Prefix'
+            default: null

@@ -1,0 +1,13 @@
+id: contact
+public_name: "Contact Form"
+success_message: "Thank you! Your message has been processed via YAML control."
+redirect_to: "index"
+fields:
+  guest_name:
+    label: "Name"
+    type: text
+    required: true
+    validation: "min:3"
+  message:
+    label: "Message"
+    type: textarea

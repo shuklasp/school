@@ -4,11 +4,36 @@
  * Initiates the SPP.
  */
 if (!defined('SPP_VER')) {
+  // Automatically resolve debug mode from global settings if not already defined
+  if (!defined('SPP_DEBUG')) {
+      $gsPath = dirname(__FILE__) . DIRECTORY_SEPARATOR . 'etc' . DIRECTORY_SEPARATOR . 'global-settings.yml';
+      $gs = [];
+      if (file_exists($gsPath)) {
+          // Use a simple parser if Yaml isn't loaded yet, or just assume sppinit will load it later
+          // But since we need it NOW for exception handling, we'll do a quick check
+          $content = file_get_contents($gsPath);
+          if (preg_match('/debug:\s*(true|1)/i', $content)) {
+              define('SPP_DEBUG', true);
+          } else {
+              define('SPP_DEBUG', false);
+          }
+      } else {
+          define('SPP_DEBUG', false);
+      }
+  }
 
   /**
-   * Store the old working directory.
+   * Resolve framework version from centralized configuration
    */
-  define('SPP_VER', '0.5');
+  $verPath = dirname(__FILE__) . DIRECTORY_SEPARATOR . 'etc' . DIRECTORY_SEPARATOR . 'sppver.yml';
+  $sppVer = '0.5'; // Fallback
+  if (file_exists($verPath)) {
+      $verContent = file_get_contents($verPath);
+      if (preg_match('/version:\s*([0-9\.]+)/i', $verContent, $matches)) {
+          $sppVer = $matches[1];
+      }
+  }
+  define('SPP_VER', $sppVer);
   //define('SPP_DS',DIRECTORY_SEPARATOR);
   define('SPP_DS', '/');
   define('SPP_US', '/');
@@ -30,6 +55,20 @@ if (!defined('SPP_VER')) {
   define('SPP_ETC_DIR', SPP_BASE_DIR . SPP_DS . 'etc');
   if (!defined('SPP_APP_DIR')) {
     define('SPP_APP_DIR', dirname(__DIR__, 1));
+  }
+  if (!defined('APP_BASE_DIR')) {
+    define('APP_BASE_DIR', SPP_APP_DIR);
+  }
+  if (!defined('APP_BASE_URI')) {
+    $appBaseUri = '';
+    if (defined('SPP_DOC_ROOT') && SPP_DOC_ROOT !== '') {
+      $docRoot = str_replace('\\', '/', rtrim(SPP_DOC_ROOT, '/\\'));
+      $appDir = str_replace('\\', '/', rtrim(APP_BASE_DIR, '/\\'));
+      if ($docRoot !== '' && str_starts_with($appDir, $docRoot)) {
+        $appBaseUri = substr($appDir, strlen($docRoot));
+      }
+    }
+    define('APP_BASE_URI', rtrim(str_replace('\\', '/', $appBaseUri), '/'));
   }
   define('APP_ETC_DIR', SPP_APP_DIR . SPP_DS . 'etc' . SPP_DS . 'apps');
   define('SPP_LOG_DIR', SPP_APP_DIR . SPP_DS . 'var' . SPP_DS . 'logs');
@@ -128,6 +167,14 @@ if (file_exists($composer_autoload)) {
     }
   });
 
+  if (defined('SPP_DEBUG') && SPP_DEBUG && class_exists('\SPP\SPPError')) {
+      set_exception_handler('\SPP\SPPError::exceptionHandler');
+
+      // Initialize Debug metrics if active
+      if (defined('SPP_DEBUG') && SPP_DEBUG) {
+          \SPP\Core\Debug::start();
+      }
+  }
 
   if (php_sapi_name() !== 'cli') {
     if (session_status() === PHP_SESSION_NONE) {
@@ -191,7 +238,24 @@ if (file_exists($composer_autoload)) {
    * Initiate SPPSession and SPPError
    */
   \SPP\Scheduler::detectAndEnforceContext();
-  $app = new \SPP\App(\SPP\Scheduler::getContext());
+  $context = \SPP\Scheduler::getContext();
+  
+  // Resolve App Type
+  $appType = 'standard';
+  $drupalRoot = '../drupal';
+  $settingsPath = SPP_ETC_DIR . '/global-settings.yml';
+  if (file_exists($settingsPath)) {
+      $gs = \Symfony\Component\Yaml\Yaml::parseFile($settingsPath);
+      $appConfig = $gs['apps'][$context] ?? [];
+      $appType = $appConfig['type'] ?? 'standard';
+      $drupalRoot = $appConfig['drupal_root'] ?? $drupalRoot;
+  }
+
+  if ($appType === 'drupal' && class_exists('\\SPP\\DrupalApp')) {
+      $app = new \SPP\DrupalApp($context, $drupalRoot);
+  } else {
+      $app = new \SPP\App($context);
+  }
 
   // Redundant call removed here as App::__construct already handles loadAllModules()
   

@@ -2,98 +2,64 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-//print_r($_GET);
-use SPP\SPPGlobal;
-use \SPPMod\SPPView\Pages;
-use function Symfony\Component\String\u;
 
 require_once('vendor/autoload.php');
 require_once('spp/sppinit.php');
+
+// 1. Context Discovery: If 'q' matches a registered app, switch context
+$q = $_GET['q'] ?? '';
+$parts = explode('/', trim($q, '/'));
+$potentialApp = $parts[0];
+$settings = \SPP\App::getGlobalSettings();
+
+// Case-insensitive app discovery
+$appKeys = array_keys($settings['apps']);
+$appMap = array_combine(array_map('strtolower', $appKeys), $appKeys);
+$lowPotential = strtolower($potentialApp);
+
+if (isset($appMap[$lowPotential])) {
+    $realAppName = $appMap[$lowPotential];
+    \SPP\App::getApp($realAppName);
+    array_shift($parts);
+    $_GET['q'] = implode('/', $parts);
+}
+
 require_once('global.php');
-\SPPMod\SPPView\ViewPage::addCssIncludeFile('res/spp/css/spp.css');
-\SPPMod\SPPView\ViewPage::addJsIncludeFile('res/spp/js/spp.js');
-\SPPMod\SPPView\ViewPage::addJsIncludeFile('res/spp/js/spp-router.js');
 
 \SPP\Core\MiddlewareKernel::run(function($request) {
+    $appBaseUri = defined('APP_BASE_URI') ? APP_BASE_URI : '';
+    $appAsset = function (string $path) use ($appBaseUri): string {
+        return rtrim($appBaseUri, '/') . '/' . ltrim($path, '/');
+    };
+
+    // Register core scripts INSIDE the kernel to prevent them from being lost during bootstrap
+    \SPPMod\SPPView\ViewPage::addCssIncludeFile($appAsset('res/spp/css/spp.css'));
+    \SPPMod\SPPView\ViewPage::addJsIncludeFile($appAsset('res/spp/js/spp.js'));
+    \SPPMod\SPPView\ViewPage::addJsIncludeFile($appAsset('res/spp/js/spp-router.js'));
+    \SPPMod\SPPView\ViewPage::addJsIncludeFile($appAsset('res/spp/js/sppvalidations.js'));
+    \SPPMod\SPPView\ViewPage::addJsIncludeFile($appAsset('res/spp/js/spp-autoinit.js'));
+
+    if (\SPP\Module::isEnabled('sppux') && class_exists('\SPPMod\SPPUX\SPPUX')) {
+        \SPPMod\SPPUX\SPPUX::boot();
+    }
+
     if (\SPP\Module::isEnabled('sppapi') && class_exists('\SPPMod\SPPAPI\SPPAPI') && \SPPMod\SPPAPI\SPPAPI::isApiRequest()) {
         \SPPMod\SPPAPI\SPPAPI::handle();
         return;
     }
 
-    // SPA dispatch: handle AJAX fragment/service requests before full HTML render
     if (\SPP\Module::isEnabled('sppajax') && \SPPMod\SPPAjax\SPPAjax::isAjaxRequest()) {
         \SPPMod\SPPAjax\SPPAjax::handle();
         return;
     }
 
     \SPPMod\SPPView\ViewPage::processForms();
+    
+    $activeProc = \SPP\Scheduler::getActiveProc();
+    if (method_exists($activeProc, 'handle')) {
+        $activeProc->handle($request);
+        return;
+    }
+
     \SPPMod\SPPView\ViewPage::showPage();
 });
-// $q = $_GET['q'];
-// $page=array();
-// if ($q == null) {
-//     $def = Pages::getDefault('home');
-//     $page=Pages::getPage($def);
-//     // SPPGlobal::set('page', null);
-//     // SPPGlobal::set('url', $page['src/home.php']);
-//     // SPPGlobal::set('params', $_GET);
-//     // SPPGlobal::set('q', $q);
-//     // SPPGlobal::set('numparams', count($_GET));
-//     // include($page['url']);
-//     // die();
-// }
-// else{
-//     $page = Pages::getPage();
-// }
-// // \SPP\SPPEvent::fireEvent('test_event');
-// // \SPP\SPPEvent::fireEvent('another_test_event');
-// // \SPP\SPPEvent::startEvent('test_simple');
-// // \SPP\SPPEvent::startEvent('test_simple');
-// //$obj=new \SPP\Settings();
-// //require_once('vendor/autoload.php');
-// //print($q);
-// //echo $page;
-// SPPGlobal::set('page', $page);
-// SPPGlobal::set('url', $page['url']);
-// SPPGlobal::set('params', $page['params']);
-// SPPGlobal::set('q', $q);
-// SPPGlobal::set('numparams', count($page['params']));
-// if(file_exists($page['url']))
-//     include($page['url']);
-// foreach($page['params'] as $param=>&$value)
-// {
-//     echo $param.'=>'.$value.',';
-// }
-// echo count($page['params']);
-//SPPGlobal::set('page',$page);
-//print_r($page);
-//if($q=='home')
-//include('src/home.php');
-/* try{
-    $k=1;
-    if($k==1)
-    {
-        throw new FakeException('This is a fake exception');
-    }
-    if($k==2)
-    {
-        throw new AotherException('This is another exception');
-    }
-//throw new FakeException('This is a fake exception');
-}
-catch(FakeException $e){
-    echo get_class($e);
-    //echo $e->getMessage();
-    echo $e;
-}
-catch(AotherException $e){
-    //echo $e->getMessage();
-    echo $e;
-}
- *///var_dump($_SESSION);
-/*if($set=$obj->getSetting('src'))
-//print_r($obj);
-{
-    print($set[0]->dir);
-}*/
-//var_dump($set);

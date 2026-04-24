@@ -1,0 +1,9 @@
+variables:
+    log_precedence: db_first
+    log_targets:
+        - db
+        - file
+    log_subdir: system
+    log_filename_format: 'log-{appname}-{date}-{index}.txt'
+    max_file_size: 2097152.0
+    log_retention_days: 30.0

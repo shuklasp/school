@@ -1,0 +1,26 @@
+<?php
+
+namespace {{namespace}};
+
+/**
+ * Class {{className}}
+ * Auto-generated service class.
+ */
+class {{className}}
+{
+    /**
+     * {{className}} constructor.
+     */
+    public function __construct()
+    {
+        // TODO: Implement constructor
+    }
+
+    /**
+     * Example method.
+     */
+    public function execute()
+    {
+        // TODO: Implement business logic
+    }
+}

@@ -134,7 +134,7 @@ class Scheduler extends \SPP\SPPObject
         
         // Load Global Settings
         $settings = [];
-        $path = (defined('SPP_BASE_DIR') ? SPP_BASE_DIR : dirname(__DIR__, 2)) . '/etc/global-settings.yml';
+        $path = (defined('SPP_ETC_DIR') ? SPP_ETC_DIR : (defined('SPP_BASE_DIR') ? SPP_BASE_DIR : dirname(__DIR__, 2)) . '/etc') . '/global-settings.yml';
         if (file_exists($path) && class_exists('\\Symfony\\Component\\Yaml\\Yaml')) {
             try {
                 $settings = \Symfony\Component\Yaml\Yaml::parseFile($path);
@@ -150,8 +150,8 @@ class Scheduler extends \SPP\SPPObject
             $baseUrl = $meta['base_url'] ?? '';
             if ($baseUrl === '' || $baseUrl === '/') continue;
             
-            // Check if URI starts with base_url
-            if (strpos($uri, $baseUrl) !== false) {
+            // Check if URI starts with base_url (Case-Insensitive)
+            if (stripos($uri, $baseUrl) !== false) {
                  if (strlen($baseUrl) > $maxLen) {
                      $maxLen = strlen($baseUrl);
                      $matchedApp = $name;

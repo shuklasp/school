@@ -24,6 +24,15 @@ class Registry extends \SPP\SPPObject
     /** @var array<int,mixed> */
     public static array $values = [];
 
+    /** @var array<string,mixed> Flat lookup cache for O(1) performance */
+    private static array $lookupCache = [];
+
+    /** @var array<string,string> Resolved name cache */
+    private static array $resolvedNames = [];
+
+    /** @var string Active context prefix */
+    private static string $contextPrefix = '';
+
     /** @var int */
     private static int $valkey = 0;
 
@@ -41,14 +50,12 @@ class Registry extends \SPP\SPPObject
      */
     public static function register(string $entity, mixed $value): void
     {
-        if (\SPP\Scheduler::getContext() !== '') {
-            $entity = '__apps=>' . \SPP\Scheduler::getContext() . '=>' . $entity;
-        }
-
+        $entity = self::resolveEntityName($entity);
         $key = self::getKey($entity);
 
         if ($key !== false) {
             self::$values[$key] = $value;
+            self::$lookupCache[$entity] = $value; // Update cache
             return;
         }
 
@@ -135,12 +142,45 @@ class Registry extends \SPP\SPPObject
      */
     public static function get(string $entity): mixed
     {
-        if (\SPP\Scheduler::getContext() !== '') {
-            $entity = '__apps=>' . \SPP\Scheduler::getContext() . '=>' . $entity;
+        $entity = self::resolveEntityName($entity);
+        
+        // O(1) Flat Cache Hit
+        if (array_key_exists($entity, self::$lookupCache)) {
+            return self::$lookupCache[$entity];
         }
 
         $key = self::getKey($entity);
-        return is_int($key) ? self::$values[$key] : false;
+        
+        if (is_int($key)) {
+            $value = self::$values[$key];
+            self::$lookupCache[$entity] = $value; // Memoize for future
+            return $value;
+        }
+
+        if (is_array($key)) {
+            // It's a non-leaf node, attempt to resolve all children recursively
+            return self::resolveValueMap($key);
+        }
+
+        return false;
+    }
+
+    /**
+     * Recursively resolves an array of registry indices to their values.
+     */
+    private static function resolveValueMap(array $map): array
+    {
+        $result = [];
+        foreach ($map as $k => $v) {
+            if (is_int($v)) {
+                $result[$k] = self::$values[$v] ?? false;
+            } elseif (is_array($v)) {
+                $result[$k] = self::resolveValueMap($v);
+            } else {
+                $result[$k] = $v;
+            }
+        }
+        return $result;
     }
 
     /**
@@ -148,21 +188,13 @@ class Registry extends \SPP\SPPObject
      */
     public static function isRegistered(string $entity): bool
     {
-        if (\SPP\Scheduler::getContext() !== '') {
-            $entity = '__apps=>' . \SPP\Scheduler::getContext() . '=>' . $entity;
+        $entity = self::resolveEntityName($entity);
+
+        if (array_key_exists($entity, self::$lookupCache)) {
+            return true;
         }
 
-        $tokens = array_map('trim', explode('=>', $entity));
-        $arr = self::$reg;
-
-        foreach ($tokens as $token) {
-            if (!is_array($arr) || !array_key_exists($token, $arr)) {
-                return false;
-            }
-            $arr = $arr[$token];
-        }
-
-        return true;
+        return self::getKey($entity) !== false;
     }
 
     /**
@@ -173,6 +205,9 @@ class Registry extends \SPP\SPPObject
      */
     private static function getKey(string $entity): array|int|false
     {
+        // Internal check: if we already have the integer key mapping
+        // but this is deeper than we usually cache.
+        
         $tokens = array_map('trim', explode('=>', $entity));
         $arr = self::$reg;
 
@@ -184,5 +219,28 @@ class Registry extends \SPP\SPPObject
         }
 
         return $arr;
+    }
+
+    /**
+     * Resolves the entity name with context and memoizes it.
+     */
+    private static function resolveEntityName(string $entity): string
+    {
+        // System-level global keys (starting with __) should not be prefixed with application context
+        if (strpos($entity, '__') === 0) {
+            return $entity;
+        }
+
+        $ctx = \SPP\Scheduler::getContext();
+        if ($ctx === '' || $ctx === 'default') return $entity;
+
+        $cacheKey = $ctx . '::' . $entity;
+        if (isset(self::$resolvedNames[$cacheKey])) {
+            return self::$resolvedNames[$cacheKey];
+        }
+
+        $resolved = '__apps=>' . $ctx . '=>' . $entity;
+        self::$resolvedNames[$cacheKey] = $resolved;
+        return $resolved;
     }
 }

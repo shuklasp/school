@@ -1,6 +1,6 @@
 {
-    "timestamp": 1776819695,
-    "spp_version": "0.5",
+    "timestamp": 1777038567,
+    "spp_version": "0.7",
     "base_dir": "\/mnt\/c\/projects\/apache\/school1\/spp",
     "database": {
         "dbtype": "mysql",
@@ -28,8 +28,13 @@
         },
         "dotnet": {
             "name": ".NET",
-            "path": "",
-            "version": ""
+            "path": "\/usr\/bin\/dotnet",
+            "version": "8.0.126"
+        },
+        "go": {
+            "name": "Go",
+            "path": "\/usr\/bin\/go",
+            "version": "1.22.2"
         },
         "compiler": {
             "name": "GCC",

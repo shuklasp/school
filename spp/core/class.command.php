@@ -35,4 +35,12 @@ abstract class Command
     {
         return $this->description;
     }
+
+    /**
+     * Helpers for CLI output
+     */
+    protected function line(string $text): void { echo $text . "\n"; }
+    protected function info(string $text): void { echo "\033[32mINFO: \033[0m" . $text . "\n"; }
+    protected function warn(string $text): void { echo "\033[33mWARN: \033[0m" . $text . "\n"; }
+    protected function error(string $text): void { echo "\033[31mERROR: \033[0m" . $text . "\n"; }
 }

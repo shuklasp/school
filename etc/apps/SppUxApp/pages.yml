@@ -1,0 +1,6 @@
+pages:
+  index:
+    url: index.php
+defaults:
+  home: index
+  pagedir: /src/SppUxApp

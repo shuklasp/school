@@ -472,7 +472,34 @@ class SPPEntity implements \JsonSerializable
           }
       }
       
-      file_put_contents($entitiesDir . '/' . strtolower($name) . '.yml', $yaml);
+      $ymlPath = $entitiesDir . '/' . strtolower($name) . '.yml';
+      file_put_contents($ymlPath, $yaml);
+
+      // Trigger Auto-Evolution if enabled
+      $globalSettingsPath = SPP_ETC_DIR . '/global-settings.yml';
+      if (file_exists($globalSettingsPath)) {
+          $settings = \Symfony\Component\Yaml\Yaml::parseFile($globalSettingsPath);
+          if (($settings['prototyping']['auto_evolution'] ?? 'manual') === 'automatic') {
+              // We need to trigger install but we might need a class name or use static helper
+              // For simplicity, we'll try to resolve the class or run a direct install via SPPEntity
+              try {
+                  // Temporarily load this config to metadata so install() can use it
+                  $tempClass = "App\\" . ucfirst($appname) . "\\Entities\\" . ucfirst($name);
+                  self::$_metadata[$tempClass] = $config;
+                  // Handle install
+                  $db = new \SPPMod\SPPDB\SPPDB();
+                  $table = $config['table'] ?? strtolower($name).'s';
+                  $attributes = $config['attributes'] ?? [];
+                  if (!$db->tableExists($table)) {
+                      $sql = 'create table %tab% (' . ($config['id_field'] ?? 'id') . ' varchar(20))';
+                      $db->exec_squery($sql, $table);
+                  }
+                  $db->add_columns($table, $attributes);
+              } catch (\Exception $e) {
+                  error_log("Auto-evolution failed: " . $e->getMessage());
+              }
+          }
+      }
 
       // 2. Generate PHP Skeleton Class
       $srcDir = SPP_APP_DIR . '/src/' . $appname . '/entities';

@@ -83,4 +83,38 @@
             <dependency>sppview</dependency>
         </dependencies>
     </module>
+    <module>
+        <modname>sppux</modname>
+        <modpath>spp/sppux</modpath>
+        <status>active</status>
+        <dependencies>
+            <dependency>sppview</dependency>
+            <dependency>sppajax</dependency>
+        </dependencies>
+    </module>
+    <module>
+        <modname>parikshak</modname>
+        <modpath>spp/parikshak</modpath>
+        <status>active</status>
+        <dependencies>
+            <dependency>sppdb</dependency>
+            <dependency>sppentity</dependency>
+        </dependencies>
+    </module>
+    <module>
+        <modname>sppblade</modname>
+        <modpath>spp/sppblade</modpath>
+        <status>active</status>
+        <dependencies>
+            <dependency>sppview</dependency>
+        </dependencies>
+    </module>
+    <module>
+        <modname>sppdrupal</modname>
+        <modpath>spp/sppdrupal</modpath>
+        <status>active</status>
+        <dependencies>
+            <dependency>sppcore</dependency>
+        </dependencies>
+    </module>
 </modules>

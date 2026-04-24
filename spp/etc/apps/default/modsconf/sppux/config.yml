@@ -1,0 +1,6 @@
+variables:
+    runtime_path: spp/modules/spp/sppux/js/sppux.js
+    loader_path: spp/modules/spp/sppux/js/spp-loader.js
+    component_base: 'src/{app}/comp'
+    auto_mount: true
+    expose_bridge: true

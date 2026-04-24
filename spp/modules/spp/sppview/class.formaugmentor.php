@@ -73,11 +73,21 @@ class FormAugmentor extends \SPP\SPPObject
         if (!empty($scripts)) {
             $root = $dom->getElementsByTagName('body')->item(0) ?: $dom->documentElement;
             if ($root) {
-                foreach ($scripts as $src) {
+                foreach ($scripts as $sEntry) {
+                    $src = is_array($sEntry) ? $sEntry['path'] : $sEntry;
+                    $opts = is_array($sEntry) ? ($sEntry['options'] ?? []) : [];
+                    
                     $sNode = $dom->createElement('script');
-                    $sNode->setAttribute('type', 'text/javascript');
+                    $sNode->setAttribute('type', $opts['type'] ?? 'text/javascript');
                     $sNode->setAttribute('src', $src);
-                    // Ensure the script tag is not self-closing
+                    
+                    // Add any other attributes (async, defer, etc)
+                    foreach ($opts as $key => $val) {
+                        if ($key !== 'type') {
+                            $sNode->setAttribute($key, $val);
+                        }
+                    }
+
                     $sNode->nodeValue = ''; 
                     $root->appendChild($sNode);
                 }

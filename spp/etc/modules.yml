@@ -1,0 +1,72 @@
+modules:
+    - name: sppauth
+      path: spp/sppauth
+      status: active
+      deps:
+          - sppcore
+    - name: sppdb
+      path: spp/sppdb
+      status: active
+      deps:
+          - sppcore
+    - name: sppconfig
+      path: spp/sppconfig
+      status: active
+      deps:
+          - sppcore
+    - name: spplogger
+      path: spp/spplogger
+      status: inactive
+      deps:
+          - sppcore
+          - sppdb
+          - sppsession
+    - name: sppprofile
+      path: spp/sppprofile
+      status: active
+      deps:
+          - sppcore
+          - sppdb
+          - sppsession
+    - name: sppwizard
+      path: spp/sppwizard
+      status: active
+      deps:
+          - sppcore
+          - sppdb
+          - sppsession
+    - name: sppview
+      path: spp/sppview
+      status: active
+      deps:
+          - sppcore
+          - sppdb
+          - sppsession
+    - name: sppajax
+      path: spp/sppajax
+      status: active
+      deps:
+          - sppcore
+          - sppview
+    - name: sppux
+      path: spp/sppux
+      status: active
+      deps:
+          - sppview
+          - sppajax
+    - name: parikshak
+      path: spp/parikshak
+      status: active
+      deps:
+          - sppdb
+          - sppentity
+    - name: sppblade
+      path: spp/sppblade
+      status: active
+      deps:
+          - sppview
+    - name: sppdrupal
+      path: spp/sppdrupal
+      status: active
+      deps:
+          - sppcore

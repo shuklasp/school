@@ -48,8 +48,8 @@ if (!checkDevMode()) {
     <link
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
-    <!-- Premium Stylesheet -->
     <link rel="stylesheet" href="css/admin.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="css/login.css?v=<?php echo time(); ?>">
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="images/spp-logo.jpg">
 </head>
@@ -61,33 +61,33 @@ if (!checkDevMode()) {
 
     <!-- UI Logic Screens -->
 
-    <!-- 1. Authentication Layer -->
     <div id="login-layer" class="active glass-overlay">
-        <div class="glass-panel login-card">
+        <div class="login-background"></div>
+        <div class="login-card glass-panel">
             <header>
-                <img src="images/spp-logo.jpg" alt="SPP Logo" class="brand-logo" onerror="this.style.display='none'">
-                <h1>Workbench Login</h1>
-                <p>System Administration Access</p>
+                <div class="logo-container">
+                    <img src="images/spp-logo.jpg" alt="SPP Logo" class="brand-logo">
+                    <div class="logo-glow"></div>
+                </div>
+                <h1>Workbench</h1>
+                <p>Framework Control Center</p>
             </header>
             <form id="login-form">
                 <div class="input-group">
-                    <label for="username">Username</label>
+                    <label for="username">Identity</label>
                     <input type="text" id="username" placeholder="Enter username..." required autocomplete="username">
                 </div>
                 <div class="input-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" placeholder="Enter password..." required
-                        autocomplete="current-password">
+                    <label for="password">Secret Key</label>
+                    <input type="password" id="password" placeholder="Enter password..." required autocomplete="current-password">
                 </div>
-                <div class="input-group">
-                    <button type="submit" class="btn primary-btn pulse"
-                        style="width:100%;justify-content:center;">Authenticate</button>
-                </div>
+                <button type="submit" class="btn primary-btn shine-effect" style="width:100%; justify-content:center;">
+                    <span>Initialize Access</span>
+                </button>
             </form>
             <footer>
-                <p>Powered by Satya Portal Pack &copy;
-                    <?php echo date('Y'); ?>
-                </p>
+                <p>SPP Framework Enterprise Edition</p>
+                <div class="version-tag">v2.4.0-evolve</div>
             </footer>
         </div>
     </div>
@@ -189,6 +189,8 @@ if (!checkDevMode()) {
     <!-- Framework Infrastructure (Standard Scripts for maximum compatibility) -->
     <script src="js/sppux.js?v=<?php echo time(); ?>"></script>
     <script src="js/admin.js?v=<?php echo time(); ?>"></script>
+    <!-- Schema-based module settings enhancement (overrides openModuleSettings only) -->
+    <script src="js/admin-settings.js?v=<?php echo time(); ?>"></script>
 
     <!-- CSRF Token for Frontend -->
     <script>

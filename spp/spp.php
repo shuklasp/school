@@ -107,60 +107,8 @@ if (isset($discoveredCommands[$command])) {
 switch ($command) {
     case 'make:entity':
     case 'ent:create':
-        $entityName = $argv[2] ?? null;
-        if (!$entityName) $entityName = prompt("Entity Name (e.g. Student)");
-        
-        $entityName = preg_replace('/[^a-zA-Z0-9_]/', '', $entityName);
-        $appname = prompt("Application/Context", "default");
-        $tableName = prompt("Database Table", strtolower($entityName) . "s");
-        $extends = prompt("Extends (Parent Entity class, optional)", "");
-        $login = strtolower(prompt("Enable Login Support? (y/n)", "n")) === 'y';
-        
-        $config = [
-            'table' => $tableName,
-            'id_field' => 'id',
-            'sequence' => $tableName . '_seq',
-            'extends' => $extends,
-            'login_enabled' => $login,
-            'attributes' => [],
-            'relations' => []
-        ];
-
-        echo "\nEntity Attributes (Press Enter on empty Name to finish):\n";
-        while(true) {
-            $attrName = prompt("  Attribute Name");
-            if (!$attrName) break;
-            $attrType = prompt("  Type (e.g. varchar(255), int, text, timestamp)", "varchar(255)");
-            $config['attributes'][$attrName] = $attrType;
-        }
-
-        echo "\nEntity Relationships (Press Enter on empty Target to finish):\n";
-        while(true) {
-            $target = prompt("  Target Entity (e.g. \\App\\Entities\\Course)");
-            if (!$target) break;
-            $type = prompt("  Relation Type (OneToMany / ManyToMany)", "OneToMany");
-            $fk = prompt("  Foreign Key Field", strtolower($entityName) . "_id");
-            
-            $rel = [
-                'child_entity' => $target,
-                'relation_type' => $type,
-                'child_entity_field' => $fk
-            ];
-            
-            if ($type === 'ManyToMany') {
-                $rel['pivot_table'] = prompt("  Pivot Table Name", strtolower($entityName) . "_" . strtolower(basename(str_replace('\\', '/', $target))));
-            }
-            
-            $config['relations'][] = $rel;
-        }
-
-        require_once __DIR__ . '/sppinit.php';
-        try {
-            \SPPMod\SPPEntity\SPPEntity::saveEntityDefinition($entityName, $appname, $config);
-            echo "\nSuccess: Entity {$entityName} saved and scaffolded in {$appname} context.\n";
-        } catch (\Exception $e) {
-            echo "Error: " . $e->getMessage() . "\n";
-        }
+        echo "Error: 'make:entity' has been migrated to a modern command class.\n";
+        echo "Please ensure SPP\\CLI\\Commands\\MakeEntityCommand is properly loaded.\n";
         break;
 
     case 'ent:list':
@@ -393,38 +341,7 @@ switch ($command) {
         break;
 
     case 'make:module':
-        if (!isset($argv[2])) {
-            echo "Error: Module name required.\n";
-            exit(1);
-        }
-        $modName = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $argv[2]));
-        $modDir = SPP_APP_DIR . '/modules/spp/' . $modName;
-        if (!is_dir($modDir)) {
-            mkdir($modDir, 0777, true);
-        }
-
-        $xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-        $xml .= "<module>\n";
-        $xml .= "    <name>{$modName}</name>\n";
-        $xml .= "    <author>SPP Auto-Builder</author>\n";
-        $xml .= "    <version>1.0</version>\n";
-        $xml .= "    <description>Auto-generated {$modName} module.</description>\n";
-        $xml .= "    <namespace>SPPMod\\" . ucfirst($modName) . "</namespace>\n";
-        $xml .= "    <autoload>\n";
-        $xml .= "        <class name=\"" . ucfirst($modName) . "\" file=\"class.{$modName}.php\"/>\n";
-        $xml .= "    </autoload>\n";
-        $xml .= "</module>\n";
-
-        file_put_contents($modDir . '/module.xml', $xml);
-
-        $php = "<?php\n";
-        $php .= "namespace SPPMod\\" . ucfirst($modName) . ";\n\n";
-        $php .= "class " . ucfirst($modName) . " extends \SPP\SPPObject\n";
-        $php .= "{\n    public function __construct() {\n        \n    }\n}\n";
-
-        file_put_contents($modDir . "/class.{$modName}.php", $php);
-
-        echo "Success: Module {$modName} created.\n";
+        echo "Error: 'make:module' has been migrated to a modern command class.\n";
         break;
 
     case 'build:edge':

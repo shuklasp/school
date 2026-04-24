@@ -1,0 +1,27 @@
+form:
+  name: student_form
+  id: student_form
+  method: post
+  controls:
+    control:
+      -
+        name: name
+        type: SPPText
+        label: Name
+        id: name
+      -
+        name: description
+        type: SPPTextArea
+        label: Description
+        id: description
+      -
+        name: submit
+        type: SPPSubmit
+        value: 'Save Student'
+        id: submit
+  validations:
+    validation:
+      -
+        control: name
+        type: SPPRequiredValidator
+        message: 'Name is required'

@@ -29,7 +29,9 @@ class ViewPage extends \SPP\SPPObject
 {
     protected static $pageid;
     protected static $jsincludelist = array();
+    protected static $jscontentlist = array();
     protected static $cssincludelist = array();
+    protected static $csscontentlist = array();
     protected static $formslist = array();
     protected static $elementslist = array();
     protected static $pagetitle;
@@ -70,9 +72,10 @@ class ViewPage extends \SPP\SPPObject
             $pageData = Pages::getPage();
         }
 
-        // Configuration defaults
-        $doAugment = $options['augment'] ?? (bool)\SPP\Module::getConfig('auto_page_augmentation', 'sppview');
-        $doInjectJs = $options['inject_js'] ?? (bool)\SPP\Module::getConfig('auto_js_injection', 'sppview');
+        // Configuration defaults - Force true for sppux apps to ensure the loader and runtime always initialize
+        $isSppUx = (\SPP\App::getApp()->type === 'sppux');
+        $doAugment = $options['augment'] ?? ($isSppUx ?: (bool)\SPP\Module::getConfig('auto_page_augmentation', 'sppview'));
+        $doInjectJs = $options['inject_js'] ?? ($isSppUx ?: (bool)\SPP\Module::getConfig('auto_js_injection', 'sppview'));
 
         if ($pageData['special'] == 1) {
             include(SPP_APP_DIR . SPP_US . trim($pageData['url']));
@@ -87,6 +90,11 @@ class ViewPage extends \SPP\SPPObject
         
         $filename = SPP_APP_DIR . $src . SPP_US . $pageData['url'];
         
+        // Safety check: Prevent infinite recursion if pagedir resolution fails or points to root index
+        if ($filename === SPP_APP_DIR . SPP_US . 'index.php') {
+            throw new \SPP\SPPException('Router safety: Infinite recursion detected. Please check your "pagedir" setting in pages.yml.');
+        }
+
         if (file_exists($filename) && is_file($filename)) {
             
             if ($doAugment) {
@@ -120,9 +128,7 @@ class ViewPage extends \SPP\SPPObject
                 }, $html);
 
                 if ($doInjectJs) {
-                    self::addJsIncludeFile('res/spp/js/spp-router.js');
-                    self::addJsIncludeFile('res/spp/js/sppvalidations.js');
-                    self::addJsIncludeFile('res/spp/js/spp-autoinit.js');
+                    // Standard injections handled by index.php for better control
                 }
                 
                 // 4. Inject Debug Bar (Phase 5 Evolution)
@@ -130,8 +136,8 @@ class ViewPage extends \SPP\SPPObject
                     $debugData = \SPP\Core\Debug::getData();
                     $debugJson = htmlspecialchars(json_encode($debugData), ENT_QUOTES, 'UTF-8');
                     $html .= "<div id='spp-debug-bar' data-metrics='{$debugJson}'></div>";
-                    self::addJsIncludeFile('res/spp/js/spp-debug.js');
-                    self::addCssIncludeFile('res/spp/css/spp-debug.css');
+                    self::addJsIncludeFile('/school1/res/spp/js/spp-debug.js');
+                    self::addCssIncludeFile('/school1/res/spp/css/spp-debug.css');
                 }
 
                 // Pass the accumulated script list to the augmentor for internal DOM injection
@@ -173,7 +179,39 @@ class ViewPage extends \SPP\SPPObject
 
     public static function includeJSDynamic($jsfile)
     {
-        echo '<script type="text/javascript" src="' . htmlspecialchars((string) $jsfile, ENT_QUOTES, 'UTF-8') . '"></script>' . "\n";
+        $path = $jsfile;
+        $options = [];
+
+        if (is_array($jsfile)) {
+            $path = $jsfile['path'] ?? '';
+            $options = $jsfile['options'] ?? [];
+        }
+
+        if ($path === '') {
+            return;
+        }
+
+        $attrs = '';
+        foreach ($options as $key => $value) {
+            if ($value === false || $value === null) {
+                continue;
+            }
+            $safeKey = preg_replace('/[^a-zA-Z0-9_\-]/', '', (string) $key);
+            if ($safeKey === '') {
+                continue;
+            }
+            if ($value === true) {
+                $attrs .= ' ' . $safeKey;
+            } else {
+                $attrs .= ' ' . $safeKey . '="' . htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8') . '"';
+            }
+        }
+
+        if (!isset($options['type'])) {
+            $attrs = ' type="text/javascript"' . $attrs;
+        }
+
+        echo '<script' . $attrs . ' src="' . htmlspecialchars((string) $path, ENT_QUOTES, 'UTF-8') . '"></script>' . "\n";
     }
 
     public static function includeJSFilesDynamic()
@@ -529,14 +567,16 @@ class ViewPage extends \SPP\SPPObject
      * @param string $fpath
      * @return bool
      */
-    public static function addJsIncludeFile($fpath)
+    public static function addJsIncludeFile($fpath, array $options = [])
     {
+        $entry = ['path' => $fpath, 'options' => $options];
         foreach (self::$jsincludelist as $fl) {
-            if ($fl == $fpath) {
+            if (is_array($fl) && $fl['path'] == $fpath) {
                 return false;
             }
+            if ($fl == $fpath) return false;
         }
-        self::$jsincludelist[] = $fpath;
+        self::$jsincludelist[] = $entry;
         return true;
     }
 
@@ -556,6 +596,16 @@ class ViewPage extends \SPP\SPPObject
         }
         self::$cssincludelist[] = $fpath;
         return true;
+    }
+
+    public static function addJsContent($content)
+    {
+        self::$jscontentlist[] = $content;
+    }
+
+    public static function addCssContent($content)
+    {
+        self::$csscontentlist[] = $content;
     }
 
 
@@ -661,12 +711,35 @@ class ViewPage extends \SPP\SPPObject
     {
         if (file_exists($fl)) {
             self::$xml = simplexml_load_file($fl);
-            //\SPP\SPPEvent::fireEvent('event_spp_process_xml_form', 'SPP_HTML_Page::processXMLForm', array('xml'=>$xml));
-            //print_r($xml);
             return true;
         } else {
             return false;
         }
+    }
+
+    /**
+     * Function readFormFile($fl)
+     * Reads a form definition file (XML or YAML).
+     *
+     * @param string $fl
+     * @return bool
+     */
+    public static function readFormFile($fl)
+    {
+        if (!file_exists($fl)) return false;
+
+        $ext = strtolower(pathinfo($fl, PATHINFO_EXTENSION));
+        if ($ext === 'yml' || $ext === 'yaml') {
+            $data = \Symfony\Component\Yaml\Yaml::parseFile($fl);
+            self::processFormArray($data);
+            return true;
+        } else {
+            if (self::readXMLFile($fl)) {
+                self::processXMLForm();
+                return true;
+            }
+        }
+        return false;
     }
 
 
@@ -689,7 +762,14 @@ class ViewPage extends \SPP\SPPObject
     {
         $xml = self::$xml;
         $arr = \SPP\SPPUtils::xml2phpArray($xml);
-        
+        self::processFormArray($arr);
+    }
+
+    /**
+     * Processes a PHP array containing form definitions.
+     */
+    public static function processFormArray(array $arr)
+    {
         if (!isset($arr['form'])) {
             return;
         }
@@ -713,6 +793,7 @@ class ViewPage extends \SPP\SPPObject
                         foreach ($controls as $control) {
                             $cnt = self::createElementFromArray($control);
                             $frm->addElement($cnt);
+                            self::addElement($cnt);
                         }
                     }
                 }
@@ -746,11 +827,18 @@ class ViewPage extends \SPP\SPPObject
     {
         $val = '';
         //print_r($arr);
+        $type = $arr['type'];
+        // Prepend namespace if not absolute
+        if (strpos($type, '\\') !== 0 && strpos($type, 'SPPMod\\SPPView\\') !== 0) {
+            $type = __NAMESPACE__ . '\\' . $type;
+        }
+
         if (array_key_exists('control', $arr)) {
-            $val = new $arr['type'](self::$elementslist[$arr['control']]);
+            $val = new $type(self::$elementslist[$arr['control']]);
         } elseif (array_key_exists('controls', $arr)) {
             //$ctrls='';
             //print_r($arr['controls']);
+            $ctrls = [];
             foreach ($arr['controls'] as $controls) {
                 //print_r($controls);
                 foreach ($controls['control'] as $control) {
@@ -758,7 +846,7 @@ class ViewPage extends \SPP\SPPObject
                 }
             }
             //print_r($ctrls);
-            $val = new $arr['type']($ctrls);
+            $val = new $type($ctrls);
         } else {
             \SPP\SPPError::triggerDevError('Error reading validations from array');
         }
@@ -892,8 +980,26 @@ class ViewPage extends \SPP\SPPObject
         self::$jsincludelist = $jsi;
         echo '<!-- Including Javascript files for Satya Portal Pack -->';
         foreach (self::$jsincludelist as $fl) {
-            echo '<script src="' . htmlspecialchars((string) $fl, ENT_QUOTES, 'UTF-8') . '" type="text/JavaScript"></script>';
+            $src = is_array($fl) ? $fl['path'] : $fl;
+            $opts = is_array($fl) ? ($fl['options'] ?? []) : [];
+            $type = $opts['type'] ?? 'text/JavaScript';
+            
+            $attrs = '';
+            foreach ($opts as $k => $v) {
+                if ($k !== 'type') $attrs .= ' ' . htmlspecialchars($k) . '="' . htmlspecialchars($v) . '"';
+            }
+
+            echo '<script src="' . htmlspecialchars((string) $src, ENT_QUOTES, 'UTF-8') . '" type="' . htmlspecialchars($type) . '"' . $attrs . '></script>';
         }
+
+        if (!empty(self::$jscontentlist)) {
+            echo '<script type="text/javascript">';
+            foreach (self::$jscontentlist as $content) {
+                echo $content . "\n";
+            }
+            echo '</script>';
+        }
+
         echo '<!-- Include ends -->';
         \SPP\SPPEvent::endEvent('event_spp_include_js_files');
     }
@@ -912,6 +1018,15 @@ class ViewPage extends \SPP\SPPObject
         foreach (self::$cssincludelist as $fl) {
             echo '<link rel="stylesheet" href="' . htmlspecialchars((string) $fl, ENT_QUOTES, 'UTF-8') . '" />';
         }
+
+        if (!empty(self::$csscontentlist)) {
+            echo '<style type="text/css">';
+            foreach (self::$csscontentlist as $content) {
+                echo $content . "\n";
+            }
+            echo '</style>';
+        }
+
         echo '<!-- Include ends -->';
         \SPP\SPPEvent::endEvent('event_spp_include_css_files');
     }

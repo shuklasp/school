@@ -1,0 +1,39 @@
+<?php
+
+namespace {{namespace}};
+
+use SPPMod\SPPDB\SPPDB;
+
+/**
+ * Class {{className}}
+ * Auto-generated model class (Fluent-ready).
+ */
+class {{className}}
+{
+    /** @var string Database table */
+    protected static string $table = '{{tableName}}';
+
+    /**
+     * Get a query builder for this model.
+     */
+    public static function query()
+    {
+        return (new SPPDB())->table(self::$table);
+    }
+
+    /**
+     * Find a record by ID.
+     */
+    public static function find($id)
+    {
+        return self::query()->where('id', $id)->first();
+    }
+
+    /**
+     * Get all records.
+     */
+    public static function all()
+    {
+        return self::query()->get();
+    }
+}

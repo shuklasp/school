@@ -24,8 +24,15 @@ class SPPSession extends \SPP\SPPObject
     {
         $ssname = \SPP\App::getSessionName();
         if (!self::sessionExists()) {
+            if (session_status() === PHP_SESSION_ACTIVE || php_sapi_name() === 'cli') {
+                // Auto-initialize the session bucket if we are in an active session context
+                $session = new SPPSession();
+                $_SESSION[$ssname] = serialize($session);
+                self::$cache = $session;
+                return $session;
+            }
             self::$cache = null;
-            throw new SessionDoesNotExistException('No session exists!');
+            throw new SessionDoesNotExistException('No session exists! (Bucket ' . $ssname . ' not found in $_SESSION)');
         }
         if (self::$cache !== null) {
             return self::$cache;

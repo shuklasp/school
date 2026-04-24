@@ -7,14 +7,7 @@
         Modules configuration.
 -->
 <modules>
-    <module>
-        <modname>sppauth</modname>
-        <modpath>spp/sppauth</modpath>
-        <status>inactive</status>
-        <dependencies>
-            <dependency>sppcore</dependency>
-        </dependencies>
-    </module>
+    
     
     
     

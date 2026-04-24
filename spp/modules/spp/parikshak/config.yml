@@ -1,0 +1,5 @@
+active: true
+fuzz_intensity: 10
+auto_generate_tests: true
+table_prefix: spptest__
+storage_strategy: same_db

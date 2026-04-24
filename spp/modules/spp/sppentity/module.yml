@@ -1,11 +1,9 @@
-# SPP Entity Module Manifest
-
 module:
     name: sppentity
-    version: "0.5"
-    pubname: SPP Entity
+    version: '0.5'
+    pubname: 'SPP Entity'
     modgroup: SPP_Optional
-    pubdesc: Defines an Entity.
+    pubdesc: 'Defines an Entity.'
     includes:
         - class.sppentity.php
         - entityexceptions.php
@@ -17,3 +15,24 @@ module:
         - dbpasswd
         - dbhost
         - dbname
+    settings:
+        dbtype:
+            type: text
+            label: Dbtype
+            default: mysql
+        dbuser:
+            type: text
+            label: Dbuser
+            default: root
+        dbpasswd:
+            type: password
+            label: Dbpasswd
+            default: hello123
+        dbhost:
+            type: text
+            label: Dbhost
+            default: localhost
+        dbname:
+            type: text
+            label: Dbname
+            default: school

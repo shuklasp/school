@@ -1,0 +1,4 @@
+variables:
+  views_path: resources/PremiumBlade/views
+  cache_path: var/cache/PremiumBlade/blade
+  mode: 0

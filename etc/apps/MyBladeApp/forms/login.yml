@@ -1,0 +1,27 @@
+form:
+  name: login_form
+  action: ''
+  method: post
+  id: login_form
+  controls:
+    control:
+      - name: username
+        type: SPPText
+        label: Username
+        id: username
+      - name: password
+        type: SPPPassword
+        label: Password
+        id: password
+      - name: submit
+        type: SPPSubmit
+        value: Login
+        id: submit
+  validations:
+    validation:
+      - control: username
+        type: SPPRequiredValidator
+        message: Username is required
+      - control: password
+        type: SPPRequiredValidator
+        message: Password is required

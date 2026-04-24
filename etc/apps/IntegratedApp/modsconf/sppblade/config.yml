@@ -1,0 +1,4 @@
+variables:
+  views_path: resources/IntegratedApp/views
+  cache_path: var/cache/IntegratedApp/blade
+  mode: 0

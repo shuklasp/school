@@ -1,0 +1,7 @@
+pages:
+  index:
+    url: index.php
+    special: 1
+defaults:
+  home: index
+  pagedir: /src/PremiumSppUx

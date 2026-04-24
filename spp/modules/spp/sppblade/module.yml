@@ -1,0 +1,18 @@
+# SPP Blade Module Manifest
+
+module:
+    name: sppblade
+    version: "1.0"
+    pubname: SPP Blade Engine
+    modgroup: SPP_Optional
+    pubdesc: Integrates Blade templating engine (via BladeOne) into SPP.
+    includes:
+        - class.sppblade.php
+    services:
+        blade:
+            class: \SPPMod\SPPBlade\SPPBlade
+            shared: true
+    config_variables:
+        views_path: "resources/views"
+        cache_path: "var/cache/blade"
+        mode: "auto" # auto, slow, fast

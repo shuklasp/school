@@ -427,3 +427,13 @@ class SPPViewForm_DateChooser extends SPPViewForm_Input
     }
 
 }
+
+// Class Aliases for common form elements used in scaffolding
+class SPPText extends SPPViewForm_Input_Text {}
+class SPPPassword extends SPPViewForm_Input_Password {}
+class SPPSubmit extends SPPViewForm_Input_Submit {}
+class SPPTextArea extends SPPViewForm_TextArea {}
+class SPPButton extends SPPViewForm_Button {}
+class SPPSelect extends SPPViewForm_Select {}
+class SPPRadio extends SPPViewForm_Input_Radio {}
+class SPPCheckbox extends SPPViewForm_Input_Checkbox {}

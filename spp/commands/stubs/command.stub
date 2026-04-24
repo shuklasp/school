@@ -1,0 +1,37 @@
+<?php
+
+namespace {{namespace}};
+
+use SPP\CLI\Command;
+
+/**
+ * Class {{className}}
+ * Auto-generated CLI command class.
+ */
+class {{className}} extends Command
+{
+    /** @var string Command name */
+    protected string $name = '{{commandName}}';
+
+    /** @var string Command description */
+    protected string $description = '{{description}}';
+
+    /**
+     * {{className}} constructor.
+     */
+    public function __construct()
+    {
+        //
+    }
+
+    /**
+     * Execute the command.
+     *
+     * @param array $args
+     */
+    public function execute(array $args): void
+    {
+        echo "Executing {{commandName}}...\n";
+        // TODO: Implement command logic
+    }
+}

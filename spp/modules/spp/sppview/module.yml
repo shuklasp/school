@@ -1,11 +1,9 @@
-# SPP View Module Manifest
-
 module:
     name: spphtml
-    version: "0.5"
-    pubname: SPP View
+    version: '0.5'
+    pubname: 'SPP View'
     modgroup: SPP_Optional
-    pubdesc: Handles HTML in SPP.
+    pubdesc: 'Handles HTML in SPP.'
     includes:
         - class.viewtag.php
         - class.sppformelement.php
@@ -33,7 +31,30 @@ module:
         - auto_js_injection
     installation:
         tables:
-            dropdowns:
-                ddid: "VARCHAR(10)"
-                optgroupname: "VARCHAR(50)"
-                optname: "VARCHAR(50)"
+            dropdowns: { ddid: VARCHAR(10), optgroupname: VARCHAR(50), optname: VARCHAR(50) }
+    settings:
+        page_source_primary:
+            type: select
+            label: 'Primary Page Source'
+            options:
+                yaml: 'YAML Definition'
+                db: 'Database Store'
+                file: 'Physical File'
+            default: yaml
+        page_source_fallback:
+            type: select
+            label: 'Fallback Page Source'
+            options:
+                yaml: 'YAML Definition'
+                db: 'Database Store'
+                file: 'Physical File'
+                none: 'None'
+            default: db
+        auto_page_augmentation:
+            type: boolean
+            label: 'Auto Page Augmentation'
+            default: true
+        auto_js_injection:
+            type: boolean
+            label: 'Auto Js Injection'
+            default: true

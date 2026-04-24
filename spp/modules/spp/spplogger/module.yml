@@ -1,24 +1,41 @@
 module:
     name: spplogger
-    pubname: SPP Unified Logger
+    pubname: 'SPP Unified Logger'
     version: 1.2
-    author: Satya Prakash Shukla
-    pubdesc: Centralized logging engine providing multiple adapters (Database, File, Console) with support for log levels and rotation.
+    author: 'Satya Prakash Shukla'
+    pubdesc: 'Centralized logging engine providing multiple adapters (Database, File, Console) with support for log levels and rotation.'
     modgroup: Core
     installation:
         tables:
-            logger:
-                loggerid: "VARCHAR(40) NOT NULL PRIMARY KEY"
-                uid: "VARCHAR(50)"
-                uname: "VARCHAR(100)"
-                ip: "VARCHAR(50)"
-                logtime: "DATETIME"
-                sessid: "VARCHAR(100)"
-                level: "VARCHAR(20)"
-                descr: "TEXT"
-                context: "TEXT"
-                request_uri: "TEXT"
-                method: "VARCHAR(10)"
-                agent: "TEXT"
+            logger: { loggerid: 'VARCHAR(40) NOT NULL PRIMARY KEY', uid: VARCHAR(50), uname: VARCHAR(100), ip: VARCHAR(50), logtime: DATETIME, sessid: VARCHAR(100), level: VARCHAR(20), descr: TEXT, context: TEXT, request_uri: TEXT, method: VARCHAR(10), agent: TEXT }
         sequences:
             - loggerid
+    settings:
+        log_precedence:
+            type: select
+            label: 'Log Precedence'
+            options:
+                db_first: 'Database First'
+                file_first: 'File First'
+                parallel: 'Parallel Writing'
+            default: db_first
+        log_targets:
+            type: text
+            label: 'Log Targets'
+            default: [db, file]
+        log_subdir:
+            type: text
+            label: 'Log Subdir'
+            default: system
+        log_filename_format:
+            type: text
+            label: 'Log Filename Format'
+            default: 'log-{appname}-{date}-{index}.txt'
+        max_file_size:
+            type: number
+            label: 'Max File Size'
+            default: 2097152.0
+        log_retention_days:
+            type: number
+            label: 'Log Retention Days'
+            default: 30.0

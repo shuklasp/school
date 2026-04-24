@@ -1,0 +1,5 @@
+modules:
+    -
+        name: spplogger
+        path: spp/spplogger
+        status: active

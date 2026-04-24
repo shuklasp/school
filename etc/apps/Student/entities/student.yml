@@ -1,0 +1,6 @@
+table: students
+id_field: id
+sequence: students_seq
+attributes:
+  name: varchar(255)
+  description: text

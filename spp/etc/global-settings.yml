@@ -6,9 +6,6 @@ shared_groups:
       - User
       - Role
       - Right
-admin_auth:
-  username: admin
-  password: admin123
   academic:
     extends: core
     table_prefix: sch_
@@ -26,6 +23,9 @@ admin_auth:
     extends: core
     table_prefix: test_
     entities: {  }
+admin_auth:
+  username: admin
+  password: admin123
 apps:
   default:
     base_url: /
@@ -45,4 +45,107 @@ apps:
     shared_group: core
     etc_path: etc/apps/autodemo
     src_path: src/autodemo
+  cms:
+    base_url: /cms
+    type: drupal
+    drupal_root: vshiksha_theme/..
+    table_prefix: drupal_
+    shared_group: core
+  test1:
+    base_url: /test1
+    table_prefix: test1_
+    type: sppux
+    shared_group: core
+    etc_path: etc/apps/test1
+    src_path: src/test1
+  MyBladeApp:
+    base_url: /MyBladeApp
+    table_prefix: mba_
+    shared_group: core
+    etc_path: etc/apps/MyBladeApp
+    src_path: src/MyBladeApp
+  IntegratedApp:
+    base_url: /IntegratedApp
+    table_prefix: ia_
+    shared_group: core
+    etc_path: etc/apps/IntegratedApp
+    src_path: src/IntegratedApp
+  PremiumApp:
+    base_url: /PremiumApp
+    table_prefix: pre_
+    shared_group: core
+    etc_path: etc/apps/PremiumApp
+    src_path: src/PremiumApp
+  SppUxApp:
+    base_url: /SppUxApp
+    table_prefix: SppUxApp_
+    type: sppux
+    shared_group: core
+    etc_path: etc/apps/SppUxApp
+    src_path: src/SppUxApp
+  PremiumBlade:
+    base_url: /PremiumBlade
+    table_prefix: PremiumBlade_
+    type: blade
+    shared_group: core
+    etc_path: etc/apps/PremiumBlade
+    src_path: src/PremiumBlade
+  PremiumDropIn:
+    base_url: /PremiumDropIn
+    table_prefix: PremiumDropIn_
+    type: dropin
+    shared_group: core
+    etc_path: etc/apps/PremiumDropIn
+    src_path: src/PremiumDropIn
+  PremiumSppUx:
+    base_url: /PremiumSppUx
+    table_prefix: PremiumSppUx_
+    type: sppux
+    shared_group: core
+    etc_path: etc/apps/PremiumSppUx
+    src_path: src/PremiumSppUx
 base_app: default
+prototyping:
+  auto_evolution: manual
+  view_generation: php_html
+formats:
+  - yaml
+  - xml
+  - db
+  - json
+modes:
+  -
+    name: sys
+    format: yaml
+    ref: /etc/sys
+  -
+    name: mod
+    format: xml
+    ref: /etc/settings/modules
+  -
+    name: app
+    format: yaml
+    ref: /etc/settings/app
+  -
+    name: umod
+    format: json
+    ref: /etc/umod
+settings:
+  site_name: Vidyalaya
+  Key2:
+    skey1: 'new value'
+  Key3: Val3
+  debug: true
+  compulsory_modules:
+    - sppauth
+    - sppdb
+    - sppconfig
+    - sppview
+bridge:
+  shared_dir: var/shared
+dev:
+  testing:
+    storage_strategy: same_db
+    table_prefix: spptest__
+    auto_generate_tests: true
+    fuzz_intensity: 10

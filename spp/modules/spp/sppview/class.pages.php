@@ -158,13 +158,30 @@ class Pages extends \SPP\SPPObject
     // Internal helpers — single-source lookups
     // -------------------------------------------------------------------------
 
-    /** @return array|null Matched page array or null */
     private static function findPageInYaml(string $q): ?array
     {
         $yaml = self::getYaml();
-        foreach ($yaml['pages'] as $routeConfig) {
-            if (substr_compare(trim($routeConfig['name']), $q, 0, strlen($routeConfig['name'])) === 0) {
-                return self::buildPage($routeConfig['name'], $routeConfig['url'], $q);
+        
+        // Handle empty routes by falling back to the 'home' setting
+        if ($q === '' && isset($yaml['home'])) {
+            $q = (string)$yaml['home'];
+        }
+
+        if (!isset($yaml['pages']) || !is_array($yaml['pages'])) {
+            return null;
+        }
+
+        // Exact match prioritized
+        if (isset($yaml['pages'][$q])) {
+             $routeConfig = $yaml['pages'][$q];
+             return self::buildPage($q, $routeConfig['url'], $q);
+        }
+
+        foreach ($yaml['pages'] as $name => $routeConfig) {
+            $name = (string)$name;
+            // Robust prefix matching for parameters
+            if ($name !== '' && strpos($q, $name) === 0) {
+                return self::buildPage($name, $routeConfig['url'], $q);
             }
         }
         return null;

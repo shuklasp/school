@@ -1,0 +1,34 @@
+module:
+  name: parikshak
+  version: 1.0.0
+  description: Automated Evolutionary Testing Engine (Evaluator)
+  author: Satya Prakash Shukla
+  namespace: SPPMod\Parikshak
+  config: config.yml
+  dependencies:
+    - sppdb
+    - sppentity
+  settings:
+    active:
+      type: boolean
+      label: Active
+      default: true
+    fuzz_intensity:
+      type: number
+      label: 'Fuzz Intensity'
+      default: 10
+    auto_generate_tests:
+      type: boolean
+      label: 'Auto Generate Tests'
+      default: true
+    table_prefix:
+      type: text
+      label: 'Table Prefix'
+      default: spptest__
+    storage_strategy:
+      type: select
+      label: 'Storage Strategy'
+      options:
+        same_db: 'Same Database'
+        isolated: 'Isolated Database'
+      default: same_db
